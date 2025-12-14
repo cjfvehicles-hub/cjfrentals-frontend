@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vehicles | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .filters-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #0c1b3a;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    .filters-trigger .badge {
+      background: #fff;
+      color: #0c1b3a;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(12,27,58,0.15);
+    }
+    .active-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .active-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: #f6f8fb;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .active-chip small {
+      font-weight: 700;
+      color: #111;
+    }
+    .filters-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 9000;
+    }
+    .filters-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .filters-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 360px;
+      max-width: 92vw;
+      height: 100vh;
+      background: #fff;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.18);
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+      transform: translateX(105%);
+      transition: transform 0.25s ease;
+      z-index: 9010;
+      display: flex;
+      flex-direction: column;
+    }
+    .filters-drawer.open { transform: translateX(0); }
+    .filters-drawer__header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--stroke);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+    .filters-drawer__body {
+      padding: 14px;
+      overflow-y: auto;
+      display: grid;
+      gap: 12px;
+    }
+    .filters-drawer__footer {
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--stroke);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+    }
+    .filter-group {
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background: #f8fafc;
+    }
+    .filter-group h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .filters-close {
+      background: none;
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    @media (max-width: 768px) {
+      .filters-drawer {
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: none;
+        height: 82vh;
+        top: auto;
+        bottom: 0;
+        border-radius: 18px 18px 0 0;
+        transform: translateY(110%);
+      }
+      .filters-drawer.open { transform: translateY(0); }
+    }
+  </style>
+  <script src="assets/countryStateData.js"></script>
+  <script src="assets/safetyPopup.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">CJF</span><span>CJF Rentals</span>
+      </a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page">
+    <!-- Hero removed per request -->
+
+    <section>
+      <div class="grid" style="gap:6px;">
+        <div class="pill">Results</div>
+        <h2>All Vehicles</h2>
+        <p class="muted" id="vehicleCount">Loading vehicles...</p>
+      </div>
+      <div class="results-header">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <button class="filters-trigger" id="filtersToggle" type="button" aria-expanded="false">
+            <span>Filters</span>
+            <span class="badge" id="filterCountBadge">0</span>
+          </button>
+          <div class="active-chips" id="activeChips"></div>
+        </div>
+        <button class="button ghost" id="clearFiltersQuick" type="button">Clear all</button>
+      </div>
+
+      <div class="grid three" id="vehiclesGrid">
+        <!-- Vehicles will be loaded from shared storage -->
+      </div>
+      <div id="noVehiclesMsg" class="empty-state" style="display:none; text-align:center; padding:60px 20px;">
+        <p style="font-size:18px; color:#999;">No vehicles available at the moment.</p>
+        <p class="muted">Check back later or try adjusting your search filters.</p>
+      </div>
+      <div id="filterVehiclesMsg" class="empty-state" style="display:none; text-align:center; padding:32px 20px;">
+        <p style="font-size:16px; color:#666; margin:0;">No vehicles found for this location.</p>
+        <p class="muted" style="margin-top:8px;">Try another country, state, or city.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="filters-overlay" id="filtersOverlay"></div>
+  <aside class="filters-drawer" id="filtersDrawer" aria-hidden="true">
+    <div class="filters-drawer__header">
+      <button class="filters-close" id="filtersClose" type="button">Close</button>
+      <strong>Filters</strong>
+      <button class="button ghost" id="clearFiltersBtn" type="button" style="min-width:96px;">Clear</button>
+    </div>
+    <div class="filters-drawer__body">
+      <div class="filter-group">
+        <h3>Location</h3>
+        <label for="filterCountry">Country</label>
+        <select id="filterCountry" class="input">
+          <option value="">Any</option>
+        </select>
+        <label for="filterState">State/Region</label>
+        <select id="filterState" class="input">
+          <option value="">Any</option>
+        </select>
+        <label for="filterCity">City</label>
+        <input id="filterCity" class="input" list="filterCityList" placeholder="Type a city" />
+        <datalist id="filterCityList"></datalist>
+      </div>
+      <div class="filter-group">
+        <h3>Price</h3>
+        <div class="filter-row">
+          <div>
+            <label for="priceMin">Min</label>
+            <input id="priceMin" class="input" type="number" min="0" placeholder="0" />
+          </div>
+          <div>
+            <label for="priceMax">Max</label>
+            <input id="priceMax" class="input" type="number" min="0" placeholder="500" />
+          </div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <h3>Vehicle</h3>
+        <div class="filter-row">
+          <div>
+            <label for="yearMin">Year from</label>
+            <input id="yearMin" class="input" type="number" min="1980" max="2100" />
+          </div>
+          <div>
+            <label for="yearMax">Year to</label>
+            <input id="yearMax" class="input" type="number" min="1980" max="2100" />
+          </div>
+        </div>
+        <label for="makeFilter">Make/Brand</label>
+        <input id="makeFilter" class="input" list="makeFilterList" placeholder="Any brand" />
+        <datalist id="makeFilterList"></datalist>
+        <label for="transmission">Transmission</label>
+        <select id="transmission" class="input">
+          <option value="">Any</option>
+          <option value="Automatic">Automatic</option>
+          <option value="Manual">Manual</option>
+          <option value="CVT">CVT</option>
+        </select>
+        <label for="fuel">Fuel</label>
+        <select id="fuel" class="input">
+          <option value="">Any</option>
+          <option value="Gas">Gas</option>
+          <option value="Diesel">Diesel</option>
+          <option value="Hybrid">Hybrid</option>
+          <option value="Electric">Electric</option>
+        </select>
+        <label for="seats">Seats</label>
+        <select id="seats" class="input">
+          <option value="">Any</option>
+          <option value="2">2</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8+</option>
+        </select>
+        <label for="frequency">Price frequency</label>
+        <select id="frequency" class="input">
+          <option value="">Any</option>
+          <option value="Daily">Daily</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Monthly">Monthly</option>
+        </select>
+      </div>
+    </div>
+    <div class="filters-drawer__footer">
+      <button class="button ghost" id="drawerClear" type="button">Clear all</button>
+      <button class="button" id="applyFiltersBtn" type="button">Apply</button>
+    </div>
+  </aside>
+
+            <script>
+    const menuPanel = document.getElementById("menuPanel");
+    const backdrop = document.getElementById("backdrop");
+    const openBtn = document.getElementById("menuToggle");
+    const closeBtn = document.getElementById("menuClose");
+    const openMenu = () => { menuPanel.classList.add("open"); backdrop.classList.add("show"); };
+    const closeMenu = () => { menuPanel.classList.remove("open"); backdrop.classList.remove("show"); };
+    const syncAuth = () => AuthManager.updateUIForRole();
+    document.addEventListener("ccr:signedOut", syncAuth);
+    document.addEventListener("ccr:signedIn", syncAuth);
+    document.addEventListener("DOMContentLoaded", syncAuth);
+    if (document.readyState !== "loading") syncAuth();
+    
+    // Wire menu Sign In click handler to open login UI (no auto-login)
+    const menuSignIn = document.querySelector(".menu-signin");
+    if (menuSignIn) {
+      menuSignIn.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.href = "account.html#signin";
+        closeMenu();
+      });
+    }
+    openBtn?.addEventListener("click", openMenu);
+    closeBtn?.addEventListener("click", closeMenu);
+    backdrop?.addEventListener("click", closeMenu);
+
+    const normalizeLocation = (value) => (value ?? "").toString().trim().toLowerCase();
+    const clean = (value) => (value ?? "").toString().trim();
+    const matchesFilter = (value, filter) => {
+      if (!filter) return true;
+      if (!value) return false;
+      return value.includes(filter);
+    };
+
+    const vehiclesGrid = document.getElementById("vehiclesGrid");
+    const noVehiclesMsg = document.getElementById("noVehiclesMsg");
+    const filterVehiclesMsg = document.getElementById("filterVehiclesMsg");
+    const vehicleCount = document.getElementById("vehicleCount");
+    const filterCountry = document.getElementById("filterCountry");
+    const filterState = document.getElementById("filterState");
+    const filterCity = document.getElementById("filterCity");
+    const filterCityList = document.getElementById("filterCityList");
+    const priceMinInput = document.getElementById("priceMin");
+    const priceMaxInput = document.getElementById("priceMax");
+    const yearMinInput = document.getElementById("yearMin");
+    const yearMaxInput = document.getElementById("yearMax");
+    const makeFilter = document.getElementById("makeFilter");
+    const makeFilterList = document.getElementById("makeFilterList");
+    const transmissionSelect = document.getElementById("transmission");
+    const fuelSelect = document.getElementById("fuel");
+    const seatsSelect = document.getElementById("seats");
+    const frequencySelect = document.getElementById("frequency");
+    const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+    const clearFiltersQuick = document.getElementById("clearFiltersQuick");
+    const filtersToggle = document.getElementById("filtersToggle");
+    const filtersOverlay = document.getElementById("filtersOverlay");
+    const filtersDrawer = document.getElementById("filtersDrawer");
+    const filtersClose = document.getElementById("filtersClose");
+    const drawerClear = document.getElementById("drawerClear");
+    const filterCountBadge = document.getElementById("filterCountBadge");
+    const activeChips = document.getElementById("activeChips");
+
+    let allVehicles = [];
+    const stateCache = new Map();
+    let drawerOpen = false;
+
+    const setBadgeCount = (count) => {
+      if (!filterCountBadge) return;
+      filterCountBadge.textContent = count;
+    };
+    setBadgeCount(0);
+
+    const openFilters = () => {
+      filtersDrawer?.classList.add("open");
+      filtersOverlay?.classList.add("show");
+      filtersDrawer?.setAttribute("aria-hidden", "false");
+      filtersToggle?.setAttribute("aria-expanded", "true");
+      drawerOpen = true;
+    };
+
+    const closeFilters = () => {
+      filtersDrawer?.classList.remove("open");
+      filtersOverlay?.classList.remove("show");
+      filtersDrawer?.setAttribute("aria-hidden", "true");
+      filtersToggle?.setAttribute("aria-expanded", "false");
+      drawerOpen = false;
+    };
+
+    const fetchStates = async (country) => {
+      if (!country) {
+        populateSelect(filterState, []);
+        if (filterCity) filterCity.value = '';
+        if (filterCityList) filterCityList.innerHTML = '';
+        return;
+      }
+      if (stateCache.has(country)) {
+        populateSelect(filterState, stateCache.get(country));
+        if (filterCity) filterCity.value = '';
+        if (filterCityList) filterCityList.innerHTML = '';
+        return;
+      }
+      try {
+        const resp = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ country })
+        });
+        if (!resp.ok) throw new Error('Failed to load states');
+        const data = await resp.json();
+        const list = (data?.data?.states || []).map((s) => s?.name).filter(Boolean);
+        stateCache.set(country, list);
+        populateSelect(filterState, list);
+        if (filterCity) filterCity.value = '';
+        if (filterCityList) filterCityList.innerHTML = '';
+      } catch (e) {
+        console.warn('State lookup failed', e.message);
+        populateSelect(filterState, []);
+        if (filterCity) filterCity.value = '';
+        if (filterCityList) filterCityList.innerHTML = '';
+      }
+    };
+
+    const hasRequiredFields = (vehicle) => (
+      vehicle &&
+      vehicle.year && vehicle.make && vehicle.model &&
+      vehicle.category && vehicle.country && vehicle.state &&
+      vehicle.city && vehicle.price
+    );
+
+    const renderVehicles = (list) => {
+      if (!vehiclesGrid) return;
+      const validList = list.filter(hasRequiredFields);
+
+      if (validList.length === 0) {
+        vehiclesGrid.innerHTML = "";
+        if (allVehicles.length === 0) {
+          if (noVehiclesMsg) noVehiclesMsg.style.display = "block";
+          if (filterVehiclesMsg) filterVehiclesMsg.style.display = "none";
+          if (vehicleCount) vehicleCount.textContent = "No vehicles found";
+        } else {
+          if (noVehiclesMsg) noVehiclesMsg.style.display = "none";
+          if (filterVehiclesMsg) filterVehiclesMsg.style.display = "block";
+          if (vehicleCount) vehicleCount.textContent = "0 vehicles match filters";
+        }
+        return;
+      }
+
+      if (noVehiclesMsg) noVehiclesMsg.style.display = "none";
+      if (filterVehiclesMsg) filterVehiclesMsg.style.display = "none";
+      if (vehicleCount) vehicleCount.textContent = `${validList.length} vehicle${validList.length === 1 ? "" : "s"} available`;
+
+      vehiclesGrid.innerHTML = validList.map(vehicle => {
+        const country = clean(vehicle.country);
+        const state = clean(vehicle.state);
+        const city = clean(vehicle.city);
+        const frequency = clean(vehicle.frequency || "").toLowerCase();
+        const image = vehicle.image || "assets - Copy/default-car.jpg";
+        const transmission = clean(vehicle.transmission || "");
+        const fuel = clean(vehicle.fuel || vehicle.fuelType || "");
+        const seats = vehicle.seats || "";
+
+        return `
+          <article class="card vehicle-card"
+            data-vehicle-id="${vehicle.id}"
+            data-type="${vehicle.category}"
+            data-country="${country}"
+            data-state="${state}"
+            data-city="${city}"
+            data-price="${vehicle.price}"
+            data-year="${vehicle.year}"
+            data-make="${clean(vehicle.make)}"
+            data-transmission="${transmission}"
+            data-fuel="${fuel}"
+            data-seats="${seats}"
+            data-frequency="${vehicle.frequency || ''}">
+            <a href="vehicle.html?id=${vehicle.id}" style="text-decoration:none; color:inherit;">
+              <div class="vehicle-card-image">
+                <img src="${image}" alt="${vehicle.make} ${vehicle.model}" />
+              </div>
+              <div class="vehicle-meta">${vehicle.year} - ${vehicle.category} - ${vehicle.fuel} - ${vehicle.insurance || 'Insurance: N/A'}</div>
+              <strong>${vehicle.make} ${vehicle.model}</strong>
+              <div class="vehicle-meta">${city} - ${state}</div>
+              <div class="vehicle-price">${vehicle.price} / ${frequency || 'n/a'}</div>
+              <div class="vehicle-meta">
+                <span class="badge">${vehicle.category}</span>
+                <span class="badge">${vehicle.fuel}</span>
+                ${vehicle.insurance === 'Included' ? '<span class="badge">Insurance Included</span>' : '<span class="badge">No Insurance</span>'}
+              </div>
+            </a>
+            <a class="button ghost" href="vehicle.html?id=${vehicle.id}">View Details</a>
+          </article>
+        `;
+      }).join("");
+
+      console.log("? Vehicles rendered successfully");
+    };
+
+    const populateSelect = (selectEl, values) => {
+      if (!selectEl) return;
+      selectEl.innerHTML = '<option value="">Any</option>';
+      values.forEach((value) => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = value;
+        selectEl.appendChild(opt);
+      });
+    };
+
+    const populateMakeOptions = (vehicles = []) => {
+      if (!makeFilterList) return;
+      makeFilterList.innerHTML = '';
+      const makes = [...new Set(
+        (vehicles || [])
+          .map((veh) => clean(veh.make))
+          .filter(Boolean)
+      )];
+      makes.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      makes.forEach((make) => {
+        const option = document.createElement("option");
+        option.value = make;
+        makeFilterList.appendChild(option);
+      });
+    };
+
+    const buildFilterOptions = () => {
+      if (filterCountry && window.populateCountryElement) {
+        populateCountryElement(filterCountry);
+      }
+      // States are populated on demand after country selection; city is typed
+      populateSelect(filterState, []);
+      if (filterCity) filterCity.value = '';
+      if (filterCityList) filterCityList.innerHTML = '';
+    };
+
+    const renderActiveChips = (chips) => {
+      if (!activeChips) return;
+      activeChips.innerHTML = '';
+      chips.forEach(({ label, clear }) => {
+        const chip = document.createElement('span');
+        chip.className = 'active-chip';
+        chip.innerHTML = `${label} x`;
+        chip.onclick = clear;
+        activeChips.appendChild(chip);
+      });
+      setBadgeCount(chips.length);
+    };
+
+    const renderDefaultView = () => {
+      renderActiveChips([]);
+      renderVehicles(allVehicles);
+    };
+
+    const applyFilters = () => {
+      const countryNorm = normalizeLocation(filterCountry?.value || "");
+      const stateNorm = normalizeLocation(filterState?.value || "");
+      const cityNorm = normalizeLocation(filterCity?.value || "");
+      const priceMin = Number(priceMinInput?.value || '');
+      const priceMax = Number(priceMaxInput?.value || '');
+      const yearMin = Number(yearMinInput?.value || '');
+      const yearMax = Number(yearMaxInput?.value || '');
+      const makeValue = (makeFilter?.value || '').trim();
+      const transmissionValue = (transmissionSelect?.value || '').trim();
+      const fuelValue = (fuelSelect?.value || '').trim();
+      const seatsValue = (seatsSelect?.value || '').trim();
+      const frequencyValue = (frequencySelect?.value || '').trim();
+
+      const freqNorm = normalizeLocation(frequencyValue);
+      const makeNorm = normalizeLocation(makeValue);
+      const transmissionNorm = normalizeLocation(transmissionValue);
+      const fuelNorm = normalizeLocation(fuelValue);
+
+      const filtered = allVehicles.filter((vehicle) => {
+        if (!hasRequiredFields(vehicle)) return false;
+        const vCountry = normalizeLocation(vehicle.country);
+        const vState = normalizeLocation(vehicle.state);
+        const vCity = normalizeLocation(vehicle.city);
+        const vPrice = Number(vehicle.price || 0);
+        const vYear = Number(vehicle.year || 0);
+        const vMake = normalizeLocation(vehicle.make);
+        const vTrans = normalizeLocation(vehicle.transmission);
+        const vFuel = normalizeLocation(vehicle.fuel || vehicle.fuelType);
+        const vSeats = Number(vehicle.seats || 0);
+        const vFreq = normalizeLocation(vehicle.frequency || vehicle.priceFrequency);
+
+        if (!matchesFilter(vCountry, countryNorm)) return false;
+        if (!matchesFilter(vState, stateNorm)) return false;
+        if (!matchesFilter(vCity, cityNorm)) return false;
+
+        if (priceMin && vPrice < priceMin) return false;
+        if (priceMax && vPrice > priceMax) return false;
+        if (yearMin && vYear < yearMin) return false;
+        if (yearMax && vYear > yearMax) return false;
+        if (makeNorm && vMake !== makeNorm) return false;
+        if (transmissionNorm && vTrans !== transmissionNorm) return false;
+        if (fuelNorm && vFuel !== fuelNorm) return false;
+        if (seatsValue) {
+          if (seatsValue === '8+') {
+            if (vSeats < 8) return false;
+          } else if (vSeats !== Number(seatsValue)) {
+            return false;
+          }
+        }
+        if (freqNorm && vFreq !== freqNorm) return false;
+
+        return true;
+      });
+
+      const chips = [];
+      if (countryNorm) chips.push({ label: filterCountry.value, clear: () => { filterCountry.value=''; applyFilters(); }});
+      if (stateNorm) chips.push({ label: filterState.value, clear: () => { filterState.value=''; applyFilters(); }});
+      if (cityNorm) chips.push({ label: filterCity.value, clear: () => { filterCity.value=''; applyFilters(); }});
+      if (priceMin) chips.push({ label: `Min $${priceMin}`, clear: () => { priceMinInput.value=''; applyFilters(); }});
+      if (priceMax) chips.push({ label: `Max $${priceMax}`, clear: () => { priceMaxInput.value=''; applyFilters(); }});
+      if (yearMin) chips.push({ label: `Year >= ${yearMin}`, clear: () => { yearMinInput.value=''; applyFilters(); }});
+      if (yearMax) chips.push({ label: `Year <= ${yearMax}`, clear: () => { yearMaxInput.value=''; applyFilters(); }});
+      if (makeNorm) chips.push({ label: makeFilter.value, clear: () => { makeFilter.value=''; applyFilters(); }});
+      if (transmissionNorm) chips.push({ label: transmissionValue, clear: () => { transmissionSelect.value=''; applyFilters(); }});
+      if (fuelNorm) chips.push({ label: fuelValue, clear: () => { fuelSelect.value=''; applyFilters(); }});
+      if (seatsValue) chips.push({ label: `${seatsValue}+ seats`, clear: () => { seatsSelect.value=''; applyFilters(); }});
+      if (frequencyValue) chips.push({ label: frequencyValue, clear: () => { frequencySelect.value=''; applyFilters(); }});
+      renderActiveChips(chips);
+
+      renderVehicles(filtered);
+      if (drawerOpen) closeFilters();
+    };
+
+    // Load vehicles from VehicleStore (single source of truth)
+    const loadVehicles = async () => {
+      console.log("Loading vehicles from VehicleStore...");
+      
+      // Get only ACTIVE vehicles for public display
+      const activeVehicles = await VehicleStore.getActiveVehicles();
+      allVehicles = activeVehicles.map(v => ({
+        ...v,
+        country: clean(v.country),
+        state: clean(v.state),
+        city: clean(v.city)
+      }));
+
+      populateMakeOptions(allVehicles);
+      buildFilterOptions();
+      if (filterCountry) {
+        fetchStates(filterCountry.value);
+      }
+      renderDefaultView();
+    };
+
+    // Wait for VehicleStore to be available before loading
+    const initWhenReady = () => {
+      if (!window.VehicleStore) {
+        setTimeout(initWhenReady, 100);
+        return;
+      }
+      console.log("? VehicleStore ready, loading vehicles");
+      loadVehicles();
+
+      // Reload when page becomes visible (e.g., when user returns from adding a vehicle)
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          console.log("Page visible - reloading vehicles");
+          loadVehicles();
+        }
+      });
+    };
+
+    // Hook up filter events
+    filterCountry?.addEventListener("change", () => {
+      // Reset child filters when parent changes
+      if (filterState) filterState.value = "";
+      if (filterCity) filterCity.value = "";
+      fetchStates(filterCountry.value);
+    });
+
+    filterState?.addEventListener("change", () => {
+      if (filterCity) filterCity.value = "";
+    });
+
+    filterCity?.addEventListener("input", () => {}); // keep input responsive without auto-applying
+
+    const clearFilters = () => {
+      if (filterCountry) filterCountry.value = "";
+      if (filterState) filterState.value = "";
+      if (filterCity) filterCity.value = "";
+      if (priceMinInput) priceMinInput.value = "";
+      if (priceMaxInput) priceMaxInput.value = "";
+      if (yearMinInput) yearMinInput.value = "";
+      if (yearMaxInput) yearMaxInput.value = "";
+      if (makeFilter) makeFilter.value = "";
+      if (transmissionSelect) transmissionSelect.value = "";
+      if (fuelSelect) fuelSelect.value = "";
+      if (seatsSelect) seatsSelect.value = "";
+      if (frequencySelect) frequencySelect.value = "";
+      if (filterCountry) fetchStates('');
+      renderDefaultView();
+    };
+
+    filtersToggle?.addEventListener("click", () => {
+      drawerOpen ? closeFilters() : openFilters();
+    });
+    filtersOverlay?.addEventListener("click", closeFilters);
+    filtersClose?.addEventListener("click", closeFilters);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && drawerOpen) closeFilters();
+    });
+
+    applyFiltersBtn?.addEventListener("click", applyFilters);
+    clearFiltersBtn?.addEventListener("click", clearFilters);
+    drawerClear?.addEventListener("click", clearFilters);
+    clearFiltersQuick?.addEventListener("click", clearFilters);
+
+    // Start once ready
+    initWhenReady();
+  </script>
+
+  <!-- Footer with Legal Links -->
+  <footer style="background: #f8f9fa; border-top: 1px solid #e5e7eb; padding: 32px 20px; margin-top: 48px;">
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+      <p style="margin: 0 0 16px 0; font-size: 14px; color: #666; line-height: 1.6;">
+        <strong>CJF is an advertising platform only.</strong> All rentals, payments, and agreements occur directly between Host and Renter. CJF is not responsible for scams, disputes, damages, or vehicle issues.
+      </p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 16px;">
+        <a href="terms.html" style="color: var(--accent); font-size: 14px;">Terms & Conditions</a>
+        <a href="privacy.html" style="color: var(--accent); font-size: 14px;">Privacy Policy</a>
+        <a href="host-agreement.html" style="color: var(--accent); font-size: 14px;">Host Agreement</a>
+        <a href="safety.html" style="color: var(--accent); font-size: 14px;">Safety Guidelines</a>
+        <a href="contact.html" style="color: var(--accent); font-size: 14px;">Contact Support</a>
+      </div>
+      <p style="margin: 16px 0 0 0; font-size: 13px; color: #999;">© 2025 CJF. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js?v=3"></script>
+  <script src="assets/auth.js?v=3"></script>
+  <script src="assets/vehicleStore.js?v=3"></script>
+  <script src="assets/navBuilder.js?v=3"></script>
+</body>
+</html>

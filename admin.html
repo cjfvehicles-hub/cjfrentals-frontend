@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section class="card" style="gap:10px;">
+      <div class="pill">Admin (super admin: clyderofraser97@gmail.com)</div>
+      <h1 style="font-size: clamp(24px, 3.6vw, 32px);">Full control center</h1>
+      <p class="muted">Manage users, hosts, vehicles, reviews, subscriptions, reports, featured listings, content, settings, analytics.</p>
+    </section>
+
+    <section class="grid two">
+      <div class="card" style="padding:12px;">
+        <strong>Users / Hosts</strong>
+        <ul class="list">
+          <li>View, edit profiles, reset passwords</li>
+          <li>Ban/suspend/reactivate users</li>
+          <li>Verify hosts, add internal notes</li>
+        </ul>
+        <div class="grid" style="gap:8px;">
+          <button class="button" type="button">Manage users</button>
+          <button class="button ghost" type="button">Verify host</button>
+        </div>
+      </div>
+      <div class="card" style="padding:12px;">
+        <strong>Vehicles</strong>
+        <ul class="list">
+          <li>Edit, delete, hide/suspend, feature, restore</li>
+          <li>Add vehicles manually</li>
+          <li>All listings visible instantly</li>
+        </ul>
+        <button class="button" type="button">Manage vehicles</button>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card" style="padding:12px;">
+        <strong>Reviews</strong>
+        <ul class="list">
+          <li>Delete or edit reviews</li>
+          <li>Remove fake reviews</li>
+          <li>Disable reviewing on vehicles</li>
+        </ul>
+        <button class="button" type="button">Moderate reviews</button>
+      </div>
+      <div class="card" style="padding:12px;">
+        <strong>Subscriptions</strong>
+        <ul class="list">
+          <li>Upgrade/downgrade plans</li>
+          <li>Cancel subscriptions</li>
+          <li>Mark payments manual; view billing history</li>
+          <li>See earnings, expired/upcoming renewals</li>
+        </ul>
+        <button class="button" type="button">Manage billing</button>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card" style="padding:12px;">
+        <strong>Images</strong>
+        <ul class="list">
+          <li>Remove/replace any avatar</li>
+          <li>Remove/replace any cover photo</li>
+          <li>Remove/replace vehicle photos</li>
+        </ul>
+        <button class="button" type="button">Moderate images</button>
+      </div>
+      <div class="card" style="padding:12px;">
+        <strong>Reports / Safety</strong>
+        <ul class="list">
+          <li>See all reported vehicles/hosts</li>
+          <li>Suspend listings; ban hosts</li>
+          <li>Document reasons</li>
+        </ul>
+        <button class="button" type="button">Handle reports</button>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card" style="padding:12px;">
+        <strong>Site content</strong>
+        <ul class="list">
+          <li>Edit hero image/text, category names</li>
+          <li>Edit About, Terms, Contact, FAQ, Footer</li>
+        </ul>
+        <button class="button" type="button">Content editor</button>
+      </div>
+      <div class="card" style="padding:12px;">
+        <strong>Settings</strong>
+        <ul class="list">
+          <li>Change logo, site name, theme colors</li>
+          <li>Enable/disable features</li>
+          <li>Manage currency, languages (future)</li>
+        </ul>
+        <button class="button" type="button">System settings</button>
+      </div>
+    </section>
+
+    <section class="card" style="gap:10px;">
+      <div class="pill">Analytics</div>
+      <table class="table">
+        <tr><th>Total hosts</th><td>128</td><th>Total customers</th><td>3,420</td></tr>
+        <tr><th>Total vehicles</th><td>980</td><th>Uploaded this month</th><td>124</td></tr>
+        <tr><th>Most viewed vehicles</th><td>Velar, Model 3, G63</td><th>Recently added</th><td>9 listed</td></tr>
+        <tr><th>Recently reported</th><td>3 pending</td><th>Subscription revenue</th><td>$24,300</td></tr>
+        <tr><th>Growth metrics</th><td>+12% MoM</td><th>Host ratings</th><td>4.8 avg</td></tr>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel.classList.add('open'); backdrop.classList.add('show'); };
+    const closeMenu = () => { menuPanel.classList.remove('open'); backdrop.classList.remove('show'); };
+      const syncAuth = () => AuthManager.updateUIForRole();
+      document.addEventListener('authStateChanged', syncAuth);
+      document.addEventListener('ccr:signedOut', syncAuth);
+      document.addEventListener('DOMContentLoaded', syncAuth);
+      if (document.readyState !== 'loading') syncAuth();
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+  </script>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host Profile | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    .host-page { padding-top: 80px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+    @media (min-width: 960px) { .container { padding: 32px 32px; } }
+    .cover { height: clamp(180px, 26vh, 260px); border-radius: 20px; overflow: hidden; background:#f0f0f0; }
+    .cover img { width:100%; height:100%; object-fit: cover; }
+    .host-card { background:#fff; border:1px solid var(--stroke); border-radius:16px; padding:24px; display:grid; grid-template-columns:auto 1fr auto; gap:24px; align-items:center; margin-top:24px; }
+    .avatar { width:96px; height:96px; border-radius:50%; object-fit:cover; border:4px solid #fff; box-shadow:0 6px 18px rgba(0,0,0,0.12); }
+    .host-name { font-size: clamp(22px, 2.2vw, 28px); margin:0 0 6px 0; }
+    .host-meta { font-size:14px; color:#666; }
+    .stats { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; text-align:center; }
+    .stat { display:grid; gap:4px; }
+    .stat strong { font-size:20px; }
+    .stat span { font-size:12px; color:#666; text-transform: uppercase; }
+    .section { padding:24px 0 8px; }
+    .section .section-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+    .section h2 { font-size:22px; margin:0; }
+    .vehicles { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+    .vehicle-card { border:1px solid var(--stroke); border-radius:12px; overflow:hidden; background:#fff; }
+    .vehicle-thumb { width:100%; height:200px; background:#f0f0f0; background-size:cover; background-position:center; }
+    .vehicle-body { padding:12px 10px; }
+    .vehicle-title { font-size:18px; font-weight:700; }
+    .vehicle-meta { font-size:14px; color:#666; }
+    .vehicle-price { font-size:16px; font-weight:700; }
+    .profile-form { max-width:700px; background:#fff; border:1px solid var(--stroke); border-radius:12px; padding:16px; }
+    .profile-form .field { display:grid; gap:4px; margin-bottom:12px; }
+    .profile-form label { font-size:13px; color:#666; }
+    .profile-form input { height:42px; padding:8px 10px; font-size:14px; }
+    .button { height:44px; font-size:15px; }
+    @media (max-width: 768px) {
+      .host-card { grid-template-columns: 1fr; text-align:center; }
+      .stats { grid-template-columns: 1fr; }
+      .avatar { width:80px; height:80px; margin:0 auto; }
+      .vehicles { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script src="assets/vehicleStore.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="host-page">
+    <div class="container">
+      <div class="cover"><img src="assets - Copy/hero.png" alt="Cover" /></div>
+      <section class="host-card">
+        <img id="hostAvatar" class="avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=Host" alt="Avatar" />
+        <div>
+          <h1 class="host-name" id="hostName">Host Name</h1>
+          <div class="host-meta" id="hostMeta">Business Host • Rating 0.0★ • 0 vehicles</div>
+        </div>
+        <div class="stats">
+          <div class="stat"><strong id="statTrips">0</strong><span>Trips</span></div>
+          <div class="stat"><strong id="statRating">0.0★</strong><span>Rating</span></div>
+          <div class="stat"><strong id="statYears">0</strong><span>Years hosting</span></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>All vehicles by this host</h2>
+          <div class="muted" id="vehicleCount">Loading vehicles...</div>
+        </div>
+        <div class="vehicles" id="hostVehiclesGrid"></div>
+        <div id="noVehiclesMsg" class="empty-state" style="display:none; text-align:center; padding:60px 20px;">
+          <p style="font-size:16px; color:#666;">This host has no active vehicles at the moment.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Account details</h2>
+        <div class="profile-form">
+          <div class="field"><label>Name</label><input id="profileName" type="text" /></div>
+          <div class="field"><label>Email</label><input id="profileEmail" type="email" /></div>
+          <div class="field"><label>Phone</label><input id="profilePhone" type="tel" /></div>
+          <div class="field"><label>Location</label><input id="profileLocation" type="text" /></div>
+          <div style="display:flex; gap:8px;">
+            <button class="button" id="saveProfileBtn">Edit profile</button>
+            <button class="button ghost" id="logoutBtn">Log out</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel.classList.add('open'); backdrop.classList.add('show'); };
+    const closeMenu = () => { menuPanel.classList.remove('open'); backdrop.classList.remove('show'); };
+    function updateNavigationUIFromAuth() {
+      AuthManager.updateUIForRole();
+    }
+    document.addEventListener('ccr:signedOut', updateNavigationUIFromAuth);
+    document.addEventListener('ccr:signedIn', updateNavigationUIFromAuth);
+    document.addEventListener('DOMContentLoaded', updateNavigationUIFromAuth);
+    if (document.readyState !== 'loading') updateNavigationUIFromAuth();
+    
+    // Wire menu Sign In click handler to open login UI (no auto-login)
+    const menuSignIn = document.querySelector('.menu-signin');
+    if (menuSignIn) {
+      menuSignIn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'account.html#signin';
+        closeMenu();
+      });
+    }
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+  </script>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+  <script>
+    const loadHostVehicles = async () => {
+      const activeVehicles = await VehicleStore.getActiveVehicles();
+      const vehiclesGrid = document.getElementById('hostVehiclesGrid');
+      const noVehiclesMsg = document.getElementById('noVehiclesMsg');
+      const vehicleCount = document.getElementById('vehicleCount');
+      if (!activeVehicles || activeVehicles.length === 0) {
+        vehiclesGrid.innerHTML = '';
+        noVehiclesMsg.style.display = 'block';
+        vehicleCount.textContent = 'No active vehicles';
+        return;
+      }
+      noVehiclesMsg.style.display = 'none';
+      vehicleCount.textContent = `${activeVehicles.length} active vehicle${activeVehicles.length === 1 ? '' : 's'}`;
+      vehiclesGrid.innerHTML = activeVehicles.map(v => {
+        const img = (Array.isArray(v.photos) && v.photos[0]) || v.image || (v.images && v.images[0]) || 'assets - Copy/default-car.jpg';
+        const title = `${v.make || ''} ${v.model || ''} ${v.year || ''}`.trim();
+        const price = v.pricePerDay || v.dailyPrice || v.price || '-';
+        const rating = (v.ratingAvg?.toFixed?.(1) || '0.0');
+        const trips = v.trips ? `(${v.trips} trips)` : '';
+        return `
+          <article class="vehicle-card">
+            <a href="vehicle.html?id=${v.id}" class="vehicle-link" style="text-decoration:none; color:inherit; display:block;">
+              <div class="vehicle-thumb" style="background-image:url('${img}')"></div>
+              <div class="vehicle-body">
+                <div class="vehicle-title">${title}</div>
+                <div class="vehicle-meta">${rating}★ ${trips}</div>
+                <div class="vehicle-price">$${price} / day</div>
+              </div>
+            </a>
+          </article>`;
+      }).join('');
+    };
+
+    loadHostVehicles();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page visible - reloading host vehicles');
+        loadHostVehicles();
+      }
+    });
+
+    setInterval(loadHostVehicles, 8000);
+  </script>
+</body>
+</html>

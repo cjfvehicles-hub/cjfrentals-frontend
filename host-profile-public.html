@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title id="hostPageTitle">Host Profile | CJF</title>
+	<meta id="hostMetaDesc" name="description" content="View host profile and fleet" />
+	<meta property="og:title" id="hostOgTitle" content="Host Profile | CJF" />
+	<meta property="og:description" id="hostOgDesc" content="View host profile and fleet" />
+	<meta property="og:image" id="hostOgImage" content="" />
+	<meta property="og:type" content="website" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="assets/style.css" />
+	<style>
+		/* Public Host Profile Page */
+		.host-profile-page { 
+			min-height: 100vh; 
+			padding: 120px 0 40px; 
+		}
+
+		.back-button {
+			display: inline-block;
+			margin: 20px 0 0 20px;
+			padding: 8px 12px;
+			background: none;
+			border: none;
+			color: var(--accent);
+			cursor: pointer;
+			font-size: 16px;
+		}
+
+		.back-button:hover {
+			background: rgba(0,0,0,0.05);
+			border-radius: 6px;
+		}
+
+		/* Profile Header Container */
+		.profile-container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 20px;
+		}
+
+		/* Host Card Section */
+		.host-card-section {
+			margin-top: -60px;
+			position: relative;
+			z-index: 10;
+			margin-bottom: 28px;
+		}
+
+		.host-card {
+			background: white;
+			border-radius: 16px;
+			border: 1px solid var(--stroke);
+			padding: 24px;
+			display: grid;
+			grid-template-columns: auto 1fr auto;
+			gap: 24px;
+			align-items: center;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+		}
+
+		/* Avatar */
+		.host-avatar-container {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.host-avatar {
+			width: 96px;
+			height: 96px;
+			border-radius: 12px;
+			object-fit: cover;
+			border: 3px solid var(--accent);
+		}
+
+		.host-verified {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 13px;
+			color: #1f6f3c;
+			font-weight: 600;
+			padding: 4px 12px;
+			border: 1px solid rgba(34, 139, 34, 0.5);
+			background: rgba(46, 204, 113, 0.15);
+			border-radius: 999px;
+			text-transform: none;
+			letter-spacing: 0;
+		}
+
+		/* Host Info */
+		.host-info {
+			display: grid;
+			gap: 16px;
+		}
+
+		.host-header-text h1 {
+			margin: 0;
+			font-size: 28px;
+			font-weight: 700;
+		}
+
+		.host-header-text p {
+			margin: 4px 0 0;
+			color: #666;
+			font-size: 16px;
+		}
+
+		.host-rating {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-size: 14px;
+		}
+
+		.verified-note {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 14px;
+			font-weight: 600;
+			color: #1f6f3c;
+			margin-top: 4px;
+		}
+
+		.verified-note::before {
+			content: '✔';
+			font-size: 15px;
+		}
+
+		.stars {
+			color: #ffc107;
+			font-size: 14px;
+		}
+
+		.rating-count {
+			color: #666;
+		}
+
+		.host-location {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-size: 14px;
+			color: #666;
+		}
+
+		.host-stats {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 16px;
+			padding-top: 16px;
+			border-top: 1px solid var(--stroke);
+		}
+
+		.stat-item {
+			display: grid;
+			gap: 4px;
+			text-align: center;
+		}
+
+		.stat-value {
+			font-size: 24px;
+			font-weight: 700;
+			color: var(--accent);
+		}
+
+		.stat-label {
+			font-size: 12px;
+			color: #666;
+			text-transform: uppercase;
+		}
+
+		/* Host Actions */
+		.host-actions {
+			display: grid;
+			gap: 12px;
+		}
+
+		.host-actions .button {
+			width: 100%;
+		}
+
+		/* Fleet Section */
+		.fleet-section {
+			margin: 40px 0;
+		}
+
+		.fleet-header {
+			margin-bottom: 32px;
+			display: grid;
+			gap: 8px;
+		}
+
+		.fleet-header h2 {
+			margin: 0;
+			font-size: 24px;
+			font-weight: 700;
+		}
+
+		.fleet-header p {
+			color: #666;
+			margin: 0;
+		}
+
+		.vehicles-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+			gap: 16px;
+		}
+
+		.vehicle-card {
+			background: white;
+			border-radius: 12px;
+			overflow: hidden;
+			border: 1px solid var(--stroke);
+			transition: all 0.3s ease;
+			cursor: pointer;
+		}
+
+		.vehicle-card:hover {
+			border-color: var(--accent);
+			box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+		}
+
+		.vehicle-image {
+			width: 100%;
+			height: 200px;
+			object-fit: cover;
+			background: #f0f0f0;
+		}
+
+		.vehicle-info {
+			padding: 16px;
+			display: grid;
+			gap: 8px;
+		}
+
+		.vehicle-title {
+			font-weight: 600;
+			font-size: 16px;
+			margin: 0;
+		}
+
+		.vehicle-location {
+			font-size: 14px;
+			color: #666;
+			margin: 0;
+		}
+
+		.vehicle-price {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-top: 12px;
+			padding-top: 12px;
+			border-top: 1px solid var(--stroke);
+		}
+
+		.vehicle-price-amount {
+			font-weight: 700;
+			color: var(--accent);
+		}
+
+		.vehicle-frequency {
+			font-size: 12px;
+			color: #666;
+		}
+
+		.empty-state {
+			text-align: center;
+			padding: 60px 20px;
+			background: #f8fafc;
+			border-radius: 12px;
+		}
+
+		.empty-state p {
+			color: #666;
+			font-size: 16px;
+		}
+
+		/* Reviews Section */
+		.reviews-section {
+			margin: 60px 0;
+		}
+
+		.reviews-header {
+			margin-bottom: 32px;
+			display: grid;
+			gap: 8px;
+		}
+
+		.legal-note {
+			font-size: 13px;
+			color: #475569;
+			margin: 0;
+			max-width: 640px;
+		}
+
+		.reviews-header h2 {
+			margin: 0;
+			font-size: 24px;
+			font-weight: 700;
+		}
+
+		.review-card {
+			background: white;
+			border: 1px solid var(--stroke);
+			border-radius: 12px;
+			padding: 20px;
+			margin-bottom: 16px;
+		}
+
+		.review-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: start;
+			margin-bottom: 12px;
+		}
+
+		.review-author {
+			font-weight: 600;
+			font-size: 16px;
+		}
+
+		.review-date {
+			font-size: 12px;
+			color: #999;
+		}
+
+		.review-rating {
+			color: #ffc107;
+			font-size: 14px;
+			margin-bottom: 8px;
+		}
+
+		.review-badge {
+			font-size: 12px;
+			color: #1f6f3c;
+			font-weight: 700;
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			margin-left: 12px;
+		}
+
+		.review-text {
+			color: #333;
+			line-height: 1.6;
+			margin: 0;
+		}
+
+		.no-reviews {
+			text-align: center;
+			padding: 40px;
+			background: #f8fafc;
+			border-radius: 12px;
+			color: #666;
+		}
+
+		/* Responsive */
+		@media (max-width: 768px) {
+			.host-card { grid-template-columns: 1fr; text-align: center; }
+			.host-card-section { margin-top: -48px; }
+			.host-avatar { width: 80px; height: 80px; }
+			.profile-cover { height: 200px; }
+			.vehicles-grid { grid-template-columns: 1fr; }
+			.host-stats { grid-template-columns: 1fr; }
+		}
+	</style>
+	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+	<script src="assets/firebase.js"></script>
+	<script src="assets/auth.js"></script>
+	<script src="assets/vehicleStore.js"></script>
+</head>
+<body>
+	<header class="header">
+		<div class="header-inner">
+			<a class="brand" href="index.html">
+				<span class="brand-mark">CJF</span>
+				<span>Car Connect Rentals</span>
+			</a>
+			<button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+		</div>
+	</header>
+	<div class="backdrop" id="backdrop"></div>
+	<nav class="menu-panel" id="menuPanel" aria-label="Site menu">
+		<div class="brand" style="justify-content: space-between; align-items: center;">
+			<span>Navigation</span>
+			<button class="menu-button" id="menuClose" aria-label="Close menu">Close</button>
+		</div>
+		<ul class="menu-list">
+			<li class="menu-account"><a href="account.html">My Account</a></li>
+			<li class="menu-signin"><a href="signin.html">Sign In</a></li>
+			<li class="menu-logout" style="display:none;"><a href="index.html">Sign Out</a></li>
+			<li><a href="index.html">Browse Vehicles</a></li>
+			<li><a href="terms.html">Terms &amp; Conditions</a></li>
+			<li><a href="contact.html">Contact</a></li>
+		</ul>
+	</nav>
+
+	<main class="host-profile-page">
+		<!-- Host Card -->
+		<div class="host-card-section">
+			<div class="profile-container">
+				<div class="host-card">
+					<!-- Avatar -->
+					<div class="host-avatar-container">
+						<img id="hostAvatarImg" class="host-avatar" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23ddd%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2216%22 fill=%22%23999%22%3EHost%3C/text%3E%3C/svg%3E" alt="Host Avatar" />
+						<div class="host-verified" id="verificationBadge" style="display:none;">
+							Verified
+						</div>
+					</div>
+
+					<!-- Host Info -->
+					<div class="host-info">
+						<div class="host-header-text">
+							<h1 id="hostNameText">Loading...</h1>
+							<p id="hostOwnerTypeText">---</p>
+						</div>
+
+						<div class="host-rating">
+							<span class="stars" id="hostStars">*****</span>
+							<span class="rating-count">
+								<span id="hostRatingValue">5.0</span> 
+								(<span id="hostReviewCount">0</span> reviews)
+							</span>
+						</div>
+						<div class="verified-note" id="verifiedNote" style="display:none;">Verified customer reviews</div>
+
+						<div class="host-location">
+							---- <span id="hostLocationText">Location</span>
+						</div>
+
+						<div class="host-stats">
+							<div class="stat-item">
+								<div class="stat-value" id="vehicleCount">0</div>
+								<div class="stat-label">Vehicles</div>
+							</div>
+							<div class="stat-item">
+								<div class="stat-value" id="rentalCount">0</div>
+								<div class="stat-label">Rentals</div>
+							</div>
+							<div class="stat-item">
+								<div class="stat-value" id="joiningYear">2024</div>
+								<div class="stat-label">Member Since</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Actions -->
+					<div class="host-actions">
+						<button class="button" id="contactHostBtn">Contact Host</button>
+						<button class="button ghost" id="visitWebsiteBtn" style="display:none;">Visit Website</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Fleet Section -->
+		<div class="profile-container">
+			<section class="fleet-section">
+				<div class="fleet-header">
+					<h2>Fleet</h2>
+					<p id="fleetDescription">Browse all available vehicles from this host</p>
+				</div>
+
+				<div id="vehiclesContainer" class="vehicles-grid">
+					<!-- Vehicle cards populated by JS -->
+				</div>
+
+				<div id="emptyFleetMsg" class="empty-state" style="display:none;">
+					<p>This host has no active vehicles at the moment.</p>
+				</div>
+			</section>
+
+			<!-- Reviews Section -->
+			<section class="reviews-section">
+				<div class="reviews-header">
+					<h2>Reviews</h2>
+					<p class="legal-note">
+						Reviews and star ratings are submitted by customers after direct interactions with hosts.
+						Verified reviews are collected using secure, one-time review links or phone confirmation.
+						Customers are not required to create an account.
+					</p>
+				</div>
+
+				<div id="reviewsContainer">
+					<!-- Reviews populated by JS -->
+				</div>
+
+				<div id="emptyReviewsMsg" class="no-reviews" style="display:none;">
+					<p>No reviews yet. Be the first to review this host!</p>
+				</div>
+			</section>
+		</div>
+	</main>
+
+	<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+	<script>
+		// Menu toggle functionality
+		const menuPanel = document.getElementById('menuPanel');
+		const backdrop = document.getElementById('backdrop');
+		const openBtn = document.getElementById('menuToggle');
+		const closeBtn = document.getElementById('menuClose');
+
+		const openMenu = () => {
+			menuPanel.classList.add('open');
+			backdrop.classList.add('show');
+		};
+
+		const closeMenu = () => {
+			menuPanel.classList.remove('open');
+			backdrop.classList.remove('show');
+		};
+
+		openBtn?.addEventListener('click', openMenu);
+		closeBtn?.addEventListener('click', closeMenu);
+		backdrop?.addEventListener('click', closeMenu);
+
+		// Centralized menu UI update for auth state
+		function updateNavigationUIFromAuth() {
+			if (window.AuthManager && typeof AuthManager.updateUIForRole === 'function') {
+				AuthManager.updateUIForRole();
+			}
+		}
+		document.addEventListener('ccr:signedOut', updateNavigationUIFromAuth);
+		document.addEventListener('ccr:signedIn', updateNavigationUIFromAuth);
+		document.addEventListener('DOMContentLoaded', updateNavigationUIFromAuth);
+		if (document.readyState !== 'loading') updateNavigationUIFromAuth();
+		
+		// Wire menu Sign In click handler to open login UI (no auto-login)
+		const menuSignIn = document.querySelector('.menu-signin');
+		if (menuSignIn) {
+			menuSignIn.addEventListener('click', (e) => {
+				e.preventDefault();
+				window.location.href = 'account.html#signin';
+				closeMenu();
+			});
+		}
+
+		const showToast = (message) => {
+			const toastEl = document.getElementById('toast');
+			if (toastEl) {
+				toastEl.textContent = message;
+				toastEl.classList.add('show');
+				setTimeout(() => toastEl.classList.remove('show'), 2800);
+			}
+		};
+
+		// Load host profile from URL parameter
+		async function loadHostProfile() {
+			try {
+				// Get hostId from URL
+				const params = new URLSearchParams(window.location.search);
+				const hostId = params.get('id');
+
+				if (!hostId) {
+					document.querySelector('.host-profile-page').innerHTML = `
+						<div style="padding: 40px; text-align: center;">
+							<h2>Host Profile Not Found</h2>
+							<p>No host ID provided.</p>
+							<a href="index.html" style="color: var(--accent);">--- Back to Home</a>
+						</div>
+					`;
+					return;
+				}
+
+				// Get all vehicles from this host (keep page even if none)
+				const allVehicles = await VehicleStore.getAllVehicles();
+				const normalizedHostId = String(hostId || '').trim();
+				const hostVehicles = allVehicles.filter((v) => {
+					const vehicleHostId = String(v.hostId || v.ownerId || '').trim();
+					const status = (v.status || 'active').toLowerCase();
+					return vehicleHostId === normalizedHostId && status === 'active';
+				});
+
+				// Get host profile (Firestore only; if missing, show placeholder)
+				let hostProfile = null;
+				let hostMeta = null;
+				if (window.firebaseDb) {
+					try {
+						const snap = await firebaseDb.collection('users').doc(String(hostId)).get();
+						if (snap.exists) {
+							hostProfile = { id: hostId, ...snap.data() };
+						}
+					} catch (e) {
+						console.warn('Host fetch failed:', e.message);
+					}
+					try {
+						const metaSnap = await firebaseDb.collection('hosts').doc(String(hostId)).get();
+						if (metaSnap.exists) {
+							hostMeta = metaSnap.data();
+						}
+					} catch (metaErr) {
+						console.warn('Host meta fetch failed:', metaErr.message);
+					}
+				}
+				if (!hostProfile) {
+					hostProfile = {
+						name: 'Host',
+						ownerType: 'Host',
+						city: '',
+						state: '',
+						country: '',
+						email: '',
+						phone: '',
+						avatar: null,
+						joined: 'recently'
+					};
+				}
+
+				// Update page title/meta
+				const hostName = hostProfile.displayName || hostProfile.name || hostProfile.firstName || 'Host';
+				document.getElementById('hostPageTitle').textContent = `${hostName} - Host Profile | CJF`;
+				document.getElementById('hostOgTitle').content = `${hostName} - Host Profile`;
+				document.getElementById('hostMetaDesc').content = `View ${hostName}'s fleet and contact details.`;
+				document.getElementById('hostOgDesc').content = `Browse ${hostName}'s vehicles.`;
+
+				// Populate host card
+				document.getElementById('hostNameText').textContent = hostName;
+				document.getElementById('hostOwnerTypeText').textContent = hostProfile.ownerType || hostProfile.hostType || 'Vehicle Owner';
+				document.getElementById('hostLocationText').textContent = 
+					`${hostProfile.city || ''}, ${hostProfile.state || ''}, ${hostProfile.country || ''}`.replace(/^,\s*|,\s*$/g, '');
+				
+				// Host avatar
+				const hostAvatar = hostProfile.avatar || hostProfile.photoURL ||
+					'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23e0e7ff"/><circle cx="50" cy="35" r="20" fill="%236366f1"/><path d="M 30 70 Q 50 60 70 70 Q 70 85 50 90 Q 30 85 30 70" fill="%236366f1"/></svg>';
+				document.getElementById('hostAvatarImg').src = hostAvatar;
+
+				// Set OG image (use host cover or first vehicle photo)
+				const coverPhoto = hostProfile.coverPhoto || hostProfile.cover || hostVehicles[0]?.photos?.[0] || '';
+				document.getElementById('hostOgImage').content = coverPhoto;
+
+				// Verification badge
+				const verified = !!(hostProfile.email && hostProfile.phone);
+				document.getElementById('verificationBadge').style.display = verified ? 'flex' : 'none';
+
+				// Stats
+				document.getElementById('vehicleCount').textContent = hostVehicles.length;
+				document.getElementById('rentalCount').textContent = hostProfile.trips || hostProfile.completedTrips || '0';
+				let createdYear = 'N/A';
+				if (hostProfile.createdAt) {
+					const ts = hostProfile.createdAt.seconds ? hostProfile.createdAt.seconds * 1000 : hostProfile.createdAt;
+					createdYear = new Date(ts).getFullYear();
+				}
+				document.getElementById('joiningYear').textContent = createdYear;
+
+				// Rating
+				const ratingSource = hostMeta?.ratingAvg ?? hostProfile.rating ?? hostProfile.ratingAvg ?? hostProfile.avgRating ?? 5;
+				const ratingVal = Number(ratingSource).toFixed(1);
+				const reviews = hostMeta?.ratingCount ?? hostProfile.reviewCount ?? hostProfile.reviewsCount ?? 0;
+				document.getElementById('hostRatingValue').textContent = ratingVal;
+				document.getElementById('hostReviewCount').textContent = reviews;
+				const hostStarsEl = document.getElementById('hostStars');
+				if (hostStarsEl) {
+					hostStarsEl.textContent = '*****';
+					hostStarsEl.setAttribute('aria-label', `Rating: ${ratingVal} / 5`);
+				}
+				const verifiedNoteEl = document.getElementById('verifiedNote');
+				if (verifiedNoteEl) {
+					verifiedNoteEl.style.display = reviews > 0 ? 'flex' : 'none';
+				}
+
+				// Contact button
+				const contactBtn = document.getElementById('contactHostBtn');
+				if (hostProfile.email) {
+					contactBtn.onclick = () => window.location.href = `mailto:${hostProfile.email}`;
+				} else if (hostProfile.phone) {
+					contactBtn.onclick = () => window.location.href = `tel:${hostProfile.phone}`;
+				} else {
+					contactBtn.disabled = true;
+					contactBtn.textContent = 'Contact info unavailable';
+				}
+				const websiteBtn = document.getElementById('visitWebsiteBtn');
+				if (websiteBtn) {
+					if (hostProfile.website) {
+						websiteBtn.style.display = 'block';
+						websiteBtn.onclick = () => window.open(hostProfile.website, '_blank');
+					} else {
+						websiteBtn.style.display = 'none';
+					}
+				}
+
+				// Populate vehicles grid
+				const vehiclesContainer = document.getElementById('vehiclesContainer');
+				vehiclesContainer.innerHTML = '';
+
+				if (!hostVehicles.length) {
+					vehiclesContainer.innerHTML = '<p style="color:#6b7280;">This host has no active vehicles.</p>';
+				} else {
+					hostVehicles.forEach(vehicle => {
+						const vehicleCard = document.createElement('div');
+						vehicleCard.className = 'vehicle-card';
+						vehicleCard.onclick = () => {
+							window.location.href = `vehicle.html?id=${vehicle.id}`;
+						};
+
+						const photo = vehicle.photos && vehicle.photos[0] ? vehicle.photos[0] : 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22280%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2220%22 fill=%22%23999%22%3EVehicle%3C/text%3E%3C/svg%3E';
+
+						vehicleCard.innerHTML = `
+							<img src="${photo}" alt="${vehicle.year} ${vehicle.make} ${vehicle.model}" class="vehicle-image" />
+							<div class="vehicle-info">
+								<h3 class="vehicle-title">${vehicle.year} ${vehicle.make} ${vehicle.model}</h3>
+								<p class="vehicle-location">${vehicle.city || ''}${vehicle.state ? ', ' + vehicle.state : ''}</p>
+								<div class="vehicle-price">
+									<span class="vehicle-price-amount">$${vehicle.price || 0}</span>
+									<span class="vehicle-frequency">/${(vehicle.frequency || 'day').toLowerCase()}</span>
+								</div>
+							</div>
+						`;
+
+						vehiclesContainer.appendChild(vehicleCard);
+					});
+				}
+
+				// Show/hide empty state
+				document.getElementById('emptyFleetMsg').style.display = hostVehicles.length === 0 ? 'block' : 'none';
+				document.getElementById('fleetDescription').textContent = `All vehicles from ${hostName}`;
+
+				await renderVerifiedReviews(hostId);
+
+				const safeUpdateMenuAuth = (typeof window.updateMenuAuth === 'function') ? window.updateMenuAuth : null;
+				if (safeUpdateMenuAuth) {
+					safeUpdateMenuAuth();
+				} else if (window.AuthManager && typeof AuthManager.updateUIForRole === 'function') {
+					AuthManager.updateUIForRole();
+				}
+
+			} catch (error) {
+				console.error('Failed to load host profile:', error);
+				showToast('Error loading host profile');
+			}
+		}
+
+		async function renderVerifiedReviews(hostId) {
+			const container = document.getElementById('reviewsContainer');
+			const emptyMsg = document.getElementById('emptyReviewsMsg');
+			if (!container) return;
+			container.innerHTML = '';
+
+			if (!window.firebaseDb) {
+				if (emptyMsg) emptyMsg.style.display = 'block';
+				return;
+			}
+
+			try {
+				const reviewsSnap = await firebaseDb
+					.collection('hosts')
+					.doc(hostId)
+					.collection('reviews')
+					.where('verified', '==', true)
+					.orderBy('createdAt', 'desc')
+					.limit(12)
+					.get();
+
+				if (reviewsSnap.empty) {
+					if (emptyMsg) emptyMsg.style.display = 'block';
+					return;
+				}
+
+				if (emptyMsg) emptyMsg.style.display = 'none';
+				reviewsSnap.forEach(doc => {
+					container.appendChild(buildReviewCard(doc.data()));
+				});
+			} catch (err) {
+				console.warn('Failed to load verified reviews:', err);
+				if (emptyMsg) {
+					emptyMsg.style.display = 'block';
+				}
+				container.innerHTML = '<div class="no-reviews"><p>Unable to load reviews right now.</p></div>';
+			}
+		}
+
+		function buildReviewCard(review) {
+			const card = document.createElement('div');
+			card.className = 'review-card';
+
+			const header = document.createElement('div');
+			header.className = 'review-header';
+
+			const author = document.createElement('div');
+			author.className = 'review-author';
+			author.textContent = review.displayName || 'Anonymous';
+
+			const date = document.createElement('div');
+			date.className = 'review-date';
+			date.textContent = formatReviewDate(review.createdAt);
+
+			const rating = document.createElement('div');
+			rating.className = 'review-rating';
+			const starValue = Math.max(0, Math.min(5, Number(review.rating) || 0));
+			rating.textContent = '★'.repeat(starValue) + '☆'.repeat(5 - starValue);
+
+			const badge = document.createElement('div');
+			badge.className = 'review-badge';
+			badge.textContent = 'Verified review';
+
+			header.appendChild(author);
+			header.appendChild(date);
+			header.appendChild(rating);
+			header.appendChild(badge);
+			card.appendChild(header);
+
+			if (review.comment) {
+				const text = document.createElement('div');
+				text.className = 'review-text';
+				text.textContent = review.comment;
+				card.appendChild(text);
+			} else {
+				const placeholder = document.createElement('div');
+				placeholder.className = 'muted';
+				placeholder.textContent = 'No written feedback provided.';
+				card.appendChild(placeholder);
+			}
+
+			return card;
+		}
+
+		function formatReviewDate(timestamp) {
+			if (!timestamp) return '';
+			const ms = timestamp.seconds ? timestamp.seconds * 1000 : new Date(timestamp).getTime();
+			const date = new Date(ms);
+			return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+		}
+
+		// Load profile on page load
+		document.addEventListener('DOMContentLoaded', loadHostProfile);
+	</script>
+</body>
+</html>

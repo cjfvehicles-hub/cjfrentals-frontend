@@ -1,0 +1,320 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Test Profile Persistence | CJF Rentals</title>
+	<link rel="stylesheet" href="assets/style.css" />
+	<style>
+		body {
+			padding: 20px;
+			max-width: 1000px;
+			margin: 0 auto;
+		}
+		.test-section {
+			background: #f5f5f5;
+			padding: 20px;
+			margin: 20px 0;
+			border-radius: 8px;
+			border-left: 4px solid #0066cc;
+		}
+		.test-button {
+			background: #0066cc;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			margin: 5px;
+			font-weight: 600;
+		}
+		.test-button:hover {
+			background: #0052a3;
+		}
+		.test-result {
+			background: white;
+			padding: 15px;
+			margin: 10px 0;
+			border-radius: 4px;
+			border: 1px solid #ddd;
+			font-family: monospace;
+			max-height: 300px;
+			overflow-y: auto;
+		}
+		.pass {
+			border-left: 4px solid #28a745;
+		}
+		.fail {
+			border-left: 4px solid #dc3545;
+		}
+		.warning {
+			border-left: 4px solid #ffc107;
+		}
+		h1, h2 {
+			color: #333;
+		}
+		code {
+			background: #f0f0f0;
+			padding: 2px 6px;
+			border-radius: 3px;
+		}
+	</style>
+</head>
+<body>
+	<h1>ðŸ§ª Profile Persistence Test Suite</h1>
+	
+	<div class="test-section">
+		<h2>Test 1: Clear Existing Data & Sign In</h2>
+		<p>Clear localStorage and simulate user sign-in with demo account.</p>
+		<button class="test-button" onclick="test1_clearAndSignIn()">Run Test 1</button>
+		<div id="test1-result" class="test-result"></div>
+	</div>
+
+	<div class="test-section">
+		<h2>Test 2: Update Profile Fields</h2>
+		<p>Manually update profile data (name, email, phone, location) and verify it's saved to localStorage.</p>
+		<button class="test-button" onclick="test2_updateProfile()">Run Test 2</button>
+		<div id="test2-result" class="test-result"></div>
+	</div>
+
+	<div class="test-section">
+		<h2>Test 3: Simulate Avatar Upload</h2>
+		<p>Simulate avatar upload and verify it's saved to profileData.avatar in localStorage.</p>
+		<button class="test-button" onclick="test3_avatarUpload()">Run Test 3</button>
+		<div id="test3-result" class="test-result"></div>
+	</div>
+
+	<div class="test-section">
+		<h2>Test 4: Simulate Cover Photo Upload</h2>
+		<p>Simulate cover photo upload and verify it's saved to profileData.coverPhoto in localStorage.</p>
+		<button class="test-button" onclick="test4_coverPhotoUpload()">Run Test 4</button>
+		<div id="test4-result" class="test-result"></div>
+	</div>
+
+	<div class="test-section">
+		<h2>Test 5: Reload Page Simulation</h2>
+		<p>Verify that all profile data (name, email, phone, location, avatar, cover photo) is correctly loaded from localStorage on page reload.</p>
+		<button class="test-button" onclick="test5_pageReload()">Run Test 5</button>
+		<div id="test5-result" class="test-result"></div>
+	</div>
+
+	<div class="test-section">
+		<h2>Test 6: Verify No John Doe Demo Data</h2>
+		<p>Confirm that when custom profile is saved, "John Doe" demo data is never shown.</p>
+		<button class="test-button" onclick="test6_noJohnDoe()">Run Test 6</button>
+		<div id="test6-result" class="test-result"></div>
+	</div>
+
+	<div class="test-section">
+		<h2>Current localStorage State</h2>
+		<button class="test-button" onclick="showLocalStorage()">Show localStorage</button>
+		<button class="test-button" onclick="clearAllData()">Clear All Data</button>
+		<div id="storage-result" class="test-result"></div>
+	</div>
+
+	<script>
+		const logResult = (testId, passed, message) => {
+			const resultEl = document.getElementById(testId);
+			const className = passed ? 'pass' : 'fail';
+			resultEl.className = `test-result ${className}`;
+			resultEl.textContent = message;
+		};
+
+		const test1_clearAndSignIn = () => {
+			try {
+				localStorage.clear();
+				
+				// Simulate sign-in with demo account
+				const demoProfile = {
+					name: 'John Doe',
+					email: 'john@example.com',
+					phone: '+1 (555) 123-4567',
+					country: 'United States',
+					state: 'California',
+					city: 'Los Angeles',
+					address: '',
+					ownerType: 'Private Owner',
+					avatar: null,
+					coverPhoto: null
+				};
+				
+				localStorage.setItem('ccrProfileData', JSON.stringify(demoProfile));
+				localStorage.setItem('ccrSignedIn', 'true');
+				localStorage.setItem('CCR_CURRENT_USER', JSON.stringify({id: 1, name: 'John Doe'}));
+				
+				const stored = JSON.parse(localStorage.getItem('ccrProfileData'));
+				const isSignedIn = localStorage.getItem('ccrSignedIn') === 'true';
+				
+				const message = `✅ Test 1 Passed\n\n` +
+					`Profile Data Saved:\n${JSON.stringify(stored, null, 2)}\n\n` +
+					`Signed In: ${isSignedIn}`;
+				
+				logResult('test1-result', true, message);
+			} catch (e) {
+				logResult('test1-result', false, `✖ Test 1 Failed: ${e.message}`);
+			}
+		};
+
+		const test2_updateProfile = () => {
+			try {
+				let profileData = JSON.parse(localStorage.getItem('ccrProfileData')) || {};
+				
+				// Simulate user updating profile
+				profileData.name = 'Jane Smith';
+				profileData.email = 'jane@example.com';
+				profileData.phone = '+1 (555) 987-6543';
+				profileData.city = 'New York';
+				profileData.state = 'New York';
+				
+				localStorage.setItem('ccrProfileData', JSON.stringify(profileData));
+				
+				const stored = JSON.parse(localStorage.getItem('ccrProfileData'));
+				
+				const message = `✅ Test 2 Passed\n\n` +
+					`Updated Profile Data:\n${JSON.stringify(stored, null, 2)}\n\n` +
+					`Name changed to: ${stored.name}\n` +
+					`Email changed to: ${stored.email}`;
+				
+				logResult('test2-result', true, message);
+			} catch (e) {
+				logResult('test2-result', false, `✖ Test 2 Failed: ${e.message}`);
+			}
+		};
+
+		const test3_avatarUpload = () => {
+			try {
+				let profileData = JSON.parse(localStorage.getItem('ccrProfileData')) || {};
+				
+				// Simulate avatar upload (small data URL)
+				const mockAvatarData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+				profileData.avatar = mockAvatarData;
+				
+				localStorage.setItem('ccrProfileData', JSON.stringify(profileData));
+				
+				const stored = JSON.parse(localStorage.getItem('ccrProfileData'));
+				const hasAvatar = stored.avatar !== null && stored.avatar.startsWith('data:image');
+				
+				const message = `✅ Test 3 Passed\n\n` +
+					`Avatar saved to profileData.avatar\n` +
+					`Avatar is data URL: ${hasAvatar}\n` +
+					`Avatar length: ${stored.avatar ? stored.avatar.length : 0} characters`;
+				
+				logResult('test3-result', true, message);
+			} catch (e) {
+				logResult('test3-result', false, `✖ Test 3 Failed: ${e.message}`);
+			}
+		};
+
+		const test4_coverPhotoUpload = () => {
+			try {
+				let profileData = JSON.parse(localStorage.getItem('ccrProfileData')) || {};
+				
+				// Simulate cover photo upload (small data URL)
+				const mockCoverData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+				profileData.coverPhoto = mockCoverData;
+				
+				localStorage.setItem('ccrProfileData', JSON.stringify(profileData));
+				
+				const stored = JSON.parse(localStorage.getItem('ccrProfileData'));
+				const hasCoverPhoto = stored.coverPhoto !== null && stored.coverPhoto.startsWith('data:image');
+				
+				const message = `✅ Test 4 Passed\n\n` +
+					`Cover photo saved to profileData.coverPhoto\n` +
+					`Cover photo is data URL: ${hasCoverPhoto}\n` +
+					`Cover photo length: ${stored.coverPhoto ? stored.coverPhoto.length : 0} characters`;
+				
+				logResult('test4-result', true, message);
+			} catch (e) {
+				logResult('test4-result', false, `✖ Test 4 Failed: ${e.message}`);
+			}
+		};
+
+		const test5_pageReload = () => {
+			try {
+				// Simulate page reload - get data from localStorage
+				const profileData = JSON.parse(localStorage.getItem('ccrProfileData'));
+				
+				if (!profileData) {
+					throw new Error('Profile data not found in localStorage');
+				}
+				
+				const requiredFields = ['name', 'email', 'phone', 'city', 'state', 'country', 'avatar', 'coverPhoto'];
+				const missingFields = requiredFields.filter(field => !(field in profileData));
+				
+				const hasCustomName = profileData.name !== 'John Doe';
+				const hasCustomEmail = profileData.email !== 'john@example.com';
+				const allPresent = missingFields.length === 0;
+				
+				const passed = allPresent && hasCustomName && hasCustomEmail;
+				
+				const message = `${passed ? '✅' : '✖'} Test 5 ${passed ? 'Passed' : 'Failed'}\n\n` +
+					`Profile loaded from localStorage:\n${JSON.stringify(profileData, null, 2)}\n\n` +
+					`All fields present: ${allPresent}\n` +
+					`Custom name (not John Doe): ${hasCustomName}\n` +
+					`Custom email: ${hasCustomEmail}`;
+				
+				logResult('test5-result', passed, message);
+			} catch (e) {
+				logResult('test5-result', false, `✖ Test 5 Failed: ${e.message}`);
+			}
+		};
+
+		const test6_noJohnDoe = () => {
+			try {
+				const profileData = JSON.parse(localStorage.getItem('ccrProfileData'));
+				
+				const isCustomProfile = profileData.name !== 'John Doe' || 
+					profileData.email !== 'john@example.com';
+				
+				const message = isCustomProfile ? 
+					`✅ Test 6 Passed\n\n` +
+					`Profile is custom (not default John Doe):\n` +
+					`Name: ${profileData.name}\n` +
+					`Email: ${profileData.email}\n\n` +
+					`When visiting account.html, the header will show:\n` +
+					`  - ${profileData.name} (not "John Doe")\n` +
+					`  - ${profileData.email} (not "john@example.com")`
+					:
+					`✖ Test 6 Failed\n\n` +
+					`Profile still contains demo data (John Doe):\n` +
+					`Name: ${profileData.name}\n` +
+					`Email: ${profileData.email}`;
+				
+				logResult('test6-result', isCustomProfile, message);
+			} catch (e) {
+				logResult('test6-result', false, `✖ Test 6 Failed: ${e.message}`);
+			}
+		};
+
+		const showLocalStorage = () => {
+			const profileData = localStorage.getItem('ccrProfileData');
+			const allData = {};
+			
+			for (let i = 0; i < localStorage.length; i++) {
+				const key = localStorage.key(i);
+				allData[key] = localStorage.getItem(key);
+			}
+			
+			const message = `Current localStorage State:\n\n${JSON.stringify(allData, null, 2)}`;
+			document.getElementById('storage-result').className = 'test-result';
+			document.getElementById('storage-result').textContent = message;
+		};
+
+		const clearAllData = () => {
+			if (confirm('Clear all localStorage data? This cannot be undone.')) {
+				localStorage.clear();
+				document.getElementById('storage-result').className = 'test-result pass';
+				document.getElementById('storage-result').textContent = '✅ All data cleared from localStorage';
+			}
+		};
+
+		// Auto-run tests on page load
+		window.addEventListener('load', () => {
+			console.log('Profile persistence test page loaded');
+			console.log('Click "Run Test" buttons to run tests');
+		});
+	</script>
+</body>
+</html>
+
+

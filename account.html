@@ -1,0 +1,1718 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host Profile | CJF Rentals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/countryStateData.js"></script>
+    <style>
+    :root {
+      --page-bg: #f6f7fb;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --radius: 18px;
+      --shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .no-scroll { overflow: hidden; }
+
+    a { color: var(--accent); text-decoration: none; }
+
+    .page-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .brand > span { display: inline-flex !important; }
+    .brand .brand-mark,
+    .brand .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+    }
+
+    .menu-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 0 12px;
+      width: auto;
+    }
+
+    /* Hero */
+    .cover-wrapper { display: none; }
+
+    .cover-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%);
+      pointer-events: none;
+    }
+
+    .cover-btn {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      background: rgba(255,255,255,0.94);
+      border: 1px solid #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      cursor: pointer;
+    }
+
+    /* Profile */
+    .profile-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px 16px 24px;
+      margin-top: 0;
+      box-shadow: var(--shadow);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .avatar-shell {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      margin-top: 0;
+      border: 4px solid #fff;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.16);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    #avatarImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    #avatarUpload {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border: 4px solid #fff;
+      border-radius: 50%;
+    }
+
+    .avatar-shell:hover #avatarUpload { opacity: 1; }
+
+    .host-name {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 6px 0 2px;
+    }
+
+    .host-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .host-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .badge.verified {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+      color: #4338ca;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .stats-card {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-tile {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 0 4px;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .subscription-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .plan-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 12px;
+      font-weight: 700;
+      color: #312e81;
+    }
+
+    .plan-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .vehicles-section { display: flex; flex-direction: column; gap: 14px; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .section-title { margin: 0; font-size: 20px; font-weight: 800; }
+    .subtext { color: var(--muted); font-size: 14px; margin: 0; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      border: 1px solid transparent;
+      text-decoration: none;
+      min-height: 44px;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: #f8fafc; color: var(--text); border-color: #e2e8f0; }
+    .btn-ghost { background: transparent; color: var(--text); border-color: #e2e8f0; }
+    .btn-danger { background: #fef2f2; color: #b91c1c; border-color: #fecdd3; }
+    .btn-full { width: 100%; }
+
+    .vehicles-grid { display: flex; flex-direction: column; gap: 16px; }
+
+    .vehicle-card {
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .vehicle-media { position: relative; width: 100%; padding-top: 56%; background: #e5e7eb; overflow: hidden; }
+    .vehicle-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .vehicle-type-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.9); border-radius: 10px; padding: 6px 10px; font-weight: 700; font-size: 12px; }
+
+    .vehicle-content { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .vehicle-title { margin: 0; font-size: 18px; font-weight: 800; }
+    .vehicle-location { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .vehicle-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .feature-tag {
+      padding: 6px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .vehicle-price { font-size: 20px; font-weight: 800; }
+    .vehicle-price .period { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+    .vehicle-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .reviews-card { text-align: center; }
+    .empty-icon { font-size: 24px; color: #f59e0b; }
+
+    /* Footer */
+    .global-footer {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 48px 16px 28px;
+      margin-top: 32px;
+    }
+    .footer-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+    .footer-column h3 { margin: 0 0 10px; font-size: 15px; font-weight: 800; color: #fff; }
+    .footer-column ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+    .footer-column a { color: #cbd5e1; font-size: 14px; text-decoration: none; }
+    .footer-column a:hover { color: #fff; }
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.14);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .footer-legal { display: flex; gap: 16px; flex-wrap: wrap; }
+    .social-icons { display: flex; gap: 12px; }
+    .social-icon { width: 34px; height: 34px; border-radius: 50%; background: #334155; display: inline-flex; align-items: center; justify-content: center; color: #e2e8f0; text-decoration: none; }
+    .social-icon:hover { background: #475569; }
+
+    /* Menu / backdrop */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 300;
+    }
+    .backdrop.show { opacity: 1; pointer-events: auto; }
+
+    .menu-panel {
+      position: fixed;
+      top: 0; right: -320px; bottom: 0;
+      width: 280px;
+      background: #fff;
+      box-shadow: -10px 0 30px rgba(15,23,42,0.2);
+      z-index: 400;
+      transition: right 0.25s ease;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .menu-panel.open { right: 0; }
+    .menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .menu-title { font-weight: 800; }
+    .menu-close { background:none; border:1px solid #e2e8f0; width:32px; height:32px; border-radius:8px; }
+    .menu-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+
+    /* Cover editor overlay */
+    .cover-editor-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1200;
+    }
+    .cover-editor {
+      width: min(960px, 100%);
+      max-height: 90vh;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .cover-editor-header,
+    .cover-editor-footer {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+    }
+    .cover-editor-footer { border-top: 1px solid #e2e8f0; border-bottom: none; }
+    .cover-editor-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .cover-preview-frame { position: relative; width: 100%; height: min(60vh, 520px); min-height: 320px; border-radius: 12px; overflow: hidden; background: #0f172a; }
+    .cover-preview-frame img { width: 100%; height: 100%; object-fit: cover; cursor: grab; touch-action: none; }
+    .cover-preview-frame.dragging img { cursor: grabbing; }
+    .cover-header-mask { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 60%); }
+    .cover-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+    @media (min-width: 768px) {
+      .page-shell { padding: 24px 20px 100px; gap: 28px; }
+      .cover-wrapper { height: 240px; }
+      .profile-card { padding: 24px; }
+      .stats-card { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .vehicles-grid { flex-direction: row; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    }
+
+    /* Modal / forms */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1000; }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 1001; }
+    .modal.show { opacity: 1; pointer-events: auto; }
+    .modal-panel { width: 100%; max-width: 700px; max-height: 90vh; background: #fff; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-close { background: none; border: none; width: 32px; height: 32px; border-radius: 6px; font-size: 20px; cursor: pointer; }
+    .modal-body { padding: 24px; overflow: auto; flex: 1; }
+
+    .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .upload-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .upload-box:hover { border-color: #3b82f6; background: #f8fafc; }
+    .upload-box img { width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
+    .upload-box.avatar img { border-radius: 50%; width: 120px; height: 120px; margin: 0 auto 12px; }
+    .upload-label { font-size: 14px; font-weight: 600; color: #475569; display: block; margin-bottom: 8px; }
+    .upload-hint { font-size: 12px; color: #94a3b8; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-field label { font-size: 13px; font-weight: 700; color: #475569; }
+    .form-field input, .form-field textarea, .form-field select {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      background: #f8fafc;
+    }
+    textarea { min-height: 100px; }
+
+    .modal-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end; }
+
+    /* Cover editor */
+    .cover-editor { position: relative; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #0f172a; height: 320px; display:none; }
+    .cover-editor img { width: 100%; height: 100%; object-fit: cover; cursor: grab; }
+    .cover-editor.dragging img { cursor: grabbing; }
+    .cover-header-mask { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%); pointer-events: none; }
+    .cover-controls { margin-top: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .cover-controls input[type=range] { width: 180px; }
+
+    @media (max-width: 640px) {
+      .upload-section { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .menu-button { width: 36px; height: 36px; }
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <!-- Sticky Site Header -->
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">CJF</span>
+      <span class="brand-name" style="color:#0f172a;">CJF Rentals</span>
+    </a>
+    <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+  </header>
+
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+    <main class="page-shell">
+    <!-- Cover removed by request -->
+
+    <section class="profile-card">
+      <div class="avatar-shell" id="avatarContainer">
+        <img id="avatarImage" src="" alt="Host avatar" />
+        <div id="avatarUpload" style="display:none;">Change</div>
+      </div>
+      <h1 class="host-name" id="hostName">Loading...</h1>
+      <p class="host-subtitle" id="hostSubtitle"></p>
+      <div class="host-badges" id="hostBadges">
+        <span class="badge verified">Verified Host</span>
+        <span class="badge">Worldwide Platform</span>
+      </div>
+    </section>
+
+    <section class="card stats-card">
+      <div class="stat-tile">
+        <div class="stat-value" id="statVehicles">0</div>
+        <div class="stat-label">Vehicles</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-value" id="statRating">New</div>
+        <div class="stat-label">Rating</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-value" id="statYears">0</div>
+        <div class="stat-label">Years Hosting</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-value" id="statLocations"></div>
+        <div class="stat-label">Locations</div>
+      </div>
+    </section>
+
+    <section class="card subscription-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Hosting plan</h2>
+          <p class="subtext">Manage your active vehicle limits.</p>
+        </div>
+        <a href="upgrade.html" class="btn btn-primary" id="upgradeLink" style="display:none;">Manage plan</a>
+      </div>
+      <div class="plan-chip" id="planStatus">Loading plan...</div>
+    </section>
+
+    <section class="card vehicles-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="vehiclesSectionTitle">My Vehicles</h2>
+          <p class="subtext">Manage your active listings.</p>
+        </div>
+        <a href="add-vehicle.html" class="btn btn-primary" id="addVehicleBtn">+ Add new vehicle</a>
+      </div>
+      <div class="vehicles-grid" id="vehiclesGrid"></div>
+    </section>
+
+    <section class="card reviews-card">
+      <div id="reviewsEmpty">
+        <div class="empty-icon">★</div>
+        <div style="font-weight:700; font-size:16px; margin-top:6px;">No reviews yet</div>
+        <div style="color:#64748b; font-size:13px; margin-top:4px;">Complete your first rental to start building trust.</div>
+      </div>
+    </section>
+
+    <section class="card" data-host-only id="accountReviewLinkSection" style="gap:12px;">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Generate review link</h2>
+          <p class="subtext">Create a secure one-time review link after a customer interaction.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="accountVehicleId">Vehicle ID (optional)</label>
+          <input class="input" id="accountVehicleId" placeholder="vehicle-abc123" />
+        </div>
+        <div class="form-field">
+          <label for="accountCustomerLabel">Customer label (optional)</label>
+          <input class="input" id="accountCustomerLabel" placeholder="Guest name / booking ref" />
+        </div>
+        <button class="button" id="accountGenerateReviewLinkBtn" type="button">Generate review link</button>
+      </div>
+      <div id="accountReviewLinkResult" class="form-grid" style="display:none;">
+        <div class="form-field" style="flex:1;">
+          <label>Copyable link</label>
+          <input class="input" id="accountReviewLink" readonly />
+        </div>
+        <button class="button ghost" id="accountCopyReviewLinkBtn" type="button">Copy</button>
+      </div>
+      <p class="subtext" id="accountReviewLinkMeta" style="margin:0;">Links expire in 14 days and work once.</p>
+    </section>
+  </main><!-- Global Footer -->
+  <footer class="global-footer">
+    <div class="footer-content">
+      <div class="footer-column">
+        <h3>About CJF</h3>
+        <ul>
+          <li><a href="#">Our Story</a></li>
+          <li><a href="#">How It Works</a></li>
+          <li><a href="#">Advertising Platform</a></li>
+          <li><a href="#">Trust & Safety</a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Locations</h3>
+        <ul>
+          <li><a href="#">United States</a></li>
+          <li><a href="#">Jamaica</a></li>
+          <li><a href="#">All Countries</a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Hosting</h3>
+        <ul>
+          <li><a href="host-signup.html">Become a Host</a></li>
+          <li><a href="#">Host Resources</a></li>
+          <li><a href="#">Insurance Info</a></li>
+          <li><a href="host-agreement.html">Host Agreement</a></li>
+        </ul>
+      </div>
+      <div class="footer-column">
+        <h3>Support</h3>
+        <ul>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="safety.html">Safety</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-legal">
+        <a href="terms.html">Terms of Service</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="#">Cookie Preferences</a>
+        <span style="color: #64748b;"> 2025 CJF Rentals</span>
+      </div>
+      <div class="social-icons">
+        <a href="#" class="social-icon" aria-label="Facebook">f</a>
+        <a href="#" class="social-icon" aria-label="Instagram">IG</a>
+        <a href="#" class="social-icon" aria-label="TikTok">TT</a>
+        <a href="#" class="social-icon" aria-label="YouTube">YT</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Edit Profile Modal -->
+  <div id="profileModalOverlay" class="modal-overlay"></div>
+  <div id="profileModal" class="modal">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>Edit Profile</h2>
+        <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="upload-section">
+          <label class="upload-box avatar" for="avatarInput">
+            <img id="avatarPreview" src="" alt="" style="display:none;" />
+            <span class="upload-label">Profile Photo</span>
+            <span class="upload-hint">Click to upload</span>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
+          </label>
+        </div>
+        <form class="form-grid" id="profileForm">
+          <div class="form-field">
+            <label>First Name</label>
+            <input type="text" id="firstName" required />
+          </div>
+          <div class="form-field">
+            <label>Last Name</label>
+            <input type="text" id="lastName" required />
+          </div>
+          <div class="form-field">
+            <label>Business / Role</label>
+            <input type="text" id="role" placeholder="e.g., Business Owner" />
+          </div>
+          <div class="form-field">
+            <label>Phone</label>
+            <input type="tel" id="phone" />
+          </div>
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" id="email" required />
+          </div>
+          <div class="form-field">
+            <label>City</label>
+            <input type="text" id="city" />
+          </div>
+          <div class="form-field">
+            <label>State</label>
+            <select id="state" class="input">
+              <option value="">Select state</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Country</label>
+            <input type="text" id="country" list="accountCountryList" />
+            <datalist id="accountCountryList"></datalist>
+          </div>
+          <div class="form-field full">
+            <label>About / Bio</label>
+            <textarea id="about" rows="4" placeholder="Tell guests about yourself and your hosting experience..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cover Editor -->
+  <div id="coverEditorOverlay" class="cover-editor-overlay">
+    <div class="cover-editor">
+      <div class="cover-editor-header">
+        <strong>Adjust cover photo</strong>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn btn-secondary" id="coverEditorCancelTop">Cancel</button>
+          <button class="btn btn-primary" id="coverEditorSaveTop">Save</button>
+          <button class="modal-close" id="coverEditorClose" aria-label="Close">×</button>
+        </div>
+      </div>
+      <div class="cover-editor-body">
+        <div class="cover-preview-frame" id="coverEditFrame">
+          <img id="coverEditImage" src="" alt="Cover preview" />
+          <div class="cover-header-mask"></div>
+        </div>
+        <div class="cover-controls">
+          <label>Zoom <span id="zoomValue">100%</span></label>
+          <input type="range" id="coverZoom" min="100" max="200" step="1" value="100" />
+          <div style="display:flex; gap:8px; justify-content:flex-start; flex-wrap:wrap;">
+            <label for="coverFileInput" class="btn btn-secondary" style="cursor:pointer;">Upload new</label>
+            <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
+            <button class="btn btn-secondary" id="resetCoverPosition">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="cover-editor-footer">
+        <div></div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" id="coverEditorCancel">Cancel</button>
+          <button class="btn btn-primary" id="coverEditorSave">Save cover</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase CDN FIRST -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <!-- Then our custom scripts -->
+  <script src="assets/firebase.js?v=3"></script>
+  <script src="assets/auth.js?v=3"></script>
+  <script src="assets/vehicleStore.js?v=3"></script>
+  <script src="assets/navBuilder.js?v=3"></script>
+  <script>
+    // Menu toggle
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const menuToggle = document.getElementById('menuToggle');
+    const menuClose = document.getElementById('menuClose');
+
+    menuToggle?.addEventListener('click', () => {
+      menuPanel.classList.add('open');
+      backdrop.classList.add('show');
+    });
+
+    menuClose?.addEventListener('click', () => {
+      menuPanel.classList.remove('open');
+      backdrop.classList.remove('show');
+    });
+
+    backdrop?.addEventListener('click', () => {
+      menuPanel.classList.remove('open');
+      backdrop.classList.remove('show');
+    });
+
+    // Auth state
+    if (document.readyState !== 'loading' && typeof AuthManager !== 'undefined' && typeof AuthManager.updateUIForRole === 'function') {
+      AuthManager.updateUIForRole();
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof AuthManager !== 'undefined' && typeof AuthManager.updateUIForRole === 'function') {
+        AuthManager.updateUIForRole();
+      }
+    });
+
+    // Also listen for auth state changes from auth.js
+    document.addEventListener('authStateChanged', () => {
+      if (typeof AuthManager !== 'undefined' && typeof AuthManager.updateUIForRole === 'function') {
+        AuthManager.updateUIForRole();
+      }
+    });
+
+    // Profile data management
+    let currentUser = null;
+    let profileData = null;
+    let authCheckComplete = false;
+    let coverTransform = { x: 0, y: 0, scale: 1 };
+    let pendingCoverFile = null;
+    const PLAN_LIMITS = { free: 2, starter: 5, pro: Number.MAX_SAFE_INTEGER };
+    const PLAN_LABELS = { free: 'Free (2 vehicles)', starter: 'Starter (5 vehicles)', pro: 'Pro (Unlimited)' };
+
+    function applyCoverTransform(targetImg) {
+      const img = targetImg || document.getElementById('coverImage');
+      if (!img) return;
+      if (!img.style) return;
+      img.style.transform = `translate3d(${coverTransform.x}px, ${coverTransform.y}px, 0) scale(${coverTransform.scale})`;
+      img.style.objectFit = 'cover';
+      img.style.objectPosition = 'center';
+    }
+
+    async function getUserPlanKey() {
+      const db = window.firebaseDb || null;
+      const uid = window.firebaseAuth?.currentUser?.uid || null;
+      if (db && uid) {
+        try {
+          const snap = await db.collection('users').doc(uid).get();
+          if (snap.exists && snap.data().plan) {
+            const plan = snap.data().plan.toLowerCase();
+            return PLAN_LIMITS[plan] ? plan : 'free';
+          }
+        } catch (e) {
+          console.warn('Plan fetch failed, defaulting to free', e.message);
+        }
+      }
+      return 'free';
+    }
+
+    async function refreshPlanStatus(countFromList) {
+      const planStatusEl = document.getElementById('planStatus');
+      const upgradeLink = document.getElementById('upgradeLink');
+      const addBtn = document.getElementById('addVehicleBtn');
+      if (!planStatusEl || !addBtn) return;
+
+      const planKey = await getUserPlanKey();
+      const limit = PLAN_LIMITS[planKey] ?? 2;
+      const vehicles = typeof countFromList === 'number' ? countFromList : (parseInt(document.getElementById('statVehicles')?.textContent || '0', 10) || 0);
+
+      // Fetch lifetime created to enforce free cap
+      let lifetimeCreated = 0;
+      try {
+        const snap = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
+      if (snap.exists) lifetimeCreated = snap.data().vehiclesCreated || 0;
+    } catch {}
+
+      const usedText = limit === Number.MAX_SAFE_INTEGER ? `${vehicles} active (Unlimited plan)` : `${vehicles} / ${limit} active`;
+      planStatusEl.textContent = `Plan: ${PLAN_LABELS[planKey] || 'Free'} — ${usedText}`;
+
+      const freeExhausted = planKey === 'free' && lifetimeCreated >= 2;
+      const overActive = limit !== Number.MAX_SAFE_INTEGER && vehicles >= limit;
+      if (freeExhausted || overActive) {
+        addBtn.classList.add('btn-disabled');
+        addBtn.href = 'upgrade.html';
+        addBtn.textContent = 'Upgrade to add more';
+        addBtn.style.pointerEvents = 'auto';
+        if (upgradeLink) upgradeLink.style.display = 'inline-flex';
+        if (freeExhausted) planStatusEl.textContent = 'You used your 2 free postings. Upgrade to add more vehicles.';
+      } else {
+        addBtn.classList.remove('btn-disabled');
+        addBtn.href = 'add-vehicle.html';
+        addBtn.textContent = '+ Add new vehicle';
+        if (upgradeLink) upgradeLink.style.display = 'none';
+      }
+    }
+
+    async function loadProfile() {
+      // Wait for Firebase Auth to initialize
+      if (!window.firebaseAuth) {
+        console.log('Waiting for Firebase Auth to initialize...');
+        setTimeout(loadProfile, 100);
+        return;
+      }
+
+      // Use onAuthStateChanged for reliable auth detection
+      if (!authCheckComplete) {
+        authCheckComplete = true;
+        window.firebaseAuth.onAuthStateChanged(async (user) => {
+          // CRITICAL: If force sign-out is pending, treat as logged out
+          const forceSignOut = localStorage.getItem('_forceSignOut') === 'true';
+          
+          if (forceSignOut) {
+            console.log(' Force sign-out detected on account page - redirecting to signin');
+            window.location.href = 'signin.html';
+            return;
+          }
+          
+          if (!user) {
+            console.log('No user authenticated, redirecting to signin...');
+            // Clear the intentional sign-out flag since we're redirecting now
+            localStorage.removeItem('_userSignedOutIntentionally');
+            window.location.href = 'signin.html';
+            return;
+          }
+          
+          currentUser = user.uid;
+          await initializeProfile(user.uid);
+        });
+        return;
+      }
+    }
+
+    async function initializeProfile(uid) {
+      currentUser = uid;
+
+      // Show upload buttons only for own profile
+      const coverBtn = document.getElementById('coverUploadBtn');
+      const avatarUpload = document.getElementById('avatarUpload');
+      const addVehicleBtn = document.getElementById('addVehicleBtn');
+      if (coverBtn) coverBtn.style.display = 'none';
+      if (avatarUpload) avatarUpload.style.display = 'flex';
+      if (addVehicleBtn) addVehicleBtn.style.display = 'block';
+
+      // Load profile from Firestore
+      const db = window.firebaseDb;
+      if (db) {
+        try {
+          const doc = await db.collection('users').doc(uid).get();
+          if (doc.exists) {
+            profileData = doc.data();
+            displayProfile(profileData);
+          } else {
+            // Create default profile
+            profileData = {
+              firstName: 'Host',
+              lastName: 'User',
+              role: 'Business Owner',
+              phone: '',
+              email: window.firebaseAuth.currentUser.email || '',
+              city: '',
+              state: '',
+              country: '',
+              about: '',
+              avatar: null,
+              cover: null,
+              coverOffsetX: 0,
+              coverOffsetY: 0,
+              coverScale: 1,
+              createdAt: new Date().toISOString()
+            };
+            await db.collection('users').doc(uid).set(profileData);
+            displayProfile(profileData);
+          }
+        } catch (e) {
+          console.error('Failed to load profile:', e);
+        }
+      }
+
+      // Load vehicles
+      await loadVehicles();
+    }
+
+    function displayProfile(data) {
+      console.log(' displayProfile called with:', data);
+      const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Host User';
+      document.getElementById('hostName').textContent = fullName;
+      
+      const subtitle = [];
+      if (data.role) subtitle.push(data.role);
+      if (data.city && data.country) {
+        subtitle.push(`${data.city}, ${data.country}`);
+      } else if (data.country) {
+        subtitle.push(data.country);
+      }
+      document.getElementById('hostSubtitle').textContent = subtitle.join('  ') || 'CJF Host';
+
+      // Avatar
+      const avatarImg = document.getElementById('avatarImage');
+      if (avatarImg) {
+        if (data.avatar) {
+          console.log(' Setting avatar src to:', data.avatar);
+          avatarImg.src = data.avatar;
+          avatarImg.onerror = () => console.error(' Avatar failed to load. URL:', data.avatar);
+          avatarImg.onload = () => console.log(' Avatar loaded successfully');
+        } else {
+          const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&size=200&background=3b82f6&color=fff`;
+          console.log(' No avatar in data, using fallback:', fallbackUrl);
+          avatarImg.src = fallbackUrl;
+        }
+      } else {
+        console.warn('avatarImage element not found in DOM');
+      }
+
+      // Cover
+      const coverImg = document.getElementById('coverImage');
+      if (coverImg) {
+        if (data.cover) {
+          coverImg.src = data.cover;
+          coverImg.style.display = 'block';
+          coverTransform = {
+            x: Number(data.coverOffsetX || 0),
+            y: Number(data.coverOffsetY || 0),
+            scale: Number(data.coverScale || 1)
+          };
+          coverImg.onload = applyCoverTransform;
+        } else {
+          // Default cover image
+          coverImg.src = 'assets - Copy/hero.png';
+          coverImg.style.display = 'block';
+          coverTransform = { x: 0, y: 0, scale: 1 };
+        }
+      } else {
+        console.warn('coverImage element not found in DOM');
+      }
+
+      // Calculate years hosting
+      const createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
+      const years = Math.max(1, new Date().getFullYear() - createdAt.getFullYear());
+      document.getElementById('statYears').textContent = years + '+';
+    }
+
+  async function loadVehicles() {
+    const uid = window.firebaseAuth?.currentUser?.uid;
+    if (!uid || !window.VehicleStore) return;
+
+    try {
+      const vehicles = await window.VehicleStore.getUserVehicles();
+      document.getElementById('statVehicles').textContent = vehicles.length;
+
+        // Display vehicles
+      const grid = document.getElementById('vehiclesGrid');
+      grid.innerHTML = '';
+
+      if (vehicles.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color: #64748b; padding: 40px;">No vehicles yet. <a href="add-vehicle.html" style="color: #3b82f6;">Add your first vehicle</a></p>';
+        return;
+      }
+
+        // Get unique locations
+        const locations = [...new Set(vehicles.map(v => v.city).filter(Boolean))].slice(0, 3).join(', ');
+        document.getElementById('statLocations').textContent = locations || '';
+
+        // Render vehicle cards
+      vehicles.forEach(vehicle => {
+        const card = createVehicleCard(vehicle);
+        grid.appendChild(card);
+      });
+      await refreshPlanStatus(vehicles.length);
+
+    } catch (e) {
+      console.error('Failed to load vehicles:', e);
+    }
+  }
+
+    function createVehicleCard(vehicle) {
+      const card = document.createElement('div');
+      card.className = 'vehicle-card';
+
+      const image = vehicle.image || (vehicle.photos && vehicle.photos[0]) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23ddd%22 width=%22400%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2224%22 fill=%22%23999%22%3ENo Image%3C/text%3E%3C/svg%3E';
+      const category = vehicle.category || vehicle.vehicleType || 'Vehicle';
+      const fuel = vehicle.fuel || vehicle.fuelType || 'Gas';
+      const year = vehicle.year || '';
+      const make = vehicle.make || '';
+      const model = vehicle.model || '';
+      const city = vehicle.city || '';
+      const state = vehicle.state || '';
+      const country = vehicle.country || '';
+      const price = vehicle.price || 0;
+      const frequency = (vehicle.frequency || 'day').toLowerCase();
+
+      const location = [city, state, country].filter(Boolean).join(', ');
+
+      // Determine ownership for host-only controls
+      const currentUid = window.firebaseAuth?.currentUser?.uid;
+      const isOwner = !!(currentUid && (vehicle.ownerId === currentUid || vehicle.hostId === currentUid));
+
+      const hostActionsHtml = `
+          <div class="vehicle-actions">
+            <button class="btn btn-secondary btn-full" data-action="cover" data-id="${vehicle.id}">Change cover photo</button>
+            <button class="btn btn-secondary btn-full" data-action="edit" data-id="${vehicle.id}">Edit vehicle</button>
+            <button class="btn btn-secondary btn-full" data-action="pause" data-id="${vehicle.id}">${vehicle.status === 'active' ? 'Pause listing' : 'Unpause listing'}</button>
+            <button class="btn btn-danger btn-full" data-action="delete" data-id="${vehicle.id}">Delete listing</button>
+          </div>`;
+
+      const publicActionsHtml = `
+          <div class="vehicle-actions">
+            <a href="tel:${profileData?.phone || ''}" class="btn btn-primary btn-full">Call Host</a>
+            <a href="vehicle.html?id=${vehicle.id}" class="btn btn-secondary btn-full">View Details</a>
+          </div>`;
+
+      card.innerHTML = `
+        <div class="vehicle-media">
+          <img src="${image}" alt="${year} ${make} ${model}" />
+          <div class="vehicle-type-badge">${category}</div>
+        </div>
+        <div class="vehicle-content">
+          <h3 class="vehicle-title">${year} ${make} ${model}</h3>
+          <p class="vehicle-location">${location || 'Location not specified'}</p>
+          <div class="vehicle-tags">
+            <span class="feature-tag">${fuel}</span>
+            ${vehicle.insuranceIncluded ? '<span class="feature-tag">Insurance Included</span>' : ''}
+          </div>
+          <div class="vehicle-price">
+            $${price} <span class="period">/ ${frequency}</span>
+          </div>
+          ${isOwner ? hostActionsHtml : publicActionsHtml}
+        </div>
+      `;
+
+      // Wire up host-only controls (UI hooks only; backend wiring can be added later)
+      if (isOwner) {
+        const coverBtn = card.querySelector('[data-action="cover"]');
+        const editBtn = card.querySelector('[data-action="edit"]');
+        const pauseBtn = card.querySelector('[data-action="pause"]');
+        const deleteBtn = card.querySelector('[data-action="delete"]');
+
+        coverBtn?.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            coverBtn.disabled = true;
+            coverBtn.textContent = 'Uploading...';
+            
+            try {
+              const storage = window.firebaseStorage;
+              if (!storage) throw new Error('Storage not available');
+              
+              const uid = window.firebaseAuth.currentUser.uid;
+              const ref = storage.ref().child(`users/${uid}/vehicles/${vehicle.id}/cover-${Date.now()}`);
+              const snap = await ref.put(file);
+              const url = await snap.ref.getDownloadURL();
+              
+              // Update vehicle with new image
+              const db = window.firebaseDb;
+              await db.collection('vehicles').doc(vehicle.id).update({ image: url, photos: [url] });
+              
+              // Update UI
+              const img = card.querySelector('.vehicle-image');
+              img.src = url;
+              vehicle.image = url;
+              vehicle.photos = [url];
+              
+              coverBtn.textContent = 'Change cover photo';
+            } catch (err) {
+              console.error('Upload failed:', err);
+              alert('Upload failed: ' + (err.message || 'Unknown error'));
+              coverBtn.textContent = 'Change cover photo';
+            } finally {
+              coverBtn.disabled = false;
+            }
+          };
+          input.click();
+        });
+
+        editBtn?.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.location.href = `add-vehicle.html?edit=${vehicle.id}`;
+        });
+
+        pauseBtn?.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Placeholder: Toggle UI text; integrate backend/Firestore update as needed
+          const currentlyActive = vehicle.status === 'active';
+          vehicle.status = currentlyActive ? 'paused' : 'active';
+          pauseBtn.textContent = currentlyActive ? 'Unpause listing' : 'Pause listing';
+          pauseBtn.classList.toggle('secondary');
+        });
+
+        deleteBtn?.addEventListener('click', (e) => {
+          e.preventDefault();
+          const confirmed = window.confirm('Delete this listing? This cannot be undone.');
+          if (confirmed) {
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+            VehicleStore.deleteVehicle(vehicle.id)
+              .then(() => {
+                console.log(` Vehicle ${vehicle.id} deleted`);
+                card.remove();
+              })
+              .catch((err) => {
+                console.error(' Delete failed:', err);
+                alert('Delete failed. Please try again.');
+              })
+              .finally(() => {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete listing';
+              });
+          }
+        });
+      }
+
+      return card;
+    }
+
+    // Modal management
+    const modal = document.getElementById('profileModal');
+    const overlay = document.getElementById('profileModalOverlay');
+    const modalClose = document.getElementById('modalClose');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalSave = document.getElementById('modalSave');
+
+    function showModal() {
+      modal.classList.add('show');
+      overlay.classList.add('show');
+      document.body.classList.add('no-scroll');
+
+      // Pre-fill form
+      if (profileData) {
+        document.getElementById('firstName').value = profileData.firstName || '';
+        document.getElementById('lastName').value = profileData.lastName || '';
+        document.getElementById('role').value = profileData.role || '';
+        document.getElementById('phone').value = profileData.phone || '';
+        document.getElementById('email').value = profileData.email || '';
+        document.getElementById('city').value = profileData.city || '';
+        document.getElementById('state').value = profileData.state || '';
+        document.getElementById('country').value = profileData.country || '';
+        document.getElementById('about').value = profileData.about || '';
+
+        if (profileData.avatar) {
+          document.getElementById('avatarPreview').src = profileData.avatar;
+          document.getElementById('avatarPreview').style.display = 'block';
+        }
+        if (profileData.cover) {
+          document.getElementById('coverPreview').src = profileData.cover;
+          document.getElementById('coverPreview').style.display = 'block';
+        }
+      }
+    }
+
+    function hideModal() {
+      modal.classList.remove('show');
+      overlay.classList.remove('show');
+      document.body.classList.remove('no-scroll');
+    }
+
+    // Cover editor logic
+    const coverEditorOverlay = document.getElementById('coverEditorOverlay');
+    const coverEditFrame = document.getElementById('coverEditFrame');
+    const coverEditImage = document.getElementById('coverEditImage');
+    const coverZoomInput = document.getElementById('coverZoom');
+    const zoomValue = document.getElementById('zoomValue');
+    const coverFileInput = document.getElementById('coverFileInput');
+    const coverSaveTop = document.getElementById('coverEditorSaveTop');
+    const coverCancelTop = document.getElementById('coverEditorCancelTop');
+    let coverNaturalSize = { w: 0, h: 0 };
+    let frameRectCache = null;
+    let rafPending = false;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let startOffset = { x: 0, y: 0 };
+
+    function clampCoverTransform() {
+      if (!coverEditFrame || !coverNaturalSize.w || !coverNaturalSize.h) return;
+      const frameRect = frameRectCache || coverEditFrame.getBoundingClientRect();
+      const imgW = coverNaturalSize.w * coverTransform.scale;
+      const imgH = coverNaturalSize.h * coverTransform.scale;
+      // Allow a little slack so users can reveal preferred focal areas even when image ~frame size
+      const slackX = frameRect.width * 0.1;
+      const slackY = frameRect.height * 0.1;
+      const minX = (frameRect.width - imgW) - slackX;
+      const maxX = slackX;
+      const minY = (frameRect.height - imgH) - slackY;
+      const maxY = slackY;
+      coverTransform.x = Math.min(maxX, Math.max(minX, coverTransform.x));
+      coverTransform.y = Math.min(maxY, Math.max(minY, coverTransform.y));
+    }
+
+    function applyCoverPreviewTransform() {
+      if (!coverEditImage) return;
+      clampCoverTransform();
+      coverEditImage.style.transform = `translate3d(${coverTransform.x}px, ${coverTransform.y}px, 0) scale(${coverTransform.scale})`;
+      zoomValue.textContent = `${Math.round(coverTransform.scale * 100)}%`;
+    }
+
+    function schedulePreview() {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        applyCoverPreviewTransform();
+      });
+    }
+
+    function openCoverEditor(src) {
+      const source = src || profileData?.cover || document.getElementById('coverImage')?.src || '';
+      if (!coverEditorOverlay) return;
+      coverEditorOverlay.style.display = 'flex';
+      document.body.classList.add('no-scroll');
+      if (source) coverEditImage.src = source;
+            coverEditImage.onload = () => {
+        coverNaturalSize = { w: coverEditImage.naturalWidth, h: coverEditImage.naturalHeight };
+        const frame = coverEditFrame.getBoundingClientRect();
+        const scaleFit = Math.max(frame.width / coverNaturalSize.w, frame.height / coverNaturalSize.h);
+        const zoomFit = Math.max(frame.width / coverNaturalSize.w, frame.height / coverNaturalSize.h);
+        if (!profileData?.coverOffsetX && !profileData?.coverOffsetY && !profileData?.coverScale) {
+          coverTransform = {
+            x: (frame.width - coverNaturalSize.w * zoomFit) / 2,
+            y: (frame.height - coverNaturalSize.h * zoomFit) / 2,
+            scale: zoomFit
+          };
+        } else {
+          coverTransform = {
+            x: Number(profileData?.coverOffsetX || 0),
+            y: Number(profileData?.coverOffsetY || 0),
+            scale: Number(profileData?.coverScale || zoomFit)
+          };
+        }
+        const minZoom = Math.round(zoomFit * 100);
+        coverZoomInput.min = minZoom;
+        coverZoomInput.value = Math.max(minZoom, Math.round(coverTransform.scale * 100));
+        applyCoverPreviewTransform();
+      };
+    }
+
+    function closeCoverEditor() {
+      if (!coverEditorOverlay) return;
+      coverEditorOverlay.style.display = 'none';
+      document.body.classList.remove('no-scroll');
+      pendingCoverFile = null;
+    }
+
+    coverEditorOverlay?.addEventListener('click', (e) => {
+      if (e.target === coverEditorOverlay) closeCoverEditor();
+    });
+    document.getElementById('coverEditorClose')?.addEventListener('click', closeCoverEditor);
+    document.getElementById('coverEditorCancel')?.addEventListener('click', closeCoverEditor);
+    coverCancelTop?.addEventListener('click', closeCoverEditor);
+    document.getElementById('resetCoverPosition')?.addEventListener('click', () => {
+      coverTransform = { x: 0, y: 0, scale: 1 };
+      coverZoomInput.value = 100;
+      applyCoverPreviewTransform();
+    });
+
+    coverZoomInput?.addEventListener('input', (e) => {
+      const frameRect = frameRectCache || coverEditFrame.getBoundingClientRect();
+      const prevScale = coverTransform.scale;
+      const newScale = Math.max(Number(coverZoomInput.min) / 100, Number(e.target.value) / 100);
+      if (!coverNaturalSize.w || !frameRect.width) return;
+      const centerX = frameRect.width / 2 - coverTransform.x;
+      const centerY = frameRect.height / 2 - coverTransform.y;
+      coverTransform.scale = newScale;
+      coverTransform.x -= (centerX * (newScale / prevScale - 1));
+      coverTransform.y -= (centerY * (newScale / prevScale - 1));
+      applyCoverPreviewTransform();
+    });
+
+    const dragTarget = coverEditImage || coverEditFrame;
+
+    dragTarget?.addEventListener('pointerdown', (e) => {
+      if (!coverEditImage.src) return;
+      e.preventDefault();
+      isDragging = true;
+      frameRectCache = coverEditFrame.getBoundingClientRect();
+      coverEditFrame.classList.add('dragging');
+      dragStart = { x: e.clientX, y: e.clientY };
+      startOffset = { ...coverTransform };
+      dragTarget.setPointerCapture(e.pointerId);
+    });
+
+    dragTarget?.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const dx = e.clientX - dragStart.x;
+      const dy = e.clientY - dragStart.y;
+      coverTransform.x = startOffset.x + dx;
+      coverTransform.y = startOffset.y + dy;
+      schedulePreview();
+    });
+
+    const endDrag = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      coverEditFrame.classList.remove('dragging');
+      frameRectCache = null;
+      if (e?.pointerId) dragTarget.releasePointerCapture(e.pointerId);
+    };
+    dragTarget?.addEventListener('pointerup', endDrag);
+    dragTarget?.addEventListener('pointerleave', endDrag);
+    dragTarget?.addEventListener('pointercancel', endDrag);
+
+    coverFileInput?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      pendingCoverFile = file;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        coverEditImage.src = ev.target.result;
+        coverTransform = { x: 0, y: 0, scale: 1 };
+        coverZoomInput.value = 100;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    async function saveCoverFromEditor() {
+      if (!currentUser) return;
+      const db = window.firebaseDb;
+      const storage = window.firebaseStorage;
+      let coverURL = profileData?.cover || null;
+
+      if (pendingCoverFile && storage) {
+        const ref = storage.ref().child(`users/${currentUser}/cover-${Date.now()}.jpg`);
+        const snap = await ref.put(pendingCoverFile);
+        coverURL = await snap.ref.getDownloadURL();
+      }
+
+      const updatePayload = {
+        cover: coverURL,
+        coverOffsetX: coverTransform.x,
+        coverOffsetY: coverTransform.y,
+        coverScale: coverTransform.scale,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (db) {
+        await db.collection('users').doc(currentUser).set(updatePayload, { merge: true });
+      }
+
+      profileData = { ...(profileData || {}), ...updatePayload };
+      const mainCover = document.getElementById('coverImage');
+      if (coverURL && mainCover) {
+        mainCover.src = coverURL;
+        mainCover.style.display = 'block';
+        mainCover.onload = applyCoverTransform;
+      }
+      applyCoverTransform();
+      closeCoverEditor();
+      alert('Cover saved.');
+    }
+
+    const saveCoverHandler = async () => {
+      try {
+        document.getElementById('coverEditorSave').disabled = true;
+        if (coverSaveTop) coverSaveTop.disabled = true;
+        await saveCoverFromEditor();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save cover: ' + (err.message || 'Unknown error'));
+      } finally {
+        document.getElementById('coverEditorSave').disabled = false;
+        if (coverSaveTop) coverSaveTop.disabled = false;
+      }
+    };
+    document.getElementById('coverEditorSave')?.addEventListener('click', saveCoverHandler);
+    coverSaveTop?.addEventListener('click', saveCoverHandler);
+
+    // Open modal on cover/avatar click
+    document.getElementById('coverUploadBtn')?.addEventListener('click', () => openCoverEditor(profileData?.cover || document.getElementById('coverImage')?.src || ''));
+    document.getElementById('avatarContainer')?.addEventListener('click', showModal);
+    modalClose?.addEventListener('click', hideModal);
+    modalCancel?.addEventListener('click', hideModal);
+    overlay?.addEventListener('click', hideModal);
+
+    // Image preview
+    document.getElementById('avatarInput')?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('avatarPreview').src = e.target.result;
+          document.getElementById('avatarPreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('coverInput')?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById('coverPreview').src = e.target.result;
+          document.getElementById('coverPreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Save profile
+    modalSave?.addEventListener('click', async () => {
+      const uid = window.firebaseAuth?.currentUser?.uid || currentUser;
+      if (!uid) {
+        alert('Please sign in again before uploading photos.');
+        return;
+      }
+
+      modalSave.disabled = true;
+      modalSave.textContent = 'Saving...';
+
+      try {
+        const storage = window.firebaseStorage;
+        const db = window.firebaseDb;
+        const auth = window.firebaseAuth;
+        
+        // Force auth token refresh to ensure uploads have valid auth
+        if (auth?.currentUser) {
+          await auth.currentUser.getIdToken(true);
+          console.log(' Auth token refreshed');
+        }
+        
+        console.log(' Uploading as uid:', uid, 'storage available?', !!storage, 'db?', !!db);
+
+        let avatarURL = profileData?.avatar || null;
+        let coverURL = profileData?.cover || null;
+
+        // Upload avatar if changed
+        const avatarFile = document.getElementById('avatarInput').files[0];
+        console.log(' Avatar file input:', avatarFile);
+        if (avatarFile && storage) {
+          try {
+            console.log(' Uploading avatar as uid:', uid);
+            const ref = storage.ref().child(`users/${uid}/avatar-${Date.now()}.jpg`);
+            const snap = await ref.put(avatarFile);
+            avatarURL = await snap.ref.getDownloadURL();
+            console.log(' Avatar uploaded:', avatarURL);
+          } catch (e) {
+            console.error(' Avatar upload failed:', e.message);
+            throw new Error(`Avatar upload failed: ${e.message}`);
+          }
+        } else {
+          console.log(' No avatar file or storage not available');
+        }
+
+        // Cover upload disabled (avatar only requested)
+
+        // Save to Firestore
+        const updatedData = {
+          firstName: document.getElementById('firstName').value.trim(),
+          lastName: document.getElementById('lastName').value.trim(),
+          role: document.getElementById('role').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          city: document.getElementById('city').value.trim(),
+          state: document.getElementById('state').value.trim(),
+          country: document.getElementById('country').value.trim(),
+          about: document.getElementById('about').value.trim(),
+          avatar: avatarURL,
+          cover: coverURL,
+          coverOffsetX: coverTransform.x,
+          coverOffsetY: coverTransform.y,
+          coverScale: coverTransform.scale,
+          updatedAt: new Date().toISOString()
+        };
+        console.log(' Saving updated data with avatar/cover:', updatedData);
+
+        await db.collection('users').doc(uid).set(updatedData, { merge: true });
+        console.log(' Profile saved to Firestore:', updatedData);
+        profileData = updatedData;
+        console.log(' Profile data updated in memory:', profileData);
+        displayProfile(profileData);
+        console.log(' Display function called');
+        hideModal();
+        alert('Profile saved successfully!');
+
+      } catch (e) {
+        console.error('Profile save error:', e);
+        alert('Failed to save profile: ' + e.message);
+      } finally {
+        modalSave.disabled = false;
+        modalSave.textContent = 'Save Changes';
+      }
+    });
+
+    // Country/state wiring for profile modal
+    const countryInput = document.getElementById('country');
+    const countryList = document.getElementById('accountCountryList');
+    const stateSelect = document.getElementById('state');
+    const stateCache = new Map();
+
+    if (countryList && window.populateCountryElement) {
+      populateCountryElement(countryList);
+    }
+
+    const setStates = (states = []) => {
+      if (!stateSelect) return;
+      stateSelect.innerHTML = '';
+      const any = document.createElement('option');
+      any.value = '';
+      any.textContent = states.length ? 'Select state' : 'No states';
+      stateSelect.appendChild(any);
+      states.forEach((s) => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        stateSelect.appendChild(opt);
+      });
+    };
+
+    const fetchStates = async (country) => {
+      if (!country || country === 'Any') { setStates([]); return; }
+      if (stateCache.has(country)) { setStates(stateCache.get(country)); return; }
+      try {
+        const resp = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ country })
+        });
+        if (!resp.ok) throw new Error('Request failed');
+        const data = await resp.json();
+        const list = (data?.data?.states || []).map((s) => s?.name).filter(Boolean);
+        stateCache.set(country, list);
+        setStates(list);
+      } catch (e) {
+        console.warn('State lookup failed', e.message);
+        setStates([]);
+      }
+    };
+
+    countryInput?.addEventListener('change', (e) => {
+      fetchStates(e.target.value.trim());
+    });
+
+    // Review link helper (host-only)
+    (() => {
+      const btn = document.getElementById('accountGenerateReviewLinkBtn');
+      const copyBtn = document.getElementById('accountCopyReviewLinkBtn');
+      const vehicleInput = document.getElementById('accountVehicleId');
+      const labelInput = document.getElementById('accountCustomerLabel');
+      const linkInput = document.getElementById('accountReviewLink');
+      const resultPanel = document.getElementById('accountReviewLinkResult');
+      const meta = document.getElementById('accountReviewLinkMeta');
+
+      const setMeta = (message, isError = false) => {
+        if (!meta) return;
+        meta.textContent = message;
+        meta.style.color = isError ? '#b91c1c' : '#0f172a';
+      };
+
+      btn?.addEventListener('click', async () => {
+        const user = AuthManager.getCurrentUser?.() ?? null;
+        if (!user) {
+          setMeta('Sign in as a host to create review links.', true);
+          return;
+        }
+
+        const payload = {};
+        const vehicleId = vehicleInput?.value.trim();
+        const customerLabel = labelInput?.value.trim();
+        if (vehicleId) payload.vehicleId = vehicleId;
+        if (customerLabel) payload.customerLabel = customerLabel;
+
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+        try {
+          const resp = await fetch('/api/review-tokens', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${user.id}`
+            },
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json();
+          if (!resp.ok || !data?.success) {
+            const msg = data?.error || 'Unable to create review link';
+            setMeta(`${msg} (${resp.status})`, true);
+            return;
+          }
+          const url = `${window.location.origin}/review.html?token=${encodeURIComponent(data.token)}`;
+          if (linkInput) {
+            linkInput.value = url;
+          }
+          if (resultPanel) {
+            resultPanel.style.display = 'flex';
+          }
+          setMeta(`Review token expires ${data.expiresAt ? new Date(data.expiresAt).toLocaleString() : 'in 14 days'}`);
+        } catch (error) {
+          console.error('Review link creation failed', error);
+          setMeta(`Failed to generate review link. ${error.message || 'Try again later.'}`, true);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Generate review link';
+        }
+      });
+
+      copyBtn?.addEventListener('click', () => {
+        if (!linkInput || !linkInput.value) return;
+        linkInput.select();
+        document.execCommand('copy');
+        setMeta('Review link copied to clipboard.');
+      });
+    })();
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProfile();
+      if (countryInput?.value) {
+        fetchStates(countryInput.value);
+      }
+    });
+    if (document.readyState !== 'loading') {
+      loadProfile();
+      if (countryInput?.value) fetchStates(countryInput.value);
+    }
+  </script>
+
+</body>
+</html>

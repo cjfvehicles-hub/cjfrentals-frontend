@@ -1,0 +1,1420 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vehicle | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    :root {
+      --panel: #ffffff;
+      --muted: #6b7280;
+      --pill: #f2f4f7;
+      --stroke: #e5e7eb;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .page {
+      max-width: 1120px;
+      margin: 0 auto 20px;
+      padding: 30px 12px 12px;
+    }
+    .hero-gallery {
+      background: var(--panel);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: 1fr;
+      justify-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+    .main-photo {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #eef1f5;
+      aspect-ratio: 5 / 3;
+      min-height: 0;
+    }
+    .main-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .view-all {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      font-weight: 600;
+    }
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--pill);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .section-card {
+      background: var(--panel);
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      padding: 10px 12px;
+      max-width: 960px;
+      margin: 4px auto;
+      width: 100%;
+    }
+    .section-title {
+      font-size: 22px;
+      margin: 0 0 10px;
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .overview-left {
+      display: grid;
+      gap: 12px;
+    }
+    .overview-right {
+      background: #fff;
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+      display: grid;
+      gap: 10px;
+    }
+    .title-line {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .location-line {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #4b5563;
+      font-weight: 600;
+    }
+    .location-pin {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #eef2ff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      color: #111827;
+      font-weight: 800;
+    }
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .spec {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      color: #111827;
+      font-weight: 700;
+      border: 1px solid var(--stroke);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.02);
+    }
+    .spec .label {
+      display: block;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .spec .value.muted {
+      color: #9ca3af;
+      font-weight: 600;
+    }
+    .chip {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--pill);
+      margin: 6px 6px 0 0;
+      font-weight: 600;
+      color: #111827;
+    }
+    .host-card {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: #0f172a;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: #0f172a;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn.secondary {
+      background: #fff;
+      color: #0f172a;
+    }
+    .location-section {
+      display: grid;
+      gap: 12px;
+    }
+    .location-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .location-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 16px;
+    }
+    .location-info {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f8fafc, #fff);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+    .info-block {
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.02);
+    }
+    .info-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .info-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: #eef2ff;
+      color: #1f2937;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .label {
+      letter-spacing: 0.02em;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+    .location-main {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.3;
+    }
+    .delivery-main {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .mini-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 13px;
+      color: #111827;
+    }
+    .mini-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    .map-panel {
+      position: relative;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #e5e7eb, #f8fafc);
+      min-height: 200px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    .map-panel-header {
+      padding: 10px 12px;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .map-box {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    }
+    .map-placeholder {
+      text-align: center;
+      padding: 20px;
+      color: #6b7280;
+      display: grid;
+      gap: 6px;
+      place-items: center;
+    }
+    .map-placeholder .icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: #e0e7ff;
+      color: #111827;
+      font-weight: 800;
+    }
+    .map-placeholder .link {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .features-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 18px;
+    }
+    .feature-group {
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.03);
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .feature-heading {
+      font-weight: 800;
+      font-size: 15px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .feature-heading .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #eef2ff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+    }
+    .feature-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .feature-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: #f8fafc;
+      font-weight: 700;
+      font-size: 13px;
+      color: #111827;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.02);
+    }
+    .feature-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+    .host-notes-card {
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 10px;
+      background: #f8fafc;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.03);
+      display: grid;
+      gap: 6px;
+      min-height: 110px;
+    }
+    .host-note-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .host-note-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #eef2ff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #111827;
+    }
+    .empty-note {
+      text-align: center;
+      color: #6b7280;
+      display: grid;
+      gap: 6px;
+      place-items: center;
+      padding: 14px;
+      border: 1px dashed var(--stroke);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .map-overlay-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 12px;
+      color: #0f172a;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .soft-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: #eef2ff;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    @media (max-width: 900px) {
+      .location-grid { grid-template-columns: 1fr; }
+      .map-panel { min-height: 240px; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .overview-right { order: 2; }
+      .features-layout { grid-template-columns: 1fr; }
+    }
+    .contact-block {
+      display: grid;
+      gap: 6px;
+      align-content: start;
+    }
+    .contact-line {
+      color: inherit;
+      text-decoration: none;
+      padding: 6px 10px;
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      background: #f9fafb;
+      font-weight: 600;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    .contact-line:hover {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+    }
+    .price-card {
+      display: grid;
+      gap: 10px;
+    }
+    .price-label {
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .price-value {
+      font-size: 30px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.1;
+    }
+    .cta-btn {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #0f172a;
+      color: #fff;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+    }
+    .cta-btn:hover {
+      background: #1f2937;
+    }
+    .contact-card {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .rule {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #fff;
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.02);
+    }
+    .rule .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: #eef2ff;
+      color: #0f172a;
+      font-weight: 800;
+    }
+    .rule .text {
+      display: grid;
+      gap: 4px;
+    }
+    .rule .label {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .map-box {
+      height: 260px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+      border: 1px solid var(--stroke);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .lightbox-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 18px;
+    }
+    .lightbox-backdrop.show { display: flex; }
+    .lightbox-panel {
+      background: #fff;
+      border-radius: 16px;
+      width: min(960px, 100%);
+      height: min(90vh, 760px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .lightbox-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--stroke);
+      font-weight: 700;
+    }
+    .lightbox-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke);
+      background: #f8fafc;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .lightbox-body {
+      position: relative;
+      background: #0f172a;
+      display: grid;
+      place-items: center;
+    }
+    .lightbox-body img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      background: #fff;
+      cursor: grab;
+      transition: transform 0.2s ease;
+      touch-action: none;
+      user-select: none;
+    }
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .nav-arrow.left { left: 16px; }
+    .nav-arrow.right { right: 16px; }
+    .sidebar-card {
+      background: var(--panel);
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .muted { color: var(--muted); }
+    .stack { display: grid; gap: 12px; }
+    .review-list { display: grid; gap: 12px; }
+    .review {
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 12px;
+      background: #f9fafb;
+    }
+    @media (max-width: 900px) {
+      .page { padding-top: 78px; }
+      .hero-gallery { grid-template-columns: 1fr; }
+      .thumbs { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr; }
+      .grid-two { grid-template-columns: 1fr; }
+      .lightbox-panel { height: 86vh; }
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/vehicleStore.js"></script>
+  <script src="assets/navBuilder.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">CJF</span><span>CJF Rentals</span>
+      </a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list"></ul>
+  </nav>
+
+  <main class="page">
+    <section class="hero-gallery" id="gallerySection">
+      <div class="main-photo" id="mainPhotoBox">
+        <img id="mainPhoto" alt="Vehicle photo" />
+        <button class="view-all" id="viewAllBtn">View all photos</button>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <div class="overview-grid">
+        <div class="overview-left">
+          <div class="title-line">
+            <span class="pill">Vehicle</span>
+          </div>
+          <h1 id="vehicleTitle" style="margin:0; font-size: clamp(24px, 3vw, 32px);">Loading...</h1>
+            <div class="location-line">
+              <span class="location-pin" aria-hidden="true">📍</span>
+              <span id="vehicleLocation">Location loading...</span>
+            </div>
+          <div id="quickSpecs" class="spec-grid"></div>
+        </div>
+        <div class="overview-right">
+          <div class="price-card">
+            <div class="price-label">Daily price</div>
+            <div class="price-value" id="priceBlock">$0/day</div>
+            <div class="muted" style="font-size:13px;">Informational only — pay host directly.</div>
+            <button class="cta-btn" id="contactBtn">Contact Host</button>
+          </div>
+          <div class="contact-card">
+            <div class="muted" style="font-weight:700;">Host contact</div>
+            <a id="contactEmail" class="contact-line" href="javascript:void(0)">Not provided</a>
+            <a id="contactPhone" class="contact-line" href="javascript:void(0)">Not provided</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <h2 class="section-title">Hosted by</h2>
+      <div class="host-card">
+        <div class="avatar" id="hostAvatar">HU</div>
+        <div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span id="hostName" style="font-weight:800; font-size:18px;">Loading host...</span>
+            <span class="pill-badge" id="hostBadge">Verified</span>
+          </div>
+          <div class="muted" id="hostMeta">Host - - vehicles - Joined -</div>
+          <div class="btn-row">
+            <button class="btn secondary" id="messageHostBtn">Message Host</button>
+            <button class="btn" id="viewFleetBtn">View host's other vehicles</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <div class="features-layout">
+        <div>
+          <div style="margin-bottom:10px;">
+            <h2 class="section-title" style="margin:0;">Vehicle features</h2>
+            <p class="muted" style="margin:4px 0 0;">Included features and capabilities.</p>
+          </div>
+            <div id="convGroup" class="feature-group" style="display:none;">
+              <div class="feature-heading"><span class="icon" aria-hidden="true">✨</span><span>Convenience</span></div>
+              <div id="convFeatures" class="feature-chips"></div>
+            </div>
+            <div id="safeGroup" class="feature-group" style="display:none;">
+            <div class="feature-heading"><span class="icon" aria-hidden="true">🛡️</span><span>Safety</span></div>
+            <div id="safeFeatures" class="feature-chips"></div>
+          </div>
+          <div id="techGroup" class="feature-group" style="display:none;">
+            <div class="feature-heading"><span class="icon" aria-hidden="true">⚙️</span><span>Tech</span></div>
+            <div id="techFeatures" class="feature-chips"></div>
+          </div>
+        </div>
+        <div>
+          <div style="margin-bottom:10px;">
+            <h3 style="margin:0;">Host Notes &amp; Additional Information</h3>
+            <p class="muted" style="margin:4px 0 0;">Important information from the host.</p>
+          </div>
+          <div class="host-notes-card" id="hostNotesCard">
+            <div class="host-note-header">
+              <div class="host-note-icon" aria-hidden="true">📝</div>
+              <div>Note from the host</div>
+            </div>
+            <div id="hostNotes" class="muted"></div>
+          </div>
+            <div id="hostNotesEmpty" class="empty-note" style="display:none;">
+              <div class="icon" aria-hidden="true">ℹ️</div>
+            <div style="font-weight:700; color:#111827;">No additional notes from the host</div>
+            <div class="muted">Everything you need is already listed above.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <div class="location-section">
+        <div class="location-header">
+          <div>
+            <h2 class="section-title" style="margin:0;">Rules of the road</h2>
+            <p class="muted" style="margin:4px 0 0;">Please follow these rules during your trip.</p>
+          </div>
+          <div id="rulesBadge" class="soft-badge"><span>0 rules</span></div>
+        </div>
+        <div class="rules" id="rulesList"></div>
+        <div id="rulesEmpty" class="map-placeholder" style="display:none; border:1px dashed var(--stroke); border-radius:12px; background:#f8fafc;">
+          <div class="icon">?</div>
+          <div style="font-weight:700; color:#111827;">No special rules listed</div>
+          <div class="muted">Just treat the vehicle with care and follow standard road laws.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <div class="location-section">
+        <div class="location-header">
+          <div>
+            <h2 class="section-title" style="margin:0;">Location &amp; pickup</h2>
+            <p class="muted" style="margin:4px 0 0;">See where the vehicle is located and how pickup or delivery works.</p>
+          </div>
+          <div id="deliveryBadge" class="soft-badge">
+            <span>Pickup only</span>
+          </div>
+        </div>
+        <div class="location-grid">
+          <div class="location-info">
+            <div class="info-block">
+              <div class="info-row">
+            <div class="info-icon" aria-hidden="true">ℹ️</div>
+                <div>
+                  <div class="label">Vehicle location</div>
+                  <div id="pickupInfo" class="location-main">-</div>
+                  <div class="muted" id="pickupCity">City: -</div>
+                </div>
+              </div>
+              <div class="chip-row" id="locationChips"></div>
+            </div>
+            <div class="info-block">
+              <div class="info-row">
+                <div class="info-icon" aria-hidden="true">ℹ️</div>
+                <div>
+                  <div class="label">Pickup &amp; delivery</div>
+                  <div id="deliveryInfo" class="delivery-main">-</div>
+                  <div id="altPickup" class="muted"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="map-panel">
+            <div class="map-panel-header">Map &amp; area preview</div>
+            <div class="map-box" id="mapBox">
+              <div class="map-placeholder">
+                <div class="icon" aria-hidden="true">MAP</div>
+                <div style="font-weight:700; color:#111827;">Map preview unavailable</div>
+                <div class="muted">Map is disabled (no API key)</div>
+                <a class="link" href="https://developers.google.com/maps/documentation/embed/get-api-key" target="_blank" rel="noreferrer">Learn how to enable maps</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <h2 class="section-title">Reviews</h2>
+      <div class="review-list" id="reviewList">
+        <div class="muted">No reviews yet.</div>
+      </div>
+    </section>
+
+    <section class="section-card" style="margin-top:10px;">
+      <h2 class="section-title">Similar vehicles you may like</h2>
+      <div class="grid three" id="similarGrid"></div>
+    </section>
+  </main>
+
+  <div class="lightbox-backdrop" id="lightbox">
+    <div class="lightbox-panel" role="dialog" aria-label="Photo viewer">
+            <div class="lightbox-header">
+        <button class="icon-btn" id="lbBackBtn"><</button>
+        <div id="lbCounter">1 of 1</div>
+        <div class="lightbox-actions">
+          <button class="icon-btn" id="lbCloseBtn">X</button>
+        </div>
+      </div>
+      <div class="lightbox-body">
+        <button class="nav-arrow left" id="lbPrev"><</button>
+        <img id="lbImage" alt="Vehicle photo large" />
+        <button class="nav-arrow right" id="lbNext">></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Menu wiring
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel?.classList.add('open'); backdrop?.classList.add('show'); };
+    const closeMenu = () => { menuPanel?.classList.remove('open'); backdrop?.classList.remove('show'); };
+    if (openBtn) openBtn.addEventListener('click', openMenu);
+    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    if (backdrop) backdrop.addEventListener('click', closeMenu);
+
+    // Helpers
+    const qs = (sel) => document.querySelector(sel);
+    const setText = (el, text) => { if (el) el.textContent = text; };
+    const safeList = (arr) => Array.isArray(arr) ? arr.filter(Boolean) : [];
+
+    const placeholderImg = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 400 300\"><rect fill=\"%23e5e7eb\" width=\"400\" height=\"300\"/><text x=\"200\" y=\"160\" text-anchor=\"middle\" fill=\"%23999\" font-size=\"20\" font-family=\"Arial\">No photo</text></svg>';
+
+    let gallery = [];
+    let currentIndex = 0;
+    let currentHostId = null;
+    let MAPS_EMBED_KEY_CACHE = '';
+
+    async function getMapsKey() {
+      if (MAPS_EMBED_KEY_CACHE) return MAPS_EMBED_KEY_CACHE;
+      try {
+        const res = await fetch('/.netlify/functions/map-key');
+        if (!res.ok) throw new Error('Key fetch failed');
+        const data = await res.json();
+        MAPS_EMBED_KEY_CACHE = data.key || '';
+      } catch (e) {
+        console.warn('Map key fetch failed:', e.message);
+        MAPS_EMBED_KEY_CACHE = '';
+      }
+      return MAPS_EMBED_KEY_CACHE;
+    }
+
+    function renderGallery(images) {
+      gallery = images.length ? images : [placeholderImg];
+      const main = qs('#mainPhoto');
+      main.src = gallery[0];
+      const thumbList = qs('#thumbList');
+      if (!thumbList) return;
+      thumbList.innerHTML = '';
+      gallery.slice(0, 3).forEach((src, idx) => {
+        const div = document.createElement('div');
+        div.className = 'thumb';
+        div.innerHTML = '<img alt=\"Thumbnail\" src=\"' + src + '\" />';
+        div.addEventListener('click', () => openLightbox(idx));
+        thumbList.appendChild(div);
+      });
+    }
+
+    function openLightbox(idx = 0) {
+      currentIndex = idx;
+      qs('#lightbox').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      renderLightbox();
+    }
+    function closeLightbox() {
+      qs('#lightbox').classList.remove('show');
+      document.body.style.overflow = '';
+      resetImagePosition();
+    }
+    function renderLightbox() {
+      const img = qs('#lbImage');
+      if (img) {
+        img.src = gallery[currentIndex];
+        img.draggable = false;
+        resetImagePosition();
+        attachDragHandlers(img);
+      }
+      qs('#lbCounter').textContent = `${currentIndex + 1} of ${gallery.length}`;
+    }
+    let dragState = {
+      isActive: false,
+      startX: 0,
+      startY: 0,
+      translateX: 0,
+      translateY: 0,
+      pendingFrame: null
+    };
+    const lightboxImage = qs('#lbImage');
+    const resetImagePosition = () => {
+      dragState.translateX = 0;
+      dragState.translateY = 0;
+      if (lightboxImage) lightboxImage.style.transform = 'translate3d(0px, 0px, 0)';
+    };
+    const startDrag = (event) => {
+      if (!lightboxImage) return;
+      dragState.isActive = true;
+      dragState.startX = event.clientX;
+      dragState.startY = event.clientY;
+      lightboxImage.style.cursor = 'grabbing';
+      if (lightboxImage.setPointerCapture) {
+        lightboxImage.setPointerCapture(event.pointerId);
+      }
+      event.preventDefault();
+    };
+    const stopDrag = (event) => {
+      dragState.isActive = false;
+      if (lightboxImage) lightboxImage.style.cursor = 'grab';
+      if (lightboxImage && lightboxImage.releasePointerCapture && event?.pointerId != null) {
+        try { lightboxImage.releasePointerCapture(event.pointerId); } catch (e) {}
+      }
+      event?.preventDefault();
+    };
+    const requestTransformUpdate = () => {
+      if (dragState.pendingFrame) return;
+      dragState.pendingFrame = requestAnimationFrame(() => {
+        if (lightboxImage) {
+          lightboxImage.style.transform = `translate3d(${dragState.translateX}px, ${dragState.translateY}px, 0)`;
+        }
+        dragState.pendingFrame = null;
+      });
+    };
+    const handleDrag = (event) => {
+      if (!dragState.isActive || !lightboxImage) return;
+      event.preventDefault();
+      const deltaX = event.clientX - dragState.startX;
+      const deltaY = event.clientY - dragState.startY;
+      dragState.translateX += deltaX;
+      dragState.translateY += deltaY;
+      dragState.startX = event.clientX;
+      dragState.startY = event.clientY;
+      requestTransformUpdate();
+    };
+    const attachDragHandlers = (img) => {
+      if (!img || img.dataset.dragHandlersAttached === 'true') return;
+      img.addEventListener('pointerdown', startDrag);
+      img.addEventListener('pointerup', stopDrag);
+      img.addEventListener('pointerleave', stopDrag);
+      img.addEventListener('pointercancel', stopDrag);
+      img.addEventListener('pointermove', handleDrag);
+      img.dataset.dragHandlersAttached = 'true';
+    };
+    function nextPhoto(dir = 1) {
+      currentIndex = (currentIndex + dir + gallery.length) % gallery.length;
+      renderLightbox();
+    }
+
+    async function loadHost(hostId, vehicle) {
+      currentHostId = hostId;
+      // reset avatar to placeholder before loading
+      const avatarEl = qs('#hostAvatar');
+      if (avatarEl) {
+        avatarEl.style.backgroundImage = '';
+        avatarEl.style.backgroundColor = '#0f172a';
+        setText(avatarEl, 'HU');
+      }
+      let host = null;
+      try {
+        if (window.firebaseDb && hostId) {
+          const snap = await firebaseDb.collection('users').doc(String(hostId)).get();
+          if (snap.exists) {
+            host = { id: hostId, ...snap.data() };
+          }
+        }
+      } catch (e) {
+        console.warn('Host fetch failed:', e.message);
+      }
+
+      // Best-effort vehicle count for this host
+      let hostVehicleCount = 0;
+      try {
+        const all = await VehicleStore.getActiveVehicles();
+        hostVehicleCount = all.filter(v => v.ownerId === hostId || v.hostId === hostId).length;
+      } catch (e) {
+        hostVehicleCount = host?.vehicleCount || 0;
+      }
+
+      const hostName = host?.displayName || host?.name || host?.firstName || vehicle?.hostName || 'Host';
+      setText(qs('#hostName'), hostName);
+      const initials = hostName.split(' ').map(p => p[0]).join('').substring(0,2).toUpperCase() || 'HU';
+      if (avatarEl) {
+        if (host?.avatar) {
+          avatarEl.style.backgroundImage = `url('${host.avatar}')`;
+          avatarEl.style.backgroundSize = 'cover';
+          avatarEl.style.backgroundPosition = 'center';
+          avatarEl.style.backgroundColor = 'transparent';
+          setText(avatarEl, '');
+        } else {
+          avatarEl.style.backgroundImage = '';
+          avatarEl.style.backgroundColor = '#0f172a';
+          setText(avatarEl, initials);
+        }
+      }
+      setText(qs('#hostMeta'), `${host?.type || 'Host'} - ${hostVehicleCount} vehicles - Joined ${host?.joined || 'recently'}`);
+      if (host && host.verified === false) {
+        qs('#hostBadge').style.display = 'none';
+      }
+      const fleetUrl = hostId ? `host-profile-public.html?id=${encodeURIComponent(hostId)}` : '#';
+      qs('#hostAvatar').style.cursor = 'pointer';
+      qs('#hostAvatar').onclick = () => { if (hostId) window.location.href = fleetUrl; };
+      qs('#hostName').style.cursor = 'pointer';
+      qs('#hostName').onclick = () => { if (hostId) window.location.href = fleetUrl; };
+      qs('#viewFleetBtn').onclick = () => { if (hostId) window.location.href = fleetUrl; };
+      qs('#messageHostBtn').onclick = () => {
+        const email = vehicle.contactEmail || host?.email;
+        if (email) { window.location.href = `mailto:${email}`; }
+      };
+    }
+
+    function renderFeatureGroup(arr, chipsId, groupId) {
+      const chips = qs(chipsId);
+      const group = qs(groupId);
+      if (!chips || !group) return;
+      chips.innerHTML = '';
+      const clean = safeList(arr).map(v => String(v || '').trim()).filter(Boolean);
+      if (!clean.length) {
+        group.style.display = 'none';
+        return;
+      }
+      group.style.display = 'grid';
+      clean.forEach(f => {
+        const span = document.createElement('span');
+        span.className = 'feature-chip';
+        span.innerHTML = `<span class="dot"></span>${f}`;
+        chips.appendChild(span);
+      });
+    }
+
+    function renderRules(rules) {
+      const box = qs('#rulesList');
+      const empty = qs('#rulesEmpty');
+      const badge = qs('#rulesBadge');
+      box.innerHTML = '';
+
+      const cleanRules = safeList(rules).map(r => String(r || '').trim()).filter(r => r && !/^nothing$/i.test(r) && !/^none$/i.test(r));
+
+      if (badge) {
+        badge.textContent = `${cleanRules.length} rule${cleanRules.length === 1 ? '' : 's'}`;
+      }
+
+      if (!cleanRules.length) {
+        if (box) box.style.display = 'none';
+        if (empty) empty.style.display = 'grid';
+        return;
+      }
+
+      if (box) box.style.display = 'grid';
+      if (empty) empty.style.display = 'none';
+
+      const iconMap = [
+        { key: 'smok', icon: '🚭' },
+        { key: 'pet', icon: '🐾' },
+        { key: 'party', icon: '🎉' },
+        { key: 'driver', icon: '👤' },
+        { key: 'fuel', icon: '⛽' },
+        { key: 'clean', icon: '🧼' },
+        { key: 'speed', icon: '🏎️' },
+      ];
+
+      const pickIcon = (text) => {
+        const lower = text.toLowerCase();
+        const found = iconMap.find(item => lower.includes(item.key));
+        return found ? found.icon : '⚠️';
+      };
+
+      cleanRules.forEach(rule => {
+        const div = document.createElement('div');
+        div.className = 'rule';
+        div.innerHTML = `
+          <div class="icon">${pickIcon(rule)}</div>
+          <div class="text">
+            <div>${rule}</div>
+            <div class="label">Rule</div>
+          </div>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    function renderSimilar(category, excludeId) {
+      VehicleStore.getActiveVehicles().then(list => {
+        const grid = qs('#similarGrid');
+        grid.innerHTML = '';
+        list.filter(v => v.id !== excludeId && (!category || v.category === category)).slice(0,6).forEach(v => {
+          const card = document.createElement('a');
+          card.href = `vehicle.html?id=${v.id}`;
+          card.className = 'card';
+          card.innerHTML = `
+            <img src="${(v.photos && v.photos[0]) || v.image || placeholderImg}" alt="${v.title || 'Vehicle'}" style="width:100%; height:160px; object-fit:cover; border-radius:12px;" />
+            <div style="padding:10px;">
+              <div style="font-weight:800;">${v.title || 'Vehicle'}</div>
+              <div class="muted" style="font-size:13px;">${v.city || ''} ${v.state || ''}</div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+        if (!grid.childElementCount) {
+          grid.innerHTML = '<div class=\"muted\">No similar vehicles right now.</div>';
+        }
+      });
+    }
+
+    function waitForFirebase(timeoutMs = 3000) {
+      return new Promise((resolve) => {
+        const start = Date.now();
+        const check = () => {
+          if (window.firebaseDb) return resolve(true);
+          if (Date.now() - start > timeoutMs) return resolve(false);
+          requestAnimationFrame(check);
+        };
+        check();
+      });
+    }
+
+    async function loadVehicle() {
+      const params = new URLSearchParams(window.location.search);
+      const vehicleId = params.get('id');
+      if (!vehicleId) {
+        alert('Missing vehicle id');
+        return;
+      }
+      try {
+        await waitForFirebase(); // ensure firebaseDb is ready
+        let vehicle = null;
+
+        // Try direct Firestore doc first (works for guests)
+        if (window.firebaseDb) {
+          try {
+            const snap = await firebaseDb.collection('vehicles').doc(String(vehicleId)).get();
+            if (snap.exists) {
+              vehicle = { id: vehicleId, ...snap.data() };
+              console.log('Vehicle loaded via direct Firestore');
+            }
+          } catch (err) {
+            console.warn('Direct Firestore fetch failed:', err.message);
+          }
+        }
+
+        // Fallback to store
+        if (!vehicle) {
+          vehicle = await VehicleStore.getVehicleById(vehicleId);
+          if (vehicle) {
+            console.log('Vehicle loaded via VehicleStore');
+          }
+        }
+
+        if (!vehicle) {
+          setText(qs('#vehicleTitle'), 'Vehicle not found');
+          setText(qs('#vehicleLocation'), '');
+          qs('#quickSpecs').innerHTML = '';
+          setText(qs('#priceBlock'), 'N/A');
+          const emailEl = qs('#contactEmail');
+          const phoneEl = qs('#contactPhone');
+          if (emailEl) { emailEl.textContent = '-'; emailEl.href = 'javascript:void(0)'; }
+          if (phoneEl) { phoneEl.textContent = '-'; phoneEl.href = 'javascript:void(0)'; }
+          qs('#gallerySection').style.display = 'none';
+          return;
+        }
+
+        // Gallery
+        const photos = safeList(vehicle.photos || []).length ? vehicle.photos : [];
+        renderGallery(photos);
+        qs('#viewAllBtn').onclick = () => openLightbox(0);
+
+        // Title and basics
+        setText(qs('#vehicleTitle'), vehicle.title || [vehicle.make, vehicle.model, vehicle.year].filter(Boolean).join(' ') || 'Vehicle');
+        setText(qs('#vehicleLocation'), [vehicle.city, vehicle.state, vehicle.country].filter(Boolean).join(', '));
+        const priceValue = vehicle.price ? `$${vehicle.price}/${(vehicle.frequency || 'day').toLowerCase()}` : '$0/day';
+        setText(qs('#priceBlock'), priceValue);
+
+        const specPairs = [
+          ['Year', vehicle.year],
+          ['Fuel', vehicle.fuelType],
+          ['Transmission', vehicle.transmission],
+          ['Seats', vehicle.seats],
+          ['Category', vehicle.category],
+          ['Insurance', vehicle.insurance],
+          ['Drive', vehicle.driveType]
+        ];
+        const specBox = qs('#quickSpecs');
+        specBox.innerHTML = '';
+        specPairs.forEach(([label, value]) => {
+          const isMissing = value === undefined || value === null || value === '' || value === '---';
+          const display = isMissing ? 'Not provided' : value;
+          const div = document.createElement('div');
+          div.className = 'spec';
+          div.innerHTML = `<span class="label">${label}</span><span class="value ${isMissing ? 'muted' : ''}">${display}</span>`;
+          specBox.appendChild(div);
+        });
+
+        // Contact overrides
+        const email = vehicle.contactEmail || vehicle.hostEmail || 'Not provided';
+        const phone = vehicle.contactPhone || vehicle.hostPhone || 'Not provided';
+        const emailEl = qs('#contactEmail');
+        const phoneEl = qs('#contactPhone');
+
+        setText(emailEl, email);
+        emailEl.href = email && email !== 'Not provided' ? `mailto:${email}` : 'javascript:void(0)';
+
+        setText(phoneEl, phone);
+        phoneEl.href = phone && phone !== 'Not provided' ? `tel:${phone}` : 'javascript:void(0)';
+
+        qs('#contactBtn').onclick = () => {
+          if (email && email !== 'Not provided') {
+            window.location.href = `mailto:${email}`;
+          } else if (phone && phone !== 'Not provided') {
+            window.location.href = `tel:${phone}`;
+          }
+        };
+
+        // Host
+        await loadHost(vehicle.ownerId || vehicle.hostId, vehicle);
+
+        // Features and notes
+        renderFeatureGroup(vehicle.featuresConvenience, '#convFeatures', '#convGroup');
+        renderFeatureGroup(vehicle.featuresSafety, '#safeFeatures', '#safeGroup');
+        renderFeatureGroup(vehicle.featuresTech, '#techFeatures', '#techGroup');
+
+        const hostNotesValue = (vehicle.hostNotes || '').trim();
+        const hostNotesEl = qs('#hostNotes');
+        const hostNotesCard = qs('#hostNotesCard');
+        const hostNotesEmpty = qs('#hostNotesEmpty');
+        if (hostNotesValue) {
+          if (hostNotesEl) hostNotesEl.textContent = hostNotesValue.charAt(0).toUpperCase() + hostNotesValue.slice(1);
+          if (hostNotesCard) hostNotesCard.style.display = 'grid';
+          if (hostNotesEmpty) hostNotesEmpty.style.display = 'none';
+        } else {
+          if (hostNotesCard) hostNotesCard.style.display = 'none';
+          if (hostNotesEmpty) hostNotesEmpty.style.display = 'grid';
+        }
+
+        // Rules
+        renderRules(vehicle.rules || []);
+
+        // Location
+        const pickupParts = [vehicle.address, vehicle.city, vehicle.state, vehicle.country].filter(Boolean).join(', ');
+        setText(qs('#pickupInfo'), pickupParts || 'Location not provided');
+        setText(qs('#pickupCity'), vehicle.city ? `City: ${vehicle.city}` : 'City not provided');
+        setText(qs('#altPickup'), vehicle.pickupAlt || '');
+
+        const deliveryText = vehicle.deliveryRadius
+          ? `Host will deliver within ${vehicle.deliveryRadius} miles`
+          : 'Pickup only';
+        setText(qs('#deliveryInfo'), deliveryText);
+
+        const badge = qs('#deliveryBadge');
+        if (badge) {
+          badge.textContent = vehicle.deliveryRadius ? `Delivery available • ${vehicle.deliveryRadius} miles` : 'Pickup only';
+        }
+
+        const chipHolder = qs('#locationChips');
+        if (chipHolder) {
+          const chips = [];
+          if (vehicle.deliveryRadius) chips.push(`Within ${vehicle.deliveryRadius} miles`);
+          chips.push(vehicle.deliveryRadius ? 'Delivery available' : 'Pickup only');
+          if (vehicle.address) chips.push('Pickup location shown');
+          if (vehicle.city) chips.push(vehicle.city);
+          chipHolder.innerHTML = chips.map(text => `<span class="mini-chip"><span class="dot"></span>${text}</span>`).join('');
+        }
+
+        // Map embed (Google Maps Embed API)
+        const mapBox = qs('#mapBox');
+        const MAPS_EMBED_KEY = await getMapsKey();
+        if (pickupParts && MAPS_EMBED_KEY) {
+          const q = encodeURIComponent(pickupParts);
+          mapBox.innerHTML = `
+            <div class="map-overlay-label">Map preview</div>
+            <iframe
+              title="Pickup location map"
+              width="100%"
+              height="100%"
+              style="border:0; border-radius: 12px;"
+              loading="lazy"
+              allowfullscreen
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps/embed/v1/place?key=${MAPS_EMBED_KEY}&q=${q}">
+            </iframe>`;
+        } else {
+          mapBox.innerHTML = `
+            <div class="map-placeholder">
+              <div class="icon" aria-hidden="true">🗺️</div>
+              <div style="font-weight:700; color:#111827;">${pickupParts ? 'Map preview unavailable' : 'Location not provided'}</div>
+              <div class="muted">${pickupParts ? 'Map is disabled (no API key)' : 'Add a location to show the map'}</div>
+              <a class="link" href="https://developers.google.com/maps/documentation/embed/get-api-key" target="_blank" rel="noreferrer">Learn how to enable maps</a>
+            </div>`;
+        }
+
+        // Similar
+        renderSimilar(vehicle.category, vehicle.id);
+      } catch (e) {
+        console.error('Error loading vehicle', e);
+        alert('Failed to load vehicle details');
+      }
+    }
+
+    // Lightbox events
+    qs('#lbBackBtn').onclick = closeLightbox;
+    qs('#lbCloseBtn').onclick = closeLightbox;
+    qs('#lbPrev').onclick = () => nextPhoto(-1);
+    qs('#lbNext').onclick = () => nextPhoto(1);
+    qs('#lightbox').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeLightbox(); });
+    document.addEventListener('keydown', (e) => {
+      if (!qs('#lightbox').classList.contains('show')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextPhoto(1);
+      if (e.key === 'ArrowLeft') nextPhoto(-1);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const isAuthed = (window.AuthManager && typeof AuthManager.isAuthenticated === 'function')
+        ? AuthManager.isAuthenticated()
+        : false;
+      NavBuilder.renderNav(isAuthed);
+      if (window.AuthManager && typeof AuthManager.setupFirebaseAuthListener === 'function') {
+        AuthManager.setupFirebaseAuthListener();
+      }
+      loadVehicle();
+    });
+  </script>
+</body>
+</html>

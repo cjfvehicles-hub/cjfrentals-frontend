@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safety Guidelines | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section class="card" style="gap:20px; max-width: 900px; margin: 0 auto;">
+      <div class="pill">Safety</div>
+      <h1 style="font-size: clamp(28px, 4vw, 40px);">⚠️ Renter Safety Policy</h1>
+      <p class="muted" style="font-size: 14px;"><em>Essential guidelines to protect yourself from scams</em></p>
+
+      <div style="background: #dc3545; color: white; border-radius: 8px; padding: 20px; margin: 16px 0; text-align: center;">
+        <h2 style="font-size: 24px; margin-bottom: 12px; color: white;">ðŸš¨ CRITICAL WARNING</h2>
+        <p style="font-size: 18px; font-weight: 600; margin: 0;">Never send money before seeing the vehicle in person!</p>
+      </div>
+
+      <div class="grid" style="gap:24px;">
+        <!-- Rule 1 -->
+        <div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px; color: #dc3545;">1. Never Pay Online Without Seeing the Vehicle</h2>
+          <p><strong>Do NOT send money, deposits, or payments unless you are physically present with the vehicle.</strong></p>
+          <p style="margin-top: 12px;">Common scams include:</p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>Fake listings with stolen photos</li>
+            <li>Hosts requesting advance payment via wire transfer</li>
+            <li>"Too good to be true" pricing</li>
+            <li>Requests for payment before meeting</li>
+          </ul>
+          <p style="margin-top: 12px; font-weight: 600; color: #dc3545;">If a Host refuses to meet in person, it's likely a scam. Walk away.</p>
+        </div>
+
+        <!-- Rule 2 -->
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px; color: #856404;">2. Inspect the Vehicle Before Payment</h2>
+          <p><strong>Always inspect the vehicle thoroughly before handing over any money.</strong></p>
+          <p style="margin-top: 12px;">Check for:</p>
+          <ul style="margin: 8px 0; padding-left: 24px; line-height: 1.8;">
+            <li>Matching photos (verify it's the same vehicle)</li>
+            <li>Mechanical condition (test drive if possible)</li>
+            <li>Damage, scratches, or hidden issues</li>
+            <li>Valid registration and insurance documents</li>
+            <li>Host's ID matches vehicle ownership</li>
+          </ul>
+        </div>
+
+        <!-- Rule 3 -->
+        <div style="background: #e7f3ff; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px;">3. Meet in Safe Public Locations</h2>
+          <p><strong>Only meet Hosts in well-lit, public areas.</strong></p>
+          <p style="margin-top: 12px;">Recommended meeting places:</p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>Police station parking lots</li>
+            <li>Busy shopping centers</li>
+            <li>Gas stations with security cameras</li>
+            <li>Public parking areas with foot traffic</li>
+          </ul>
+          <p style="margin-top: 12px; font-weight: 600;">Avoid isolated locations, private residences (unless verified), or meeting at night.</p>
+        </div>
+
+        <!-- Rule 4 -->
+        <div style="background: #f8f9fa; border-left: 4px solid #6c757d; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px;">4. Verify Host Identity & Ownership</h2>
+          <p><strong>Confirm the Host is who they claim to be.</strong></p>
+          <p style="margin-top: 12px;">Verification steps:</p>
+          <ul style="margin: 8px 0; padding-left: 24px; line-height: 1.8;">
+            <li>Request government-issued ID</li>
+            <li>Verify phone number matches listing</li>
+            <li>Check vehicle registration/title (must match Host name)</li>
+            <li>Look for "Verified" badge (basic check only, not a guarantee)</li>
+            <li>Search Host's name for complaints or red flags</li>
+          </ul>
+        </div>
+
+        <!-- Rule 5 -->
+        <div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px; color: #dc3545;">5. Avoid Hosts Who Refuse In-Person Meetings</h2>
+          <p><strong>If a Host insists on online-only transactions, it's a major red flag.</strong></p>
+          <p style="margin-top: 12px;">Warning signs:</p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>"I'm out of town, send payment first"</li>
+            <li>"Vehicle is stored elsewhere, pay deposit now"</li>
+            <li>Pressure to pay immediately</li>
+            <li>Refusal to provide phone number or meet</li>
+            <li>Vague or evasive answers to questions</li>
+          </ul>
+          <p style="margin-top: 12px; font-weight: 600; color: #dc3545;">Legitimate Hosts will always meet in person. Walk away if they won't.</p>
+        </div>
+
+        <!-- Rule 6 -->
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px; color: #856404;">6. Report Suspicious Hosts Immediately</h2>
+          <p><strong>Help protect other Renters by reporting scams.</strong></p>
+          <p style="margin-top: 12px;">Report if you encounter:</p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>Fake listings or stolen photos</li>
+            <li>Hosts asking for payment before meeting</li>
+            <li>Misrepresented vehicles</li>
+            <li>Fraudulent identity or documents</li>
+            <li>Aggressive or threatening behavior</li>
+          </ul>
+          <p style="margin-top: 12px;"><a href="contact.html" style="color: var(--accent); font-weight: 600;">Report a scam →</a></p>
+          <p style="margin-top: 8px; font-size: 14px; color: #856404;"><em>Hosts with 7 verified scam reports are permanently banned.</em></p>
+        </div>
+
+        <!-- Rule 7 -->
+        <div style="background: #e7f3ff; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px;">7. Understand CJF's Limitations</h2>
+          <p><strong>CJF cannot protect you from scams. You are fully responsible for verifying Hosts.</strong></p>
+          <p style="margin-top: 12px;">CJF does NOT:</p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>Guarantee Host identity or listings</li>
+            <li>Handle payments or refunds</li>
+            <li>Provide insurance or legal protection</li>
+            <li>Resolve disputes or mediate conflicts</li>
+            <li>Verify vehicle condition or ownership</li>
+          </ul>
+          <p style="margin-top: 12px; font-weight: 600;">CJF is an advertising platform only. All transactions are between you and the Host.</p>
+        </div>
+
+        <!-- Payment Safety -->
+        <div style="background: #f8f9fa; border: 2px solid #6c757d; padding: 16px; border-radius: 8px;">
+          <h2 style="font-size: 20px; margin-bottom: 12px;">ðŸ’³ Payment Safety Tips</h2>
+          <ul style="margin: 8px 0; padding-left: 24px; line-height: 1.8;">
+            <li><strong>Use traceable payment methods</strong> (credit cards, PayPal, bank transfers with documentation)</li>
+            <li><strong>Avoid cash if possible</strong> (no record of transaction)</li>
+            <li><strong>Get a receipt</strong> with Host signature, date, and vehicle details</li>
+            <li><strong>Document everything</strong> (photos, messages, agreements)</li>
+            <li><strong>Never wire money</strong> to strangers or unverified Hosts</li>
+          </ul>
+        </div>
+
+        <!-- Final Warning -->
+        <div style="background: #dc3545; color: white; border-radius: 8px; padding: 20px; text-align: center;">
+          <h2 style="font-size: 24px; margin-bottom: 12px; color: white;">⚠️ Final Warning</h2>
+          <p style="font-size: 16px; line-height: 1.8; margin: 0;">
+            <strong>CJF is NOT responsible for scams, fraud, damages, financial loss, or vehicle problems.</strong><br/><br/>
+            By using CJF, you accept all risks and agree that CJF has <strong>zero liability</strong> for your transactions.<br/><br/>
+            <strong>Use the platform safely and responsibly.</strong>
+          </p>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+        <p class="muted" style="font-size: 14px;">
+          <a href="terms.html" style="color: white; margin-right: 16px;">Terms & Conditions</a>
+          <a href="privacy.html" style="color: white; margin-right: 16px;">Privacy Policy</a>
+          <a href="host-agreement.html" style="color: white;">Host Agreement</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+
+    const openMenu = () => {
+      menuPanel?.classList.add('open');
+      backdrop?.classList.add('show');
+    };
+    const closeMenu = () => {
+      menuPanel?.classList.remove('open');
+      backdrop?.classList.remove('show');
+    };
+
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+  </script>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+</body>
+</html>
+

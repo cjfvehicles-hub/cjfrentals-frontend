@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section class="card" style="gap:12px;">
+      <div class="pill">Contact & Reports</div>
+      <h1 style="font-size: clamp(24px, 3.6vw, 32px);">Contact CJF Support</h1>
+      <p class="muted">Report scams, fraud, or contact us for assistance. All reports are reviewed promptly.</p>
+      
+      <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
+        <p style="margin: 0; font-weight: 600; color: #856404;">
+          ⚠️ Remember: CJF does not handle payments, refunds, or disputes. Contact Hosts directly for rental issues.
+        </p>
+      </div>
+      
+      <form class="form-grid">
+        <div class="form-grid two">
+          <div><label>Name</label><input class="input" required /></div>
+          <div><label>Email</label><input type="email" class="input" required /></div>
+          <div><label>Subject</label><input class="input" required /></div>
+          <div>
+            <label>Issue type</label>
+            <select class="input">
+              <option>General Inquiry</option>
+              <option>Report Scam / Fraud</option>
+              <option>Report Fake Listing</option>
+              <option>Report Host</option>
+              <option>Report Renter</option>
+              <option>Technical Issue</option>
+              <option>Account Deletion Request</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div><label>Vehicle/Host link (optional)</label><input class="input" placeholder="Paste URL if reporting a specific listing" /></div>
+          <div style="grid-column: 1 / -1;"><label>Message</label><textarea class="input" rows="6" required placeholder="Provide as much detail as possible..."></textarea></div>
+        </div>
+        <button class="button" type="submit">Send Report</button>
+      </form>
+    </section>
+
+    <section class="card" style="gap:12px; margin-top: 24px;">
+      <h2>Reporting Scams</h2>
+      <p>If you encounter a scam or fraudulent listing:</p>
+      <ul style="margin: 12px 0; padding-left: 24px; line-height: 1.8;">
+        <li>Select "Report Scam / Fraud" in the issue type above</li>
+        <li>Include the Host's name, listing URL, and description of the scam</li>
+        <li>Provide screenshots or evidence if available</li>
+        <li>We will investigate all reports within 24-48 hours</li>
+      </ul>
+      <p style="margin-top: 12px; font-size: 14px; color: #666;">
+        <strong>Note:</strong> Hosts with 7 verified scam reports are permanently banned from CJF.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel.classList.add('open'); backdrop.classList.add('show'); };
+    const closeMenu = () => { menuPanel.classList.remove('open'); backdrop.classList.remove('show'); };
+    const syncAuth = () => AuthManager.updateUIForRole();
+    document.addEventListener('ccr:signedOut', syncAuth);
+    document.addEventListener('DOMContentLoaded', syncAuth);
+    if (document.readyState !== 'loading') syncAuth();
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+  </script>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+</body>
+</html>
+

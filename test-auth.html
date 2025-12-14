@@ -1,0 +1,351 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>ðŸ” Auth Debug & Test</title>
+	<link rel="stylesheet" href="assets/style.css" />
+	<script src="assets/auth.js"></script>
+	<style>
+		body {
+			background: #f5f5f5;
+			padding: 20px;
+		}
+		.debug-container {
+			max-width: 800px;
+			margin: 0 auto;
+			background: white;
+			border-radius: 12px;
+			padding: 24px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		}
+		h1 {
+			color: #333;
+			margin-bottom: 24px;
+			border-bottom: 3px solid #667eea;
+			padding-bottom: 12px;
+		}
+		.debug-section {
+			margin-bottom: 24px;
+		}
+		.debug-section h2 {
+			font-size: 16px;
+			color: #667eea;
+			margin-bottom: 12px;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+		.debug-output {
+			background: #f9f9f9;
+			border: 1px solid #ddd;
+			border-radius: 6px;
+			padding: 12px;
+			font-family: 'Courier New', monospace;
+			font-size: 12px;
+			color: #333;
+			overflow-x: auto;
+			max-height: 300px;
+			overflow-y: auto;
+			white-space: pre-wrap;
+			word-break: break-all;
+		}
+		.button-group {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+		button {
+			padding: 10px 16px;
+			border: none;
+			border-radius: 6px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			font-size: 14px;
+		}
+		.btn-primary {
+			background: #667eea;
+			color: white;
+		}
+		.btn-primary:hover {
+			background: #5568d3;
+		}
+		.btn-success {
+			background: #4CAF50;
+			color: white;
+		}
+		.btn-success:hover {
+			background: #45a049;
+		}
+		.btn-warning {
+			background: #FF9800;
+			color: white;
+		}
+		.btn-warning:hover {
+			background: #e68900;
+		}
+		.btn-danger {
+			background: #f44336;
+			color: white;
+		}
+		.btn-danger:hover {
+			background: #da190b;
+		}
+		.status-badge {
+			display: inline-block;
+			padding: 8px 12px;
+			border-radius: 6px;
+			font-weight: 600;
+			margin: 4px 0;
+			font-size: 13px;
+		}
+		.status-success {
+			background: #c8e6c9;
+			color: #2e7d32;
+		}
+		.status-error {
+			background: #ffcdd2;
+			color: #c62828;
+		}
+		.status-info {
+			background: #bbdefb;
+			color: #1565c0;
+		}
+		.nav-buttons {
+			display: flex;
+			gap: 8px;
+			margin-top: 24px;
+			padding-top: 24px;
+			border-top: 1px solid #ddd;
+		}
+		.nav-buttons a {
+			flex: 1;
+			padding: 12px;
+			background: #667eea;
+			color: white;
+			text-decoration: none;
+			border-radius: 6px;
+			text-align: center;
+			font-weight: 600;
+			transition: all 0.3s ease;
+		}
+		.nav-buttons a:hover {
+			background: #5568d3;
+			transform: translateY(-2px);
+		}
+	</style>
+</head>
+<body>
+	<div class="debug-container">
+		<h1>ðŸ” Authentication Debug & Test Tool</h1>
+
+		<!-- Current Auth State -->
+		<div class="debug-section">
+			<h2>ðŸ“Š Current Auth State</h2>
+			<div id="authStatus"></div>
+			<button class="btn-primary" onclick="refreshAuthStatus()">ðŸ”„ Refresh Status</button>
+		</div>
+
+		<!-- localStorage Contents -->
+		<div class="debug-section">
+			<h2>ðŸ’¾ localStorage Contents</h2>
+			<div class="debug-output" id="localStorageView"></div>
+			<button class="btn-primary" onclick="viewLocalStorage()">ðŸ” View localStorage</button>
+		</div>
+
+		<!-- Test Sign In -->
+		<div class="debug-section">
+			<h2>✅ Test Sign In (Host)</h2>
+			<p style="color: #666; font-size: 14px; margin-bottom: 12px;">Sign in as a test host account to verify authentication works.</p>
+			<div class="button-group">
+				<button class="btn-success" onclick="testSignInAsHost()">Sign In as Host</button>
+				<button class="btn-warning" onclick="testSignInAsAdmin()">Sign In as Admin</button>
+				<button class="btn-danger" onclick="testSignOut()">Sign Out</button>
+			</div>
+		</div>
+
+		<!-- Test Access Control -->
+		<div class="debug-section">
+			<h2>ðŸ”’ Test Access Control</h2>
+			<p style="color: #666; font-size: 14px; margin-bottom: 12px;">Verify that AuthManager correctly blocks/allows access.</p>
+			<div class="button-group">
+				<button class="btn-primary" onclick="testAccessControl()">Test Access Checks</button>
+				<button class="btn-primary" onclick="testAuthFlow()">Test Full Auth Flow</button>
+			</div>
+			<div class="debug-output" id="accessTestOutput"></div>
+		</div>
+
+		<!-- Navigate to Pages -->
+		<div class="debug-section">
+			<h2>ðŸš€ Navigate to Pages</h2>
+			<p style="color: #666; font-size: 14px; margin-bottom: 12px;">After signing in above, test navigation to protected pages.</p>
+			<div class="nav-buttons">
+				<a href="account.html">Go to My Account</a>
+				<a href="index.html">Back to Home</a>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Refresh auth status display
+		function refreshAuthStatus() {
+			const user = AuthManager.getCurrentUser();
+			const isHost = AuthManager.isHost();
+			const isAdmin = AuthManager.isAdmin();
+			const isAuth = AuthManager.isAuthenticated();
+			const role = AuthManager.getUserRole();
+			
+			const html = `
+				<div style="margin-bottom: 12px;">
+					<p><strong>Authenticated:</strong> <span class="status-badge ${isAuth ? 'status-success' : 'status-error'}">${isAuth ? '✅ YES' : '✖ NO'}</span></p>
+					<p><strong>Role:</strong> <span class="status-badge status-info">${role.toUpperCase()}</span></p>
+					<p><strong>Is Host:</strong> <span class="status-badge ${isHost ? 'status-success' : 'status-error'}">${isHost ? '✅ YES' : '✖ NO'}</span></p>
+					<p><strong>Is Admin:</strong> <span class="status-badge ${isAdmin ? 'status-success' : 'status-error'}">${isAdmin ? '✅ YES' : '✖ NO'}</span></p>
+				</div>
+				<div style="background: #f0f0f0; padding: 12px; border-radius: 6px; margin-top: 12px;">
+					<strong>Current User:</strong>
+					<pre style="margin: 8px 0 0 0; font-size: 11px;">${JSON.stringify(user, null, 2)}</pre>
+				</div>
+			`;
+			document.getElementById('authStatus').innerHTML = html;
+		}
+
+		// View localStorage
+		function viewLocalStorage() {
+			let output = 'localStorage Contents:\n\n';
+			for (let i = 0; i < localStorage.length; i++) {
+				const key = localStorage.key(i);
+				if (key.startsWith('CCR_') || key === 'ccrSignedIn') {
+					const value = localStorage.getItem(key);
+					output += `${key}:\n${value}\n\n`;
+				}
+			}
+			if (output === 'localStorage Contents:\n\n') {
+				output = '(No CCR-related data found in localStorage)';
+			}
+			document.getElementById('localStorageView').textContent = output;
+		}
+
+		// Test sign in as host
+		function testSignInAsHost() {
+			const result = AuthManager.signInAsHost({
+				id: 'test-host-' + Date.now(),
+				name: 'Test Host Account',
+				email: 'testhost@example.com',
+				phone: '+1-555-1234',
+				country: 'United States',
+				state: 'California',
+				city: 'San Francisco'
+			});
+			
+			console.log('Sign in result:', result);
+			alert(result ? '✅ Signed in as Host successfully!' : '✖ Failed to sign in');
+			refreshAuthStatus();
+			viewLocalStorage();
+		}
+
+		// Test sign in as admin
+		function testSignInAsAdmin() {
+			const result = AuthManager.signInAsAdmin({
+				id: 'test-admin-' + Date.now(),
+				name: 'Test Admin Account',
+				email: 'testadmin@example.com',
+				phone: '+1-555-5678'
+			});
+			
+			console.log('Sign in result:', result);
+			alert(result ? '✅ Signed in as Admin successfully!' : '✖ Failed to sign in');
+			refreshAuthStatus();
+			viewLocalStorage();
+		}
+
+		// Test sign out
+		function testSignOut() {
+			AuthManager.signOut();
+			alert('✅ Signed out successfully');
+			refreshAuthStatus();
+			viewLocalStorage();
+		}
+
+		// Test access control
+		function testAccessControl() {
+			const user = AuthManager.getCurrentUser();
+			const isHost = AuthManager.isHost();
+			const isAdmin = AuthManager.isAdmin();
+			const isAuth = AuthManager.isAuthenticated();
+			
+			let output = '=== ACCESS CONTROL TEST ===\n\n';
+			output += `✓ getCurrentUser(): ${user ? 'User object found' : 'null (no user)'}\n`;
+			output += `✓ isAuthenticated(): ${isAuth}\n`;
+			output += `✓ isHost(): ${isHost}\n`;
+			output += `✓ isAdmin(): ${isAdmin}\n`;
+			output += `✓ getUserRole(): ${AuthManager.getUserRole()}\n\n`;
+			
+			output += '=== PERMISSION TESTS ===\n\n';
+			output += `✓ canAddVehicles(): ${AuthManager.canAddVehicles()}\n`;
+			output += `✓ canEditVehicle("other-host"): ${AuthManager.canEditVehicle('other-host')}\n`;
+			output += `✓ canEditProfile("other-host"): ${AuthManager.canEditProfile('other-host')}\n`;
+			
+			if (user) {
+				output += `✓ isOwner("${user.id}"): ${AuthManager.isOwner(user.id)}\n`;
+				output += `✓ canEditVehicle("${user.id}"): ${AuthManager.canEditVehicle(user.id)}\n`;
+			}
+			
+			document.getElementById('accessTestOutput').textContent = output;
+		}
+
+		// Test full auth flow
+		function testAuthFlow() {
+			let output = '=== FULL AUTH FLOW TEST ===\n\n';
+			
+			// Step 1: Check initial state
+			output += 'STEP 1: Initial state (before sign in)\n';
+			output += `  isHost: ${AuthManager.isHost()} (should be false)\n`;
+			output += `  isAuth: ${AuthManager.isAuthenticated()} (should be false)\n\n`;
+			
+			// Step 2: Sign in
+			output += 'STEP 2: Sign in as host\n';
+			const signInResult = AuthManager.signInAsHost({
+				id: 'flow-test-' + Date.now(),
+				name: 'Flow Test Host',
+				email: 'flow@test.com'
+			});
+			output += `  signInAsHost() returned: ${signInResult}\n`;
+			output += `  localStorage CCR_CURRENT_USER: ${localStorage.getItem('CCR_CURRENT_USER') ? '✓ Set' : '✗ Not set'}\n\n`;
+			
+			// Step 3: Check after sign in
+			output += 'STEP 3: Check state after sign in\n';
+			output += `  isHost: ${AuthManager.isHost()} (should be true)\n`;
+			output += `  isAuth: ${AuthManager.isAuthenticated()} (should be true)\n`;
+			output += `  getCurrentUser(): ${AuthManager.getCurrentUser() ? 'Found' : 'null'}\n\n`;
+			
+			// Step 4: Test access
+			output += 'STEP 4: Access control\n';
+			output += `  requireHost() should not redirect (should return true)\n`;
+			const accessResult = AuthManager.requireHost();
+			output += `  requireHost() returned: ${accessResult}\n\n`;
+			
+			// Step 5: Sign out
+			output += 'STEP 5: Sign out\n';
+			AuthManager.signOut();
+			output += `  After signOut():\n`;
+			output += `  isHost: ${AuthManager.isHost()} (should be false)\n`;
+			output += `  isAuth: ${AuthManager.isAuthenticated()} (should be false)\n\n`;
+			
+			output += '=== TEST COMPLETE ===';
+			
+			document.getElementById('accessTestOutput').textContent = output;
+			refreshAuthStatus();
+		}
+
+		// Initialize on page load
+		window.addEventListener('load', () => {
+			refreshAuthStatus();
+			viewLocalStorage();
+		});
+	</script>
+</body>
+</html>
+
+
+

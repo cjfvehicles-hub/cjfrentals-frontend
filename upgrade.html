@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upgrade Plan | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    body { margin: 0; background: #f6f7fb; font-family: 'Manrope', sans-serif; color: #111827; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid #e5e7eb; }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #111827; font-weight: 700; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 10px; background: #0f172a; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; }
+    .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 24px; }
+    .plan-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 6px 18px rgba(0,0,0,0.04); display: grid; gap: 10px; }
+    .plan-card.highlight { border-color: #4f46e5; box-shadow: 0 10px 22px rgba(79,70,229,0.12); }
+    .plan-name { font-size: 20px; font-weight: 800; margin: 0; }
+    .plan-price { font-size: 28px; font-weight: 800; color: #111827; margin: 4px 0; }
+    .plan-limit { font-size: 14px; color: #475569; }
+    .plan-features { margin: 0; padding-left: 18px; color: #374151; line-height: 1.5; }
+    .plan-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn { border: none; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .btn.primary { background: #4f46e5; color: white; }
+    .btn.outline { background: #eef2ff; color: #312e81; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-weight: 700; }
+    .status { font-size: 13px; color: #1f2937; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">CJF</span>
+        <span>CJF Rentals</span>
+      </a>
+      <a class="btn outline" href="account.html">Back to account</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <h1 style="margin: 0;">Upgrade your hosting plan</h1>
+    <p style="margin: 6px 0 16px; color: #475569;">Free includes 2 active vehicles. Choose Starter for 5, or Pro for unlimited.</p>
+    <div id="planStatus" class="status">Loading your current plan...</div>
+
+    <div class="plan-grid">
+      <div class="plan-card" data-plan="free">
+        <div class="tag">Current default</div>
+        <h2 class="plan-name">Free</h2>
+        <div class="plan-price">$0 / month</div>
+        <div class="plan-limit">Up to 2 active vehicle posts</div>
+        <ul class="plan-features">
+          <li>Public profile & fleet</li>
+          <li>Contact host actions</li>
+          <li>Upgrade anytime</li>
+        </ul>
+        <div class="plan-actions">
+          <button class="btn outline" data-select-plan="free">Keep Free</button>
+        </div>
+      </div>
+
+      <div class="plan-card highlight" data-plan="starter">
+        <div class="tag">Popular</div>
+        <h2 class="plan-name">Starter</h2>
+        <div class="plan-price">$10 / month</div>
+        <div class="plan-limit">Up to 5 active vehicle posts</div>
+        <ul class="plan-features">
+          <li>Everything in Free</li>
+          <li>Priority support</li>
+          <li>Best for small fleets</li>
+        </ul>
+        <div class="plan-actions">
+          <button class="btn primary" data-select-plan="starter">Choose Starter</button>
+        </div>
+      </div>
+
+      <div class="plan-card" data-plan="pro">
+        <div class="tag">Unlimited</div>
+        <h2 class="plan-name">Pro</h2>
+        <div class="plan-price">$20 / month</div>
+        <div class="plan-limit">Unlimited active vehicle posts</div>
+        <ul class="plan-features">
+          <li>Everything in Starter</li>
+          <li>Best for growing fleets</li>
+          <li>No posting cap</li>
+        </ul>
+        <div class="plan-actions">
+          <button class="btn primary" data-select-plan="pro">Choose Pro</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/vehicleStore.js"></script>
+  <script>
+    const PLAN_LABELS = { free: 'Free', starter: 'Starter', pro: 'Pro' };
+    const planStatusEl = document.getElementById('planStatus');
+    const freeCard = document.querySelector('[data-plan="free"]');
+    const freeBtn = document.querySelector('[data-select-plan="free"]');
+    let vehicleCount = 0;
+    let lifetimeCreated = 0;
+
+    function setStatus(msg) { planStatusEl.textContent = msg; }
+
+    async function getPlan() {
+      const uid = firebase.auth().currentUser?.uid;
+      if (!uid) return 'free';
+      const snap = await firebase.firestore().collection('users').doc(uid).get();
+      if (snap.exists && snap.data().plan) return snap.data().plan.toLowerCase();
+      return 'free';
+    }
+
+    async function getCounts() {
+      if (!window.VehicleStore || !firebase.auth().currentUser) return 0;
+      try {
+        const list = await window.VehicleStore.getUserVehicles();
+        const active = (list || []).filter(v => !v.status || v.status === 'active').length;
+        const profileSnap = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
+        lifetimeCreated = profileSnap.exists ? (profileSnap.data().vehiclesCreated || 0) : 0;
+        return active;
+      } catch (e) {
+        console.warn('Vehicle count failed', e);
+        return 0;
+      }
+    }
+
+    function updateFreeVisibility(planKey) {
+      const hideFree = (vehicleCount >= 2) || (lifetimeCreated >= 2);
+      if (freeCard) freeCard.style.display = hideFree ? 'none' : 'grid';
+      if (freeBtn) {
+        freeBtn.style.display = hideFree ? 'none' : 'inline-flex';
+        freeBtn.disabled = hideFree;
+      }
+      if (hideFree && planKey === 'free') {
+        setStatus('Free limit used (2/2). Upgrade to add more vehicles.');
+      }
+    }
+
+    async function savePlan(planKey) {
+      const uid = firebase.auth().currentUser?.uid;
+      if (!uid) { alert('Please sign in again.'); return; }
+      await firebase.firestore().collection('users').doc(uid).set({ plan: planKey }, { merge: true });
+      setStatus(`Plan saved: ${PLAN_LABELS[planKey] || 'Free'} (${planKey})`);
+      localStorage.removeItem('CJF_VEHICLES_CACHE');
+    }
+
+    async function startCheckout(planKey) {
+      setStatus('Redirecting to checkout...');
+      try {
+        const resp = await fetch('/.netlify/functions/createCheckout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: planKey })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Checkout session failed');
+        if (!data.url) throw new Error('No checkout URL returned');
+        window.location = data.url;
+      } catch (e) {
+        console.error(e);
+        alert('Could not start checkout. Please try again.');
+        setStatus('Checkout failed.');
+      }
+    }
+
+    document.querySelectorAll('[data-select-plan]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const planKey = btn.dataset.selectPlan;
+        if (planKey === 'free') {
+          await savePlan(planKey);
+          return;
+        }
+        await startCheckout(planKey);
+      });
+    });
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) { setStatus('Please sign in to manage your plan.'); return; }
+      setStatus('Loading your plan...');
+      vehicleCount = await getCounts();
+      const plan = await getPlan();
+      setStatus(`Current plan: ${PLAN_LABELS[plan] || 'Free'}`);
+      updateFreeVisibility(plan);
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('success') === 'true') {
+        const planParam = params.get('plan');
+        if (planParam && PLAN_LABELS[planParam]) {
+          setStatus('Applying your new plan...');
+          try {
+            await savePlan(planParam);
+            setStatus(`Plan saved: ${PLAN_LABELS[planParam]}`);
+          } catch (e) {
+            setStatus('Plan save failed after checkout. Please try again.');
+          }
+        } else {
+          setStatus('Plan saved successfully.');
+        }
+      } else if (params.get('canceled') === 'true') {
+        setStatus('Checkout canceled.');
+      }
+    });
+  </script>
+</body>
+</html>
+
