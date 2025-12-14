@@ -5,19 +5,19 @@
 
 # Force HTTPS and prefer apex (no www)
 [[redirects]]
-  from = "http://www.cjfrentals.com/*"
+  from = "/*"
   to = "https://cjfrentals.com/:splat"
   status = 301
+  force = true
 
+# Proxy API calls to Cloud Run backend
 [[redirects]]
-  from = "https://www.cjfrentals.com/*"
-  to = "https://cjfrentals.com/:splat"
-  status = 301
-
-[[redirects]]
-  from = "http://cjfrentals.com/*"
-  to = "https://cjfrentals.com/:splat"
-  status = 301
+  from = "/api/*"
+  to = "https://ccr-api-xyz.a.run.app/:splat"
+  status = 200
+  force = true
+  framework = "express"
+  headers = { Host = "ccr-api-xyz.a.run.app" }
 
 # Proxy Firebase Auth handler so Google sign-in iframe works on Netlify
 [[redirects]]
