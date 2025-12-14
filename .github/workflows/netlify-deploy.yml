@@ -1,0 +1,41 @@
+name: Netlify Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        if: exists('package.json')
+        run: |
+          npm ci || npm install
+
+      - name: Build (if needed)
+        if: exists('package.json')
+        run: |
+          if [ -f package.json ] && jq -e '.scripts.build' package.json > /dev/null; then
+            npm run build
+          else
+            echo "No build script; deploying static site"
+          fi
+
+      - name: Netlify Deploy
+        uses: netlify/actions/cli@v4
+        with:
+          args: deploy --dir=./ --prod
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

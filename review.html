@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Review | CJF Rentals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    .review-card {
+      max-width: 720px;
+      margin: 0 auto;
+      border-radius: 20px;
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      background: #fff;
+    }
+    .rating-stars {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .rating-stars .star {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: #f8fafc;
+      font-size: 24px;
+      font-weight: 700;
+      color: #cbd5f5;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .rating-stars .star.selected {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #dc2626;
+    }
+    .rating-stars .star:hover {
+      transform: translateY(-2px);
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 14px;
+      display: block;
+      color: #475569;
+    }
+    .legal-note {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 18px;
+      border-top: 1px solid var(--stroke);
+      padding-top: 12px;
+      line-height: 1.6;
+    }
+    #reviewResponse {
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 16px;
+      display: none;
+      border: 1px solid transparent;
+    }
+    #reviewResponse.success {
+      background: #ecfdf5;
+      border-color: #34d399;
+      color: #0f5132;
+    }
+    #reviewResponse.error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">CJF</span>
+        <span>CJF Rentals</span>
+      </a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" aria-label="Site menu">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" id="menuClose" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list">
+      <li><a href="index.html">Browse Vehicles</a></li>
+      <li><a href="host-profile.html">Host Profile</a></li>
+      <li><a href="host-dashboard.html">Host Dashboard</a></li>
+      <li><a href="terms.html">Terms &amp; Conditions</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section class="review-card" id="reviewCard">
+      <div class="grid" style="gap:6px; margin-bottom:16px;">
+        <div class="pill">Verified review</div>
+        <h1 id="reviewFor" style="margin:0;">Loading review form...</h1>
+        <p id="reviewInstructions" class="muted" style="margin:0;">Secure link required.</p>
+        <p id="tokenStatus" class="muted" style="margin:0;">Validating your review link...</p>
+      </div>
+
+      <form id="reviewForm" style="display:none;" novalidate>
+        <div class="form-label">Overall satisfaction</div>
+        <div class="rating-stars" role="radiogroup" aria-label="Star rating">
+          <button type="button" class="star" data-value="1" aria-label="1 star">★</button>
+          <button type="button" class="star" data-value="2" aria-label="2 stars">★</button>
+          <button type="button" class="star" data-value="3" aria-label="3 stars">★</button>
+          <button type="button" class="star" data-value="4" aria-label="4 stars">★</button>
+          <button type="button" class="star" data-value="5" aria-label="5 stars">★</button>
+        </div>
+        <input type="hidden" id="ratingValue" />
+
+        <span class="form-label" for="reviewComment">Your feedback (optional)</span>
+        <textarea id="reviewComment" class="input" rows="4" placeholder="Share what you liked or what could be improved."></textarea>
+
+        <span class="form-label" for="displayName">Display name (optional)</span>
+        <input id="displayName" class="input" placeholder="Anonymous" />
+
+        <span class="form-label" for="captchaInput">Anti-bot challenge</span>
+        <input id="captchaInput" class="input" placeholder="What is 7 + 2?" />
+
+        <div id="timeHint" class="muted" style="margin-top:8px; margin-bottom:10px;">Please stay on this page for 10 seconds before submitting.</div>
+        <button type="submit" class="button" id="submitReviewBtn" disabled>Submit review</button>
+      </form>
+
+      <div id="reviewResponse"></div>
+      <p class="legal-note">
+        Reviews and star ratings are submitted by customers after direct interactions with hosts. Verified reviews are collected using secure, one-time review links or phone confirmation. Customers are not required to create an account.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel.classList.add('open'); backdrop.classList.add('show'); };
+    const closeMenu = () => { menuPanel.classList.remove('open'); backdrop.classList.remove('show'); };
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+  </script>
+  <script src="assets/navBuilder.js"></script>
+  <script>
+    (function() {
+      const token = new URLSearchParams(window.location.search).get('token');
+      const statusEl = document.getElementById('tokenStatus');
+      const instructionsEl = document.getElementById('reviewInstructions');
+      const form = document.getElementById('reviewForm');
+      const ratingButtons = document.querySelectorAll('.rating-stars .star');
+      const ratingInput = document.getElementById('ratingValue');
+      const submitBtn = document.getElementById('submitReviewBtn');
+      const responseEl = document.getElementById('reviewResponse');
+      const timeHint = document.getElementById('timeHint');
+      const commentEl = document.getElementById('reviewComment');
+      const nameEl = document.getElementById('displayName');
+      const captchaEl = document.getElementById('captchaInput');
+      const HOST_NAME_EL = document.getElementById('reviewFor');
+      let countdown = 10;
+      let countdownInterval = null;
+
+      const showStatus = (message, isError = false) => {
+        if (statusEl) {
+          statusEl.textContent = message;
+          statusEl.style.color = isError ? '#b91c1c' : '#0f172a';
+        }
+      };
+
+      const showResponse = (message, success = true) => {
+        if (!responseEl) return;
+        responseEl.textContent = message;
+        responseEl.className = '';
+        responseEl.classList.add(success ? 'success' : 'error');
+        responseEl.style.display = 'block';
+      };
+
+      const enableCountdown = () => {
+        if (!timeHint || !submitBtn) return;
+        countdown = 10;
+        submitBtn.disabled = true;
+        timeHint.textContent = `Please wait ${countdown} seconds before submitting.`;
+        countdownInterval = setInterval(() => {
+          countdown -= 1;
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            timeHint.textContent = 'You can submit your review now.';
+            submitBtn.disabled = false;
+          } else {
+            timeHint.textContent = `Please wait ${countdown} seconds before submitting.`;
+          }
+        }, 1000);
+      };
+
+      const setRating = (value) => {
+        ratingInput.value = value;
+        ratingButtons.forEach(button => {
+          const btnValue = Number(button.dataset.value);
+          button.classList.toggle('selected', btnValue <= value);
+        });
+      };
+
+      ratingButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const value = Number(button.dataset.value);
+          setRating(value);
+        });
+      });
+
+      if (!token) {
+        showStatus('No review token provided in the URL.', true);
+        instructionsEl.textContent = 'Ask your host for a valid review link.';
+        return;
+      }
+
+      const validateToken = async () => {
+        try {
+          const resp = await fetch(`/api/review-tokens/${token}`);
+          const data = await resp.json();
+          if (!resp.ok) {
+            showStatus(data.error || 'Invalid review link.', true);
+            return;
+          }
+          HOST_NAME_EL.textContent = `Share feedback for ${data.data.hostName}`;
+          instructionsEl.textContent = `This link expires ${new Date(data.data.expiresAt).toLocaleString()}.`;
+          showStatus('Link verified. Please rate the experience.', false);
+          form.style.display = 'block';
+          enableCountdown();
+        } catch (error) {
+          console.error('Token validation failed', error);
+          showStatus('Unable to validate the review link.', true);
+        }
+      };
+
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const ratingValue = Number(ratingInput.value);
+        if (!ratingValue || ratingValue < 1 || ratingValue > 5) {
+          showResponse('Please choose a star rating before submitting.', false);
+          return;
+        }
+        const comment = (commentEl?.value || '').trim();
+        if (comment && comment.length < 20) {
+          showResponse('If you add text, please enter at least 20 characters.', false);
+          return;
+        }
+        const captchaValue = Number(captchaEl?.value.trim());
+        if (captchaValue !== 9) {
+          showResponse('The anti-bot challenge answer is incorrect.', false);
+          return;
+        }
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        try {
+          const response = await fetch('/api/reviews/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token,
+              rating: ratingValue,
+              comment,
+              displayName: (nameEl?.value || '').trim() || 'Anonymous'
+            })
+          });
+          const payload = await response.json();
+          if (!response.ok || !payload.success) {
+            showResponse(payload.error || 'Failed to submit review.', false);
+            return;
+          }
+          showResponse('Thank you! Your verified review has been submitted.', true);
+          form.style.display = 'none';
+          showStatus('Review submitted successfully.');
+        } catch (error) {
+          console.error('Submit review failed', error);
+          showResponse('Unable to submit review right now. Try again later.', false);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit review';
+        }
+      });
+
+      validateToken();
+    })();
+  </script>
+</body>
+</html>

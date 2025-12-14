@@ -1,0 +1,71 @@
+headersOrigin = "config"
+redirectsOrigin = "config"
+plugins = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental"
+publishOrigin = "config"
+base = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "SAMEORIGIN"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[redirects]]
+from = "http://www.cjfrentals.com/*"
+to = "https://cjfrentals.com/:splat"
+status = 301.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "https://www.cjfrentals.com/*"
+to = "https://cjfrentals.com/:splat"
+status = 301.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "http://cjfrentals.com/*"
+to = "https://cjfrentals.com/:splat"
+status = 301.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

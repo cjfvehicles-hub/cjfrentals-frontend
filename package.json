@@ -1,0 +1,32 @@
+{
+  "name": "clyderoccr-vehicle-rental",
+  "version": "1.2.0",
+  "description": "Global peer-to-peer vehicle rental platform with host management and plan systems",
+  "type": "module",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000 --directory .",
+    "test": "echo \"Tests not yet configured. See TESTING.md for manual regression tests.\"",
+    "test:ui": "echo \"UI tests coming soon. Use Cypress/Playwright for automated testing.\"",
+    "test:regression": "echo \"Run manual tests from TESTING.md before deployment\""
+  },
+  "keywords": [
+    "vehicle",
+    "rental",
+    "peer-to-peer",
+    "host",
+    "fleet",
+    "management"
+  ],
+  "author": "CCR Development Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clyderoccr-beep/clyderocashcarrental.git"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

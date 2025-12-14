@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Test Vehicle API</title>
+	<style>
+		body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+		.container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+		h1 { color: #333; }
+		.test { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #667eea; }
+		.test h3 { margin-top: 0; color: #667eea; }
+		.output { background: #000; color: #0f0; padding: 10px; border-radius: 4px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; font-size: 12px; }
+		.success { border-left-color: #10b981; }
+		.error { border-left-color: #ef4444; }
+		button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+		button:hover { background: #5568d3; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>ðŸ§ª Vehicle API Test</h1>
+		
+		<div class="test">
+			<h3>Test 1: Fetch Specific Vehicle (ID: 1765078664250)</h3>
+			<button onclick="testGetVehicle()">Test GET /api/vehicles/:id</button>
+			<div id="test1Output" class="output"></div>
+		</div>
+
+		<div class="test">
+			<h3>Test 2: Fetch All Vehicles</h3>
+			<button onclick="testGetAllVehicles()">Test GET /api/vehicles</button>
+			<div id="test2Output" class="output"></div>
+		</div>
+
+		<div class="test">
+			<h3>Test 3: Non-existent Vehicle (ID: 999)</h3>
+			<button onclick="testNonExistent()">Test Non-existent Vehicle</button>
+			<div id="test3Output" class="output"></div>
+		</div>
+	</div>
+
+	<script>
+		const API_URL = 'http://localhost:3000/api';
+
+		function log(elementId, message) {
+			const el = document.getElementById(elementId);
+			el.textContent += message + '\n';
+		}
+
+		function clear(elementId) {
+			document.getElementById(elementId).textContent = '';
+		}
+
+		async function testGetVehicle() {
+			clear('test1Output');
+			log('test1Output', '⏳ Fetching vehicle 1765078664250...\n');
+			
+			try {
+				const response = await fetch(`${API_URL}/vehicles/1765078664250`, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' }
+				});
+
+				log('test1Output', `Status: ${response.status}`);
+				log('test1Output', `Content-Type: ${response.headers.get('Content-Type')}\n`);
+
+				const contentType = response.headers.get('Content-Type') || '';
+				if (!contentType.includes('application/json')) {
+					log('test1Output', '✖ ERROR: Response is not JSON!');
+					const text = await response.text();
+					log('test1Output', `Response preview: ${text.substring(0, 100)}`);
+					return;
+				}
+
+				const data = await response.json();
+				log('test1Output', '✅ Successfully parsed JSON\n');
+				log('test1Output', JSON.stringify(data, null, 2));
+			} catch (error) {
+				log('test1Output', `✖ ERROR: ${error.message}`);
+				console.error(error);
+			}
+		}
+
+		async function testGetAllVehicles() {
+			clear('test2Output');
+			log('test2Output', '⏳ Fetching all vehicles...\n');
+			
+			try {
+				const response = await fetch(`${API_URL}/vehicles`, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' }
+				});
+
+				log('test2Output', `Status: ${response.status}`);
+				log('test2Output', `Content-Type: ${response.headers.get('Content-Type')}\n`);
+
+				const contentType = response.headers.get('Content-Type') || '';
+				if (!contentType.includes('application/json')) {
+					log('test2Output', '✖ ERROR: Response is not JSON!');
+					return;
+				}
+
+				const data = await response.json();
+				log('test2Output', `✅ Got ${data.count || data.data?.length || 0} vehicles\n`);
+				log('test2Output', JSON.stringify(data, null, 2));
+			} catch (error) {
+				log('test2Output', `✖ ERROR: ${error.message}`);
+				console.error(error);
+			}
+		}
+
+		async function testNonExistent() {
+			clear('test3Output');
+			log('test3Output', '⏳ Fetching vehicle 999 (should not exist)...\n');
+			
+			try {
+				const response = await fetch(`${API_URL}/vehicles/999`, {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' }
+				});
+
+				log('test3Output', `Status: ${response.status}`);
+				log('test3Output', `Content-Type: ${response.headers.get('Content-Type')}\n`);
+
+				const contentType = response.headers.get('Content-Type') || '';
+				if (!contentType.includes('application/json')) {
+					log('test3Output', '✖ ERROR: Response is not JSON!');
+					return;
+				}
+
+				const data = await response.json();
+				log('test3Output', '✅ Got JSON response\n');
+				log('test3Output', JSON.stringify(data, null, 2));
+			} catch (error) {
+				log('test3Output', `✖ ERROR: ${error.message}`);
+				console.error(error);
+			}
+		}
+	</script>
+</body>
+</html>
+
+

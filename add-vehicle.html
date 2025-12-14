@@ -1,0 +1,459 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Vehicle | CJF</title>
+  <script src="assets/countryStateData.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    .error-bar { display:none; padding: 12px; border:1px solid #fecaca; background:#fee2e2; color:#991b1b; border-radius: 10px; font-weight:600; }
+    .thumbs { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
+    .thumb { position:relative; width:100px; height:72px; border:1px solid var(--stroke); border-radius:10px; overflow:hidden; }
+    .thumb img { width:100%; height:100%; object-fit:cover; border-radius:0; }
+    .thumb button { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; border:1px solid var(--stroke); background:#fff; cursor:pointer; }
+    .button.loading { opacity:0.6; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page" style="padding-top: 90px;">
+    <section class="card" style="gap:12px;">
+      <div class="pill">Add vehicle</div>
+      <h1 style="font-size: clamp(24px, 3.6vw, 32px);">Vehicle creation</h1>
+      <p class="muted">Respects plan limits. Saves instantly and appears in admin panel, homepage feed, host profile, search results.</p>
+      <div id="formError" class="error-bar">Unable to save vehicle, please try again.</div>
+      <div id="authWait" class="error-bar" style="display:none;background:#e0f2fe;border-color:#bae6fd;color:#0c4a6e;">Waiting for sign-in... Please sign in to continue.</div>
+      <form id="addVehicleForm" class="form-grid">
+        <div class="form-grid two">
+          <div>
+            <label>Upload photos (multi)</label>
+            <input id="photoInput" type="file" class="input" accept="image/*" multiple />
+            <div id="photoPreview" class="thumbs"></div>
+          </div>
+          <div><label>Listing title</label><input id="title" class="input" placeholder="e.g., 2021 Tesla Model 3" /></div>
+          <div><label>Country</label><input id="country" class="input" list="addCountryList" required /></div>
+          <datalist id="addCountryList"></datalist>
+          <div><label>State</label><select id="state" class="input" required><option value="">Select state</option></select></div>
+          <div><label>City</label><input id="city" class="input" required /></div>
+          <div><label>Price</label><input id="price" type="number" min="0" step="1" class="input" required /></div>
+          <div><label>Frequency</label><select id="frequency" class="input"><option value="Daily">Daily</option><option>Weekly</option><option>Monthly</option></select></div>
+          <div><label>Year</label><input id="year" type="number" min="1980" max="2100" class="input" required /></div>
+          <div>
+            <label>Make</label>
+            <input id="make" class="input" list="makeList" autocomplete="off" placeholder="Start typing..." required />
+            <datalist id="makeList"></datalist>
+          </div>
+          <div>
+            <label>Model</label>
+            <input id="model" class="input" list="modelList" autocomplete="off" placeholder="Select make first" required disabled />
+            <datalist id="modelList"></datalist>
+          </div>
+          <div><label>Vehicle type</label><select id="vehicleType" class="input" required><option value="">Select...</option><option>SUV</option><option>Sedan</option><option>Coupe</option><option>Hatchback</option><option>Truck</option><option>Minivan</option><option>Convertible</option><option>Wagon</option></select></div>
+          <div><label>Fuel type</label><select id="fuelType" class="input" required><option value="">Select...</option><option>Gas</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></div>
+          <div><label>Transmission</label><select id="transmission" class="input" required><option value="">Select...</option><option>Automatic</option><option>Manual</option><option>CVT</option><option>Other</option></select></div>
+          <div><label>Drive type</label><select id="driveType" class="input"><option value="">Select...</option><option>FWD</option><option>RWD</option><option>AWD</option><option>4WD</option></select></div>
+          <div><label>Seats</label><input id="seats" type="number" min="1" max="12" class="input" /></div>
+          <div><label>Insurance included?</label><select id="insurance" class="input"><option value="Yes">Yes</option><option value="No">No</option></select></div>
+          <div><label>Host notes & additional info</label><textarea id="hostNotesInput" class="input" rows="3" placeholder="Pickup notes, restrictions, unique highlights"></textarea></div>
+        </div>
+
+        <div class="card" style="gap:10px;">
+          <h3>Features (comma separated per group)</h3>
+          <div class="form-grid two">
+            <div><label>Convenience</label><textarea id="featConvenienceInput" class="input" rows="2" placeholder="Bluetooth, Backup camera"></textarea></div>
+            <div><label>Safety</label><textarea id="featSafetyInput" class="input" rows="2" placeholder="ABS, Airbags, Lane assist"></textarea></div>
+            <div><label>Tech</label><textarea id="featTechInput" class="input" rows="2" placeholder="CarPlay, USB-C, Premium audio"></textarea></div>
+          </div>
+        </div>
+
+        <div class="card" style="gap:10px;">
+          <h3>Rules of the road</h3>
+          <div class="form-grid two">
+            <label><input type="checkbox" id="ruleNoSmoking" /> No smoking</label>
+            <label><input type="checkbox" id="ruleKeepClean" /> Keep vehicle clean</label>
+            <label><input type="checkbox" id="ruleRefuel" /> Refill fuel/charge</label>
+            <label><input type="checkbox" id="ruleNoAggressive" /> No aggressive driving</label>
+            <label><input type="checkbox" id="ruleMileage" /> Mileage guidance applies</label>
+          </div>
+          <div><label>Custom rules</label><textarea id="ruleCustom" class="input" rows="2" placeholder="Any additional guidance"></textarea></div>
+        </div>
+
+        <div class="card" style="gap:10px;">
+          <h3>Location & pickup</h3>
+          <div class="form-grid two">
+            <div><label>Primary pickup address / area</label><input id="pickupAlt" class="input" placeholder="Address or area description" /></div>
+            <div><label>Delivery radius (miles)</label><input id="deliveryRadius" type="number" min="0" step="1" class="input" placeholder="e.g., 25" /></div>
+          </div>
+        </div>
+
+        <div class="card" style="gap:10px;">
+          <h3>Host contact for this listing</h3>
+          <div class="form-grid two">
+            <div><label>Contact email</label><input id="contactEmail" type="email" class="input" placeholder="Defaults to account email" /></div>
+            <div><label>Contact phone</label><input id="contactPhone" class="input" placeholder="+1 555-123-4567" /></div>
+          </div>
+        </div>
+
+        <div class="grid two" style="align-items:start;">
+          <button id="saveBtn" class="button" type="submit">Save vehicle</button>
+          <a class="button ghost" href="account.html">Back to account</a>
+        </div>
+        <p class="muted">Posting locked until plan is active; downgrades take effect next cycle; cancel subscription locks posting after expiry.</p>
+      </form>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Firebase + App scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+  <script src="assets/vehicleStore.js"></script>
+  <script>
+    // Plan gate: Free=2, Starter=5, Pro=unlimited
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (window.VehicleStore && window.VehicleStore.canAddVehicle) {
+        try {
+          const check = await window.VehicleStore.canAddVehicle();
+          if (!check.allowed) {
+            alert(check.message || 'Please upgrade your plan to add more vehicles.');
+            window.location.href = 'upgrade.html';
+          }
+        } catch (e) {
+          console.warn('Plan check failed; allowing add by default.', e);
+        }
+      }
+    });
+
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel.classList.add('open'); backdrop.classList.add('show'); };
+    const closeMenu = () => { menuPanel.classList.remove('open'); backdrop.classList.remove('show'); };
+    const syncAuth = () => { if (typeof AuthManager !== 'undefined' && AuthManager.updateUIForRole) AuthManager.updateUIForRole(); };
+    document.addEventListener('authStateChanged', syncAuth);
+    document.addEventListener('ccr:signedOut', syncAuth);
+    document.addEventListener('DOMContentLoaded', syncAuth);
+    if (document.readyState !== 'loading') setTimeout(syncAuth, 100);
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+
+    // --- Add Vehicle logic ---
+    (function(){
+      const toast = document.getElementById('toast');
+      function showToast(msg){ if(!toast) return; toast.textContent = msg; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 2400); }
+      const errorBar = document.getElementById('formError');
+      function showError(msg){ if(!errorBar) return; errorBar.textContent = msg; errorBar.style.display='block'; }
+      function clearError(){ if(errorBar) errorBar.style.display='none'; }
+      const countryInput = document.getElementById('country');
+      const countryList = document.getElementById('addCountryList');
+      const stateSelect = document.getElementById('state');
+      const stateCache = new Map();
+
+      if (countryList && window.populateCountryElement) {
+        populateCountryElement(countryList);
+      }
+
+      const setStates = (states=[]) => {
+        if (!stateSelect) return;
+        stateSelect.innerHTML = '';
+        const any = document.createElement('option');
+        any.value = '';
+        any.textContent = states.length ? 'Select state' : 'No states';
+        stateSelect.appendChild(any);
+        states.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          stateSelect.appendChild(opt);
+        });
+      };
+
+      const fetchStates = async (country) => {
+        if (!country || country === 'Any') { setStates([]); return; }
+        if (stateCache.has(country)) { setStates(stateCache.get(country)); return; }
+        try {
+          const resp = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ country })
+          });
+          if (!resp.ok) throw new Error('Request failed');
+          const data = await resp.json();
+          const list = (data?.data?.states || []).map(s => s?.name).filter(Boolean);
+          stateCache.set(country, list);
+          setStates(list);
+        } catch (e) {
+          console.warn('State lookup failed', e.message);
+          setStates([]);
+        }
+      };
+
+      countryInput?.addEventListener('change', (e) => {
+        fetchStates(e.target.value.trim());
+      });
+
+      // Auth state gate: reuse global Firebase auth
+      function applyAuthGate(){
+        const user = window.firebaseAuth?.currentUser;
+        const form = document.getElementById('addVehicleForm');
+        const saveBtn = document.getElementById('saveBtn');
+        const waitBar = document.getElementById('authWait');
+        if (user) {
+          clearError(); if (waitBar) waitBar.style.display='none';
+          form?.classList.remove('disabled'); if (saveBtn){ saveBtn.disabled=false; }
+        } else {
+          if (waitBar) waitBar.style.display='block';
+          if (saveBtn){ saveBtn.disabled=true; }
+        }
+      }
+      // Listen to auth changes
+      if (window.firebaseAuth) {
+        window.firebaseAuth.onAuthStateChanged(u => {
+          if (u) { clearError(); applyAuthGate(); }
+          else {
+            applyAuthGate();
+            // redirect to signin after brief delay
+            setTimeout(()=>{ window.location.href = 'signin.html'; }, 1200);
+          }
+        });
+      }
+      // initial gate
+      applyAuthGate();
+
+      // Makes and models dataset (common brands)
+      const MAKES = [
+        'Toyota','Honda','Nissan','BMW','Mercedes-Benz','Audi','Volkswagen','Ford','Chevrolet','GMC','Dodge','Jeep','Ram','Chrysler','Cadillac','Buick',
+        'Hyundai','Kia','Mazda','Subaru','Lexus','Acura','Infiniti','Genesis','Volvo','Tesla','Porsche','Jaguar','Land Rover','Mini','Mitsubishi','Suzuki',
+        'Alfa Romeo','Fiat','Peugeot','Citroen','Renault','Skoda','SEAT','Opel','Vauxhall','Saab','Dacia','MG','BYD','Geely','Great Wall','Haval','Chery','Mahindra','Tata','Proton','Perodua'
+      ];
+      const MODELS = {
+        'Toyota':['Camry','Corolla','RAV4','Highlander','Tacoma','Tundra','Prius','Yaris','Avalon','Venza','C-HR','Sequoia','4Runner'],
+        'Honda':['Civic','Accord','CR-V','Pilot','HR-V','Odyssey','Ridgeline','Fit'],
+        'Nissan':['Altima','Sentra','Rogue','Murano','Pathfinder','Maxima','Versa'],
+        'BMW':['3 Series','5 Series','7 Series','X1','X3','X5','X7','i3','i4'],
+        'Mercedes-Benz':['A-Class','C-Class','E-Class','S-Class','GLA','GLC','GLE','GLS','G-Class'],
+        'Audi':['A3','A4','A6','A8','Q3','Q5','Q7','Q8','e-tron'],
+        'Volkswagen':['Golf','Jetta','Passat','Tiguan','Atlas','ID.4'],
+        'Ford':['Fiesta','Focus','Fusion','Mustang','Escape','Edge','Explorer','Bronco','F-150'],
+        'Chevrolet':['Spark','Malibu','Camaro','Equinox','Traverse','Tahoe','Suburban','Silverado','Bolt EV'],
+        'Hyundai':['Elantra','Sonata','Accent','Kona','Tucson','Santa Fe','Palisade','Ioniq'],
+        'Kia':['Rio','Forte','K5','Soul','Seltos','Sportage','Sorento','Telluride','EV6'],
+        'Mazda':['Mazda3','Mazda6','CX-3','CX-5','CX-9','MX-5'],
+        'Subaru':['Impreza','Legacy','Crosstrek','Forester','Outback','Ascent','WRX'],
+        'Lexus':['IS','ES','GS','LS','UX','NX','RX','GX','LX'],
+        'Tesla':['Model 3','Model Y','Model S','Model X','Cybertruck'],
+        'Volvo':['S60','S90','V60','V90','XC40','XC60','XC90'],
+        'Porsche':['Macan','Cayenne','Panamera','911','Taycan'],
+        'Jaguar':['XE','XF','XJ','E-PACE','F-PACE','F-TYPE','I-PACE'],
+        'Land Rover':['Range Rover','Range Rover Sport','Range Rover Evoque','Discovery','Defender'],
+        'Mini':['Cooper','Clubman','Countryman'],
+        'Mitsubishi':['Mirage','Lancer','Outlander','Eclipse Cross'],
+        'Acura':['ILX','TLX','RDX','MDX'],
+        'Infiniti':['Q50','Q60','QX50','QX60','QX80'],
+        'Genesis':['G70','G80','G90','GV70','GV80'],
+        'GMC':['Terrain','Acadia','Yukon','Sierra'],
+        'Dodge':['Charger','Challenger','Durango','Journey'],
+        'Jeep':['Renegade','Compass','Cherokee','Grand Cherokee','Wrangler','Gladiator'],
+        'Ram':['1500','2500','3500'],
+        'Chrysler':['300','Pacifica'],
+        'Cadillac':['CT4','CT5','XT4','XT5','XT6','Escalade'],
+        'Buick':['Encore','Envision','Enclave'],
+        'Fiat':['500','500X','Panda','Tipo'],
+        'Peugeot':['208','308','508','2008','3008','5008'],
+        'Citroen':['C3','C4','C5 Aircross','Berlingo'],
+        'Renault':['Clio','Megane','Talisman','Captur','Kadjar','Koleos'],
+        'Skoda':['Fabia','Octavia','Superb','Karoq','Kodiaq'],
+        'SEAT':['Ibiza','Leon','Ateca','Arona','Tarraco'],
+        'Opel':['Corsa','Astra','Insignia','Crossland','Mokka','Grandland'],
+        'Vauxhall':['Corsa','Astra','Insignia','Crossland','Mokka','Grandland'],
+        'Saab':['9-3','9-5'],
+        'Dacia':['Sandero','Logan','Duster'],
+        'MG':['ZS','HS','5 EV'],
+        'BYD':['Atto 3','Seal','Han','Tang','Yuan Plus'],
+        'Geely':['Coolray','Azkarra','Okavango'],
+        'Great Wall':['Wingle','Poer'],
+        'Haval':['H2','H6','H9'],
+        'Chery':['Tiggo 2','Tiggo 7','Tiggo 8','Arrizo 5'],
+        'Mahindra':['XUV300','XUV700','Scorpio','Bolero'],
+        'Tata':['Tiago','Altroz','Nexon','Harrier','Safari'],
+        'Proton':['Saga','Persona','X50','X70'],
+        'Perodua':['Axia','Bezza','Myvi','Ativa']
+      };
+
+      const makeEl = document.getElementById('make');
+      const makeList = document.getElementById('makeList');
+      const modelEl = document.getElementById('model');
+      const modelList = document.getElementById('modelList');
+      // Populate makes
+      MAKES.forEach(m=>{ const o=document.createElement('option'); o.value=m; makeList.appendChild(o); });
+      function refreshModels(){
+        const mk = (makeEl.value||'').trim();
+        modelList.innerHTML='';
+        const arr = MODELS[mk] || [];
+        arr.forEach(md=>{ const o=document.createElement('option'); o.value=md; modelList.appendChild(o); });
+        if (arr.length>0){ modelEl.disabled=false; modelEl.placeholder='Start typing...'; }
+        else { modelEl.disabled=true; modelEl.placeholder='Select make first'; modelEl.value=''; }
+      }
+      makeEl.addEventListener('input', refreshModels);
+      makeEl.addEventListener('change', refreshModels);
+
+      // Photo previews with constraints
+      const MAX_PHOTOS = 10; const MAX_SIZE_MB = 8;
+      const photoInput = document.getElementById('photoInput');
+      const preview = document.getElementById('photoPreview');
+      let selectedFiles = [];
+      function renderThumbs(){
+        preview.innerHTML='';
+        selectedFiles.forEach((file, idx)=>{
+          const url = URL.createObjectURL(file);
+          const wrap = document.createElement('div'); wrap.className='thumb';
+          wrap.innerHTML = `<img src="${url}" alt="photo ${idx+1}" /><button type="button" aria-label="Remove">&times;</button>`;
+          wrap.querySelector('button').addEventListener('click', ()=>{ selectedFiles.splice(idx,1); renderThumbs(); });
+          preview.appendChild(wrap);
+        });
+      }
+      photoInput.addEventListener('change', (e)=>{
+        clearError();
+        const files = Array.from(e.target.files || []);
+        for (const f of files){
+          if (!f.type.startsWith('image/')) { showError('File must be an image'); continue; }
+          if (f.size > MAX_SIZE_MB*1024*1024) { showError(`Max file size is ${MAX_SIZE_MB}MB`); continue; }
+          if (selectedFiles.length < MAX_PHOTOS) selectedFiles.push(f);
+        }
+        renderThumbs();
+        // reset input to allow re-selecting same file
+        photoInput.value = '';
+      });
+
+      const form = document.getElementById('addVehicleForm');
+      const saveBtn = document.getElementById('saveBtn');
+      async function uploadPhotos(uid, vehicleId){
+        if (!selectedFiles.length) return [];
+        const storage = window.firebaseStorage; if(!storage) return [];
+        const urls = [];
+        for (let i=0;i<selectedFiles.length;i++){
+          const f = selectedFiles[i];
+          const ref = storage.ref().child(`users/${uid}/vehicles/${vehicleId}/photo-${Date.now()}-${i}`);
+          try {
+            const snap = await ref.put(f);
+            const url = await snap.ref.getDownloadURL();
+            urls.push(url);
+          } catch (err) {
+            // Surface permission/CORS issues clearly
+            const msg = String(err && err.message || '').toLowerCase();
+            if (msg.includes('unauthorized') || msg.includes('permission') || msg.includes('cors')) {
+              throw new Error('We couldn\'t upload photos due to a permission/configuration issue. Please contact support.');
+            }
+            throw err;
+          }
+        }
+        return urls;
+      }
+
+      function validate(){
+        const required = [
+          ['country', 'Country'],['state','State'],['city','City'],['price','Price'],['year','Year'],['make','Make'],['model','Model'],['vehicleType','Vehicle type'],['fuelType','Fuel type'],['transmission','Transmission']
+        ];
+        for (const [id,label] of required){ const el=document.getElementById(id); if(!el || !el.value.trim()){ el?.classList.add('flash'); setTimeout(()=>el?.classList.remove('flash'), 1000); showError(`${label} is required`); return false; } }
+        return true;
+      }
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault(); clearError();
+        if (!window.firebaseAuth?.currentUser) { showError('Please sign in first'); return; }
+        if (!validate()) return;
+        const uid = window.firebaseAuth.currentUser.uid;
+        try {
+          saveBtn.disabled = true; saveBtn.classList.add('loading'); saveBtn.textContent = 'Saving...';
+          const vehicleId = Date.now().toString();
+          const photoURLs = await uploadPhotos(uid, vehicleId);
+          const data = {
+            id: vehicleId,
+            country: document.getElementById('country').value.trim(),
+            state: document.getElementById('state').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            insuranceIncluded: document.getElementById('insurance').value === 'Yes',
+            price: Number(document.getElementById('price').value),
+            frequency: document.getElementById('frequency').value,
+            year: Number(document.getElementById('year').value),
+            make: document.getElementById('make').value.trim(),
+            model: document.getElementById('model').value.trim(),
+            category: document.getElementById('vehicleType').value,
+            fuel: document.getElementById('fuelType').value,
+            fuelType: document.getElementById('fuelType').value,
+            title: document.getElementById('title').value.trim(),
+            seats: Number(document.getElementById('seats').value) || null,
+            transmission: document.getElementById('transmission').value,
+            drive: document.getElementById('driveType').value,
+            description: document.getElementById('hostNotesInput').value.trim(),
+            hostNotes: document.getElementById('hostNotesInput').value.trim(),
+            featuresConvenience: (document.getElementById('featConvenienceInput').value || '').split(',').map(f=>f.trim()).filter(Boolean),
+            featuresSafety: (document.getElementById('featSafetyInput').value || '').split(',').map(f=>f.trim()).filter(Boolean),
+            featuresTech: (document.getElementById('featTechInput').value || '').split(',').map(f=>f.trim()).filter(Boolean),
+            rules: [
+              document.getElementById('ruleNoSmoking').checked ? 'No smoking' : null,
+              document.getElementById('ruleKeepClean').checked ? 'Keep vehicle clean' : null,
+              document.getElementById('ruleRefuel').checked ? 'Refill fuel/charge' : null,
+              document.getElementById('ruleNoAggressive').checked ? 'No aggressive driving' : null,
+              document.getElementById('ruleMileage').checked ? 'Mileage guidance applies' : null,
+              (document.getElementById('ruleCustom').value || '').trim() || null
+            ].filter(Boolean),
+            pickupAlt: document.getElementById('pickupAlt').value.trim(),
+            deliveryRadius: Number(document.getElementById('deliveryRadius').value) || null,
+            contactEmail: document.getElementById('contactEmail').value.trim(),
+            contactPhone: document.getElementById('contactPhone').value.trim(),
+            status: 'active',
+            photos: photoURLs,
+            image: photoURLs[0] || null
+          };
+          if (!window.VehicleStore || !VehicleStore.addVehicle) throw new Error('Service unavailable');
+          const savedVehicle = await VehicleStore.addVehicle(data);
+          const newId = savedVehicle?.id || vehicleId;
+          showToast('Vehicle added successfully - building profile...');
+          setTimeout(()=>{ window.location.href = `vehicle.html?id=${newId}`; }, 900);
+        } catch (err){
+          console.warn('Vehicle save failed', err);
+          const msg = err?.message || 'Unable to save vehicle, please try again.';
+          // Show specific unauthorized message if present
+          const low = String(msg).toLowerCase();
+          if (low.includes('permission') || low.includes('unauthorized')) {
+            showError('We couldn\'t save your vehicle because of a permission issue. Please contact support.');
+          } else {
+            showError(msg);
+          }
+        } finally {
+          saveBtn.disabled = false; saveBtn.classList.remove('loading'); saveBtn.textContent = 'Save vehicle';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

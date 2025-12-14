@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host Agreement | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section class="card" style="gap:20px; max-width: 900px; margin: 0 auto;">
+      <div class="pill">Host Agreement</div>
+      <h1 style="font-size: clamp(28px, 4vw, 40px);">Host Agreement</h1>
+      <p class="muted" style="font-size: 14px;"><em>Must be accepted before signup</em></p>
+
+      <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 0; font-weight: 600; color: #856404;">⚠️ By creating a Host account, you legally agree to all terms below. This is a binding agreement.</p>
+      </div>
+
+      <div class="grid" style="gap:24px;">
+        <!-- Agreement Terms -->
+        <div>
+          <h2 style="font-size: 20px; margin-bottom: 12px;">Host Obligations & Legal Agreement</h2>
+          <p><strong>By creating a Host account, you legally agree to the following:</strong></p>
+        </div>
+
+        <div style="background: #f8f9fa; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">✓ Vehicle Ownership</h3>
+          <p>You confirm that you are the <strong>legal owner</strong> of all listed vehicles.</p>
+        </div>
+
+        <div style="background: #f8f9fa; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">✓ Truthful Information</h3>
+          <p>All information you provide is <strong>accurate and truthful</strong>. False information may result in account termination and legal action.</p>
+        </div>
+
+        <div style="background: #f8f9fa; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">✓ CJF's Limited Role</h3>
+          <p>You understand <strong>CJF is not involved in your rentals</strong>. CJF is only an advertising platform. All rental transactions, agreements, and payments occur directly between you and the Renter.</p>
+        </div>
+
+        <div style="background: #f8f9fa; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">✓ In-Person Meetings Required</h3>
+          <p>You agree to <strong>meet renters in person before payment</strong>. Remote-only transactions increase fraud risk and violate platform safety guidelines.</p>
+        </div>
+
+        <div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px; color: #dc3545;">✓ Full Responsibility</h3>
+          <p><strong>You are solely responsible for:</strong></p>
+          <ul style="margin: 8px 0; padding-left: 24px; line-height: 1.8;">
+            <li>Payments (collecting, processing, disputes)</li>
+            <li>Refunds (issuing, denying, managing)</li>
+            <li>Damage claims (inspection, documentation, resolution)</li>
+            <li>Disputes (mediation, legal action if necessary)</li>
+            <li>Vehicle safety (maintenance, insurance, roadworthiness)</li>
+            <li>Legal compliance (licenses, permits, taxes)</li>
+          </ul>
+          <p style="margin-top: 12px; font-weight: 600; color: #dc3545;">CJF has zero involvement in these matters.</p>
+        </div>
+
+        <div style="background: #f8f9fa; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">✓ Liability</h3>
+          <p>You accept <strong>full liability</strong> for your actions, your vehicle, and your interactions with Renters. CJF is not liable for any damages, injuries, financial loss, or disputes.</p>
+        </div>
+
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px; color: #856404;">⚠️ Account Termination Policy</h3>
+          <p><strong>If you receive 7 verified scam reports, your account will be permanently banned.</strong></p>
+          <p style="margin-top: 8px;">CJF takes fraud seriously. Multiple verified complaints will result in immediate removal from the platform.</p>
+        </div>
+
+        <div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px; color: #dc3545;">⚠️ False Information = Termination</h3>
+          <p><strong>If you provide false information, CJF may:</strong></p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>Delete your account immediately</li>
+            <li>Remove all listings</li>
+            <li>Report you to law enforcement</li>
+            <li>Share your information with authorities</li>
+          </ul>
+          <p style="margin-top: 12px; font-weight: 600; color: #dc3545;">Fraud = instant termination.</p>
+        </div>
+
+        <div style="background: #f8f9fa; border-left: 4px solid #0066cc; padding: 16px; border-radius: 4px;">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">✓ Release of CJF from Liability</h3>
+          <p>You <strong>release CJF from all liability</strong> related to your use of the platform, including but not limited to:</p>
+          <ul style="margin: 8px 0; padding-left: 24px;">
+            <li>Vehicle accidents or mechanical failures</li>
+            <li>Renter disputes or non-payment</li>
+            <li>Fraudulent renters or scams</li>
+            <li>Legal issues or regulatory violations</li>
+            <li>Personal injury or property damage</li>
+          </ul>
+        </div>
+
+        <!-- Final Agreement -->
+        <div style="background: #e7f3ff; border: 3px solid #0066cc; padding: 20px; border-radius: 8px; text-align: center;">
+          <h3 style="font-size: 22px; margin-bottom: 16px; color: #0066cc;">✓ I Agree & Accept</h3>
+          <p style="font-weight: 600; line-height: 1.8;">By creating a Host account, you confirm that you have read, understood, and agree to all terms in this Host Agreement, as well as CJF's <a href="terms.html" style="color: var(--accent);">Terms & Conditions</a> and <a href="privacy.html" style="color: var(--accent);">Privacy Policy</a>.</p>
+          <p style="margin-top: 16px;"><strong>This checkbox must be checked during signup:</strong></p>
+          <div style="background: white; border: 2px solid #0066cc; border-radius: 8px; padding: 12px; margin-top: 12px; text-align: left;">
+            <label style="display: flex; align-items: start; gap: 12px; cursor: pointer;">
+              <input type="checkbox" disabled style="margin-top: 4px;" />
+              <span style="font-size: 14px; line-height: 1.6;"><strong>I confirm all information is accurate and agree to CJF's Host Terms.</strong> I accept full responsibility for my listings and renters. I understand CJF is not involved in rental transactions.</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 2px solid #e5e7eb;">
+        <p class="muted" style="font-size: 14px;">
+          <a href="terms.html" style="color: var(--accent); margin-right: 16px;">Terms & Conditions</a>
+          <a href="privacy.html" style="color: var(--accent); margin-right: 16px;">Privacy Policy</a>
+          <a href="safety.html" style="color: var(--accent);">Safety Guidelines</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+
+    const openMenu = () => {
+      menuPanel?.classList.add('open');
+      backdrop?.classList.add('show');
+    };
+    const closeMenu = () => {
+      menuPanel?.classList.remove('open');
+      backdrop?.classList.remove('show');
+    };
+
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+  </script>
+</body>
+</html>

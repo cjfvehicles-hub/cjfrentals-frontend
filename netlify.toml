@@ -1,0 +1,32 @@
+[build]
+publish = "."
+command = "echo No build step"
+
+# =========================
+# API PROXY → CLOUD RUN
+# =========================
+[[redirects]]
+from = "/api/*"
+to = "https://cjf-api-864727255016.us-east1.run.app/api/:splat"
+status = 200
+force = true
+
+# =========================
+# FIREBASE AUTH PROXY
+# =========================
+[[redirects]]
+from = "/__/auth/*"
+to = "https://cjf-rentals.firebaseapp.com/__/auth/:splat"
+status = 200
+force = true
+
+# =========================
+# SECURITY HEADERS
+# =========================
+[[headers]]
+for = "/*"
+[headers.values]
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "SAMEORIGIN"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "geolocation=(self), microphone=(), camera=()"

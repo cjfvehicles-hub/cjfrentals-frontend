@@ -1,0 +1,224 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host Signup | CJF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/countryStateData.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list">
+      <!-- Menu items built dynamically by navBuilder.js -->
+    </ul>
+  </nav>
+
+  <main class="page">
+    <section class="card" style="gap:14px;">
+      <div class="grid" style="gap:6px;">
+        <div class="pill">Host signup</div>
+        <h1 style="font-size: clamp(24px, 3.8vw, 32px);">Create your host account</h1>
+        <p class="muted">After signup you land on dashboard; posting vehicles stays locked until a plan is chosen.</p>
+      </div>
+      <form class="form-grid" id="hostSignupForm">
+        <div class="form-grid two">
+          <div><label>Full Name</label><input class="input" id="hostName" required /></div>
+          <div><label>Email</label><input type="email" class="input" id="hostEmail" required /></div>
+          <div><label>Phone Number</label><input class="input" id="hostPhone" required /></div>
+          <div><label>Country</label><input class="input" id="hostCountry" list="hostCountryList" required /></div>
+          <datalist id="hostCountryList"></datalist>
+          <div><label>State</label><select class="input" id="hostState" required><option value="">Select state</option></select></div>
+          <div><label>City</label><input class="input" id="hostCity" required /></div>
+          <div><label>Full Address</label><input class="input" id="hostAddress" required /></div>
+          <div><label>Password</label><input type="password" class="input" id="hostPassword" required /></div>
+          <div><label>Confirm Password</label><input type="password" class="input" id="hostPasswordConfirm" required /></div>
+          <div>
+            <label>Owner Type</label>
+            <select class="input" id="hostOwnerType" required>
+              <option>Private Owner</option>
+              <option>Business Owner</option>
+            </select>
+          </div>
+          <div><label>DL number (optional)</label><input class="input" id="hostDL" /></div>
+          <div><label>DL front upload (optional)</label><input type="file" class="input" id="hostDLFront" /></div>
+          <div><label>DL back upload (optional)</label><input type="file" class="input" id="hostDLBack" /></div>
+        </div>
+
+        <!-- Host Agreement Checkbox -->
+        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 16px; margin-top: 16px;">
+          <label style="display: flex; align-items: start; gap: 12px; cursor: pointer;">
+            <input type="checkbox" id="hostAgreementCheckbox" required style="margin-top: 4px; min-width: 20px; min-height: 20px;" />
+            <span style="font-size: 14px; line-height: 1.6;">
+              <strong>☑ I confirm all information is accurate and agree to CJF's <a href="host-agreement.html" target="_blank" style="color: var(--accent); text-decoration: underline;">Host Terms</a>.</strong> I accept full responsibility for my listings and renters. I understand CJF is not involved in rental transactions and I release CJF from all liability.
+            </span>
+          </label>
+          <p style="margin: 12px 0 0 32px; font-size: 13px; color: #856404;">
+            <em>By checking this box, you legally agree to the <a href="host-agreement.html" target="_blank" style="color: var(--accent);">Host Agreement</a>, <a href="terms.html" target="_blank" style="color: var(--accent);">Terms & Conditions</a>, and <a href="privacy.html" target="_blank" style="color: var(--accent);">Privacy Policy</a>.</em>
+          </p>
+        </div>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <button class="button" type="submit" id="createAccountBtn" style="min-width: 200px;">Create account</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Firebase and Auth Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+  <script>
+    const menuPanel = document.getElementById('menuPanel');
+    const backdrop = document.getElementById('backdrop');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    const openMenu = () => { menuPanel.classList.add('open'); backdrop.classList.add('show'); };
+    const closeMenu = () => { menuPanel.classList.remove('open'); backdrop.classList.remove('show'); };
+    function updateNavigationUIFromAuth() {
+      AuthManager.updateUIForRole();
+    }
+    document.addEventListener('ccr:signedOut', updateNavigationUIFromAuth);
+    document.addEventListener('ccr:signedIn', updateNavigationUIFromAuth);
+    document.addEventListener('DOMContentLoaded', updateNavigationUIFromAuth);
+    if (document.readyState !== 'loading') updateNavigationUIFromAuth();
+    
+    // Wire menu Sign In click handler to open login UI (no auto-login)
+    const menuSignIn = document.querySelector('.menu-signin');
+    if (menuSignIn) {
+      menuSignIn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'account.html#signin';
+        closeMenu();
+      });
+    }
+    openBtn?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    backdrop?.addEventListener('click', closeMenu);
+
+    // Host Signup Form Validation
+    const showToast = (message) => {
+      const toastEl = document.getElementById('toast');
+      if (toastEl) {
+        toastEl.textContent = message;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), 3000);
+      }
+    };
+
+    document.getElementById('hostSignupForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const agreementChecked = document.getElementById('hostAgreementCheckbox').checked;
+      const password = document.getElementById('hostPassword').value;
+      const confirmPassword = document.getElementById('hostPasswordConfirm').value;
+      
+      // Enforce Host Agreement acceptance
+      if (!agreementChecked) {
+        showToast('✖ You must accept the Host Agreement to create an account');
+        document.getElementById('hostAgreementCheckbox').focus();
+        return;
+      }
+      
+      // Validate password match
+      if (password !== confirmPassword) {
+        showToast('✖ Passwords do not match');
+        document.getElementById('hostPasswordConfirm').focus();
+        return;
+      }
+      
+      // Save timestamp of agreement acceptance
+      const hostData = {
+        name: document.getElementById('hostName').value,
+        email: document.getElementById('hostEmail').value,
+        phone: document.getElementById('hostPhone').value,
+        country: document.getElementById('hostCountry').value,
+        state: document.getElementById('hostState').value,
+        city: document.getElementById('hostCity').value,
+        address: document.getElementById('hostAddress').value,
+        ownerType: document.getElementById('hostOwnerType').value,
+        dlNumber: document.getElementById('hostDL').value || null,
+        agreementAcceptedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      };
+      
+      console.log('✅ Host Agreement Accepted:', hostData);
+      showToast('✅ Account created successfully! Redirecting...');
+      
+      // Redirect to dashboard after 1.5 seconds
+      setTimeout(() => {
+        window.location.href = 'host-dashboard.html';
+      }, 1500);
+    });
+
+    // Country/state population
+    const countryInput = document.getElementById('hostCountry');
+    const countryList = document.getElementById('hostCountryList');
+    const stateSelect = document.getElementById('hostState');
+    const stateCache = new Map();
+
+    if (countryList && window.populateCountryElement) {
+      populateCountryElement(countryList);
+    }
+
+    const setStates = (states = []) => {
+      if (!stateSelect) return;
+      stateSelect.innerHTML = '';
+      const any = document.createElement('option');
+      any.value = '';
+      any.textContent = states.length ? 'Select state' : 'No states';
+      stateSelect.appendChild(any);
+      states.forEach((s) => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        stateSelect.appendChild(opt);
+      });
+    };
+
+    const fetchStates = async (country) => {
+      if (!country || country === 'Any') { setStates([]); return; }
+      if (stateCache.has(country)) { setStates(stateCache.get(country)); return; }
+      try {
+        const resp = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ country })
+        });
+        if (!resp.ok) throw new Error('Request failed');
+        const data = await resp.json();
+        const list = (data?.data?.states || []).map((s) => s?.name).filter(Boolean);
+        stateCache.set(country, list);
+        setStates(list);
+      } catch (e) {
+        console.warn('State lookup failed', e.message);
+        setStates([]);
+      }
+    };
+
+    countryInput?.addEventListener('change', (e) => {
+      fetchStates(e.target.value.trim());
+    });
+  </script>
+</body>
+</html>

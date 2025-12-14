@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend Test - CCR</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #2c3e50; margin-top: 0; }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-weight: 500;
+    }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .test-result {
+      margin: 10px 0;
+      padding: 12px;
+      border-left: 4px solid #007bff;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover { background: #0056b3; }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    .emoji { font-size: 24px; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="emoji">ðŸš€</span>Backend Database Test</h1>
+    
+    <div id="backendStatus" class="status info">
+      <strong>Checking backend connection...</strong>
+    </div>
+
+    <div class="test-result">
+      <strong>Backend URL:</strong> http://localhost:3000<br>
+      <strong>Database Location:</strong> server/data/vehicles.json<br>
+      <strong>VehicleStore Mode:</strong> <span id="storeMode">Checking...</span>
+    </div>
+
+    <h2>Quick Tests</h2>
+    <button onclick="testHealth()">ðŸ¥ Test Backend Health</button>
+    <button onclick="testGetVehicles()">ðŸš— Get All Vehicles</button>
+    <button onclick="testGetStats()">ðŸ“Š Get Statistics</button>
+    <button onclick="testAddVehicle()">➤ Add Test Vehicle</button>
+    <button onclick="clearResults()">ðŸ—‘ï¸ Clear Results</button>
+
+    <div id="results"></div>
+
+    <h2>Instructions</h2>
+    <div class="info">
+      <strong>✅ Backend is running!</strong><br><br>
+      Now you can:
+      <ol>
+        <li>Open <a href="index.html">index.html</a> - See all vehicles</li>
+        <li>Open <a href="account.html">account.html</a> - Add/Edit vehicles</li>
+        <li>Open <a href="vehicles.html">vehicles.html</a> - Browse vehicles</li>
+      </ol>
+      All pages now sync from the backend database at:<br>
+      <code>server/data/vehicles.json</code>
+    </div>
+  </div>
+
+  <script src="assets/vehicleStore.js"></script>
+  <script>
+    const results = document.getElementById('results');
+    const backendStatus = document.getElementById('backendStatus');
+    const storeMode = document.getElementById('storeMode');
+
+    // Check backend on load
+    window.addEventListener('load', async () => {
+      const isOnline = await VehicleStore.checkBackendHealth();
+      
+      if (isOnline) {
+        backendStatus.className = 'status success';
+        backendStatus.innerHTML = '<strong>✅ Backend is ONLINE and connected!</strong><br>Your vehicles are saved to: server/data/vehicles.json';
+        storeMode.textContent = 'Backend Database (Online)';
+      } else {
+        backendStatus.className = 'status error';
+        backendStatus.innerHTML = '<strong>✖ Backend is OFFLINE</strong><br>Make sure server is running: <code>npm start</code> in server folder';
+        storeMode.textContent = 'Offline Cache Mode';
+      }
+    });
+
+    function addResult(title, data, isError = false) {
+      const div = document.createElement('div');
+      div.className = 'test-result';
+      div.style.borderLeftColor = isError ? '#dc3545' : '#28a745';
+      
+      const titleEl = document.createElement('strong');
+      titleEl.textContent = title;
+      div.appendChild(titleEl);
+      
+      const pre = document.createElement('pre');
+      pre.textContent = JSON.stringify(data, null, 2);
+      div.appendChild(pre);
+      
+      results.appendChild(div);
+      div.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function testHealth() {
+      try {
+        const response = await fetch('http://localhost:3000/api/health');
+        const data = await response.json();
+        addResult('ðŸ¥ Backend Health Check', data);
+      } catch (error) {
+        addResult('✖ Health Check Failed', { error: error.message }, true);
+      }
+    }
+
+    async function testGetVehicles() {
+      try {
+        const vehicles = await VehicleStore.getAllVehicles();
+        addResult('ðŸš— All Vehicles from Database', {
+          count: vehicles.length,
+          vehicles: vehicles
+        });
+      } catch (error) {
+        addResult('✖ Get Vehicles Failed', { error: error.message }, true);
+      }
+    }
+
+    async function testGetStats() {
+      try {
+        const stats = await VehicleStore.getStats();
+        addResult('ðŸ“Š Vehicle Statistics', stats);
+      } catch (error) {
+        addResult('✖ Get Stats Failed', { error: error.message }, true);
+      }
+    }
+
+    async function testAddVehicle() {
+      try {
+        const testVehicle = {
+          year: 2024,
+          make: 'Test',
+          model: 'Vehicle',
+          category: 'Sedan',
+          country: 'United States',
+          state: 'California',
+          city: 'Los Angeles',
+          price: 100,
+          frequency: 'Daily',
+          fuel: 'Gas',
+          insurance: 'Included',
+          description: 'This is a test vehicle',
+          features: 'Test Feature'
+        };
+
+        const result = await VehicleStore.addVehicle(testVehicle);
+        addResult('➤ Vehicle Added Successfully', result);
+        
+        // Show updated count
+        const stats = await VehicleStore.getStats();
+        addResult('ðŸ“Š Updated Stats', stats);
+      } catch (error) {
+        addResult('✖ Add Vehicle Failed', { error: error.message }, true);
+      }
+    }
+
+    function clearResults() {
+      results.innerHTML = '';
+    }
+  </script>
+</body>
+</html>
+
+
