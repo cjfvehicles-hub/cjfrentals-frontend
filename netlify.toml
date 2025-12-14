@@ -1,37 +1,32 @@
 [build]
-  publish = "."
-  command = "echo No build step"
-  functions = "netlify/functions"
+publish = "."
+command = "echo No build step"
 
-# Force HTTPS and prefer apex (no www)
+# =========================
+# API PROXY → CLOUD RUN
+# =========================
 [[redirects]]
-  from = "/*"
-  to = "https://cjfrentals.com/:splat"
-  status = 301
-  force = true
+from = "/api/*"
+to = "https://cjf-api-864727255016.us-east1.run.app/api/:splat"
+status = 200
+force = true
 
-# Proxy API calls to Cloud Run backend
+# =========================
+# FIREBASE AUTH PROXY
+# =========================
 [[redirects]]
-  from = "/api/*"
-  to = "https://ccr-api-xyz.a.run.app/:splat"
-  status = 200
-  force = true
-  framework = "express"
-  headers = { Host = "ccr-api-xyz.a.run.app" }
+from = "/__/auth/*"
+to = "https://cjf-rentals.firebaseapp.com/__/auth/:splat"
+status = 200
+force = true
 
-# Proxy Firebase Auth handler so Google sign-in iframe works on Netlify
-[[redirects]]
-  from = "/__/auth/*"
-  to = "https://cjf-rentals.firebaseapp.com/__/auth/:splat"
-  status = 200
-  force = true
-
-# Basic security headers
+# =========================
+# SECURITY HEADERS
+# =========================
 [[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "SAMEORIGIN"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    # Allow geolocation prompts (required for the pin button to work)
-    Permissions-Policy = "geolocation=(self), microphone=(), camera=()"
+for = "/*"
+[headers.values]
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "SAMEORIGIN"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "geolocation=(self), microphone=(), camera=()"
