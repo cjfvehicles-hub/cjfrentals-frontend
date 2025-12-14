@@ -1,0 +1,37 @@
+[build]
+  publish = "."
+  command = "echo No build step"
+  functions = "netlify/functions"
+
+# Force HTTPS and prefer apex (no www)
+[[redirects]]
+  from = "http://www.cjfrentals.com/*"
+  to = "https://cjfrentals.com/:splat"
+  status = 301
+
+[[redirects]]
+  from = "https://www.cjfrentals.com/*"
+  to = "https://cjfrentals.com/:splat"
+  status = 301
+
+[[redirects]]
+  from = "http://cjfrentals.com/*"
+  to = "https://cjfrentals.com/:splat"
+  status = 301
+
+# Proxy Firebase Auth handler so Google sign-in iframe works on Netlify
+[[redirects]]
+  from = "/__/auth/*"
+  to = "https://cjf-rentals.firebaseapp.com/__/auth/:splat"
+  status = 200
+  force = true
+
+# Basic security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Allow geolocation prompts (required for the pin button to work)
+    Permissions-Policy = "geolocation=(self), microphone=(), camera=()"
