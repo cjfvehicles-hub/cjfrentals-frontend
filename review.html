@@ -343,6 +343,7 @@
   <script>
     (function() {
       const token = new URLSearchParams(window.location.search).get('token');
+      const API_BASE = window.location.hostname === 'localhost' ? '/api' : 'https://cjf-api-864727255016.us-east1.run.app/api';
       const instructionsEl = document.getElementById('verificationLine');
       const expiryEl = document.getElementById('linkExpiry');
       const form = document.getElementById('reviewForm');
@@ -441,7 +442,7 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting…';
         try {
-          const resp = await fetch('/api/reviews/submit', {
+          const resp = await fetch(`${API_BASE}/reviews/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -477,7 +478,7 @@
           return;
         }
         try {
-          const resp = await fetch(`/api/review-tokens/${token}`);
+          const resp = await fetch(`${API_BASE}/review-tokens/${token}`);
           const data = await resp.json();
           if (!resp.ok || !data?.success) {
             instructionsEl.textContent = data?.error || 'This link is no longer valid.';

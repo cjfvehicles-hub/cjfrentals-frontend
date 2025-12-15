@@ -42,8 +42,7 @@ const NavBuilder = (function() {
 	function renderNav(isLoggedIn) {
 		const navList = document.getElementById('nav-list');
 		if (!navList) {
-			console.warn(' nav-list element not found');
-			return;
+			return; // page without nav list
 		}
 
 		console.log(` renderNav(${isLoggedIn ? 'HOST' : 'GUEST'})`);
