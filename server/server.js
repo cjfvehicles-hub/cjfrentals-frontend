@@ -732,8 +732,10 @@ app.post('/api/reviews/submit', async (req, res) => {
 
   try {
     await db.runTransaction(async (tx) => {
+      // ===== ALL READS FIRST =====
       const tokenRef = db.collection('reviewTokens').doc(token);
       const tokenSnap = await tx.get(tokenRef);
+      
       if (!tokenSnap.exists) {
         throw new Error('Review token not found');
       }
@@ -754,6 +756,9 @@ app.post('/api/reviews/submit', async (req, res) => {
       const hostId = tokenData.hostId;
       const hostRef = db.collection('hosts').doc(hostId);
       const userRef = db.collection('users').doc(hostId);
+      const hostSnapshot = await tx.get(hostRef);
+
+      // ===== ALL WRITES AFTER =====
       const reviewRef = hostRef.collection('reviews').doc();
       const now = admin.firestore.Timestamp.now();
       const safeDisplayName = (displayName || '').trim() || 'Anonymous';
@@ -773,7 +778,6 @@ app.post('/api/reviews/submit', async (req, res) => {
         customerLabel: tokenData.customerLabel || null
       });
 
-      const hostSnapshot = await tx.get(hostRef);
       const hostCount = hostSnapshot.exists ? hostSnapshot.data().ratingCount || 0 : 0;
       const hostAvg = hostSnapshot.exists ? hostSnapshot.data().ratingAvg || 0 : 0;
       const newCount = hostCount + 1;
