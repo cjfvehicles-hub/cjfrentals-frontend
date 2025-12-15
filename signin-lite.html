@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign In (Lite)</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f7fb} .card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.08);max-width:420px;width:100%} .btn{padding:12px 16px;border:0;border-radius:8px;background:#667eea;color:#fff;font-weight:700;cursor:pointer;width:100%}</style>
+</head>
+<body>
+  <div class="card">
+    <h2>Google Sign-In (Lite)</h2>
+    <p id="status">Ready.</p>
+    <button id="btn" class="btn">Continue with Google</button>
+  </div>
+  <script>
+    (function(){
+      function log(msg){ console.log(msg); document.getElementById('status').textContent = msg; }
+      if (!window.firebaseAuth){ log('Firebase not ready'); return; }
+      const auth = window.firebaseAuth;
+      const provider = new firebase.auth.GoogleAuthProvider();
+      document.getElementById('btn').onclick = function(){
+        log('Starting redirect...');
+        auth.signInWithRedirect(provider).catch(err=>{ log('Error: '+ (err.message||err.code)); });
+      };
+      auth.getRedirectResult().then(result=>{
+        if (result && result.user){ log('Signed in. Redirecting...'); window.location.href='account.html'; }
+      }).catch(err=>{ log('RedirectResult error: '+(err.message||err.code)); });
+    })();
+  </script>
+</body>
+</html>
