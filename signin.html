@@ -257,19 +257,36 @@
       try {
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         const provider = new firebase.auth.GoogleAuthProvider();
-        const result = await auth.signInWithPopup(provider);
-        if (result && result.user) {
-          console.log('signin: popup success, user:', result.user.email);
-          localStorage.removeItem('_forceSignOut');
-          window.location.href = 'account.html';
+        
+        try {
+          const result = await auth.signInWithPopup(provider);
+          if (result && result.user) {
+            console.log('signin: popup success, user:', result.user.email);
+            localStorage.removeItem('_forceSignOut');
+            window.location.href = 'account.html';
+            return;
+          }
+        } catch (popupErr) {
+          console.warn('Popup blocked or failed:', popupErr.code, popupErr.message);
+          // Fallback to redirect if popup fails
+          setStatus('Redirecting to Google…');
+          try {
+            await auth.signInWithRedirect(provider);
+            return;
+          } catch (redirectErr) {
+            console.warn('Redirect also failed:', redirectErr);
+            throw redirectErr;
+          }
         }
       } catch (err) {
-        console.warn('Google popup error:', err);
+        console.warn('Google sign-in error:', err);
         let message = 'Google sign-in failed';
-        if (err.code === 'auth/popup-blocked') message = 'Popup was blocked. Check your browser settings.';
+        if (err.code === 'auth/popup-blocked') message = 'Popup was blocked. Allow popups and try again.';
         else if (err.code === 'auth/popup-closed-by-user') message = 'Sign-in was cancelled.';
         else if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
+        else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your connection.';
         else if (err.message) message = err.message;
+        console.error('Full error:', err);
         showError(message);
         form.style.display = 'block';
         loading.style.display = 'none';
