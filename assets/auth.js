@@ -14,6 +14,8 @@ const AuthManager = (function() {
     ADMIN: 'admin',
   };
 
+  const SPECIAL_ADMIN_EMAIL = 'cjfvehicles@gmail.com';
+
   // Storage keys
   const STORAGE_KEYS = {
     CURRENT_USER: 'CJF_CURRENT_USER',
@@ -57,6 +59,12 @@ const AuthManager = (function() {
     return getUserRole() === ROLES.ADMIN;
   }
 
+  function isSpecialAdminUser(user) {
+    const target = user || getCurrentUser();
+    const email = (target?.email || '').toLowerCase();
+    return email === SPECIAL_ADMIN_EMAIL;
+  }
+
   function isOwner(resourceHostId) {
     const user = getCurrentUser();
     return !!(user && user.id === resourceHostId);
@@ -64,16 +72,18 @@ const AuthManager = (function() {
 
   function syncLocalUser(firebaseUser) {
     if (!firebaseUser) return null;
+    const storedRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+    const validStoredRole = storedRole && Object.values(ROLES).includes(storedRole) ? storedRole : ROLES.HOST;
     const localUser = {
       id: firebaseUser.uid,
       name: firebaseUser.displayName || (firebaseUser.email || '').split('@')[0],
       email: firebaseUser.email || '',
       phone: '',
-      role: ROLES.HOST,
+      role: validStoredRole,
       lastSync: new Date().toISOString(),
     };
     localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(localUser));
-    localStorage.setItem(STORAGE_KEYS.USER_ROLE, ROLES.HOST);
+    localStorage.setItem(STORAGE_KEYS.USER_ROLE, validStoredRole);
     cachedLocalUser = localUser;
     return localUser;
   }
@@ -148,8 +158,16 @@ const AuthManager = (function() {
     if (!user) return false;
     const updated = { ...user, ...updates, lastSync: new Date().toISOString() };
     localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(updated));
+    if (updates.role) {
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, updates.role);
+    }
     cachedLocalUser = updated;
     return true;
+  }
+
+  function setRole(role) {
+    if (!Object.values(ROLES).includes(role)) return false;
+    return updateProfile({ role });
   }
 
   function requireAuth() {
@@ -184,9 +202,11 @@ const AuthManager = (function() {
     isAuthenticated,
     isHost,
     isAdmin,
+    isSpecialAdminUser,
     isOwner,
     signOut,
     updateProfile,
+    setRole,
     updateUIForRole,
     requireAuth,
     requireHost,

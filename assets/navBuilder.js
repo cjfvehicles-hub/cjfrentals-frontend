@@ -10,6 +10,8 @@
 const NavBuilder = (function() {
 	'use strict';
 
+	const SPECIAL_ADMIN_EMAIL = 'cjfvehicles@gmail.com';
+
 	let menuRendered = false; // Track if we've rendered the menu at least once
 
 	// Menu item definitions
@@ -83,11 +85,60 @@ const NavBuilder = (function() {
 			navList.appendChild(li);
 		});
 
+		appendAdminToggle(navList);
+
 		// Mark menu as rendered
 		menuRendered = true;
 
 		// Highlight current page
 		highlightCurrentPage();
+	}
+
+	function userIsSpecialAdmin() {
+		if (typeof AuthManager === 'undefined') return false;
+		const user = AuthManager.getCurrentUser();
+		const email = (user?.email || '').toLowerCase();
+		return email === SPECIAL_ADMIN_EMAIL;
+	}
+
+	function appendAdminToggle(navList) {
+		if (!navList || !userIsSpecialAdmin()) return;
+
+		const li = document.createElement('li');
+		li.className = 'menu-item admin-toggle';
+
+		const wrapper = document.createElement('div');
+		wrapper.className = 'admin-toggle-wrapper';
+
+		const label = document.createElement('span');
+		label.textContent = 'Admin mode';
+		label.className = 'admin-toggle-label';
+
+		const switchLabel = document.createElement('label');
+		switchLabel.className = 'admin-toggle-switch';
+
+		const checkbox = document.createElement('input');
+		checkbox.type = 'checkbox';
+		checkbox.checked = AuthManager?.isAdmin ? AuthManager.isAdmin() : false;
+		const slider = document.createElement('span');
+		slider.className = 'slider';
+
+		switchLabel.appendChild(checkbox);
+		switchLabel.appendChild(slider);
+
+		wrapper.appendChild(label);
+		wrapper.appendChild(switchLabel);
+		li.appendChild(wrapper);
+		navList.appendChild(li);
+
+		checkbox.addEventListener('change', () => {
+			const nextRole = checkbox.checked ? AuthManager.ROLES.ADMIN : AuthManager.ROLES.HOST;
+			if (AuthManager?.setRole) {
+				AuthManager.setRole(nextRole);
+				AuthManager.updateUIForRole();
+			}
+			checkbox.checked = AuthManager.isAdmin();
+		});
 	}
 
 	/**

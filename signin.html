@@ -70,6 +70,10 @@
       <div class="loading" id="loading">
         <div class="spinner"></div>
         <p style="margin-top: 12px; color: #666;">Signing in...</p>
+        <div id="slowNotice" style="display:none; margin-top:10px; font-size:13px; color:#555;">
+          This is taking longer than usual.
+          <button id="continueRedirect" class="button google" style="margin-top:8px; width:auto; padding:8px 12px;">Continue with Google</button>
+        </div>
       </div>
 
       <div class="signin-footer">
@@ -96,6 +100,8 @@
     const errorDiv = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+    let pendingGoogleFlow = false;
+    let googleSafetyTimer = null;
 
     function showError(message) {
       errorDiv.textContent = message;
@@ -149,6 +155,24 @@
         .catch((err) => console.warn('Google redirect error:', err));
     }
 
+    // Slow-flow helper: show a visible redirect option if things hang
+    function showSlowNotice(auth, provider) {
+      const slow = document.getElementById('slowNotice');
+      if (!slow) return;
+      slow.style.display = 'block';
+      const btn = document.getElementById('continueRedirect');
+      if (btn) {
+        btn.onclick = async () => {
+          try {
+            await auth.signInWithRedirect(provider);
+          } catch (e) {
+            console.warn('Redirect start failed:', e);
+            showError('Google sign-in failed. Please try again.');
+          }
+        };
+      }
+    }
+
     googleBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
@@ -159,15 +183,39 @@
         localStorage.removeItem('_forceSignOut');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         const provider = new window.firebase.auth.GoogleAuthProvider();
+        pendingGoogleFlow = true;
+
+        // iOS (or environments not supporting popup): go straight to redirect
         if (isIOS) {
           await auth.signInWithRedirect(provider);
           return;
         }
+
+        // Safety timer: if popup doesn't resolve quickly, fallback to redirect
+        if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
+        googleSafetyTimer = setTimeout(async () => {
+          if (!pendingGoogleFlow) return;
+          try {
+            showSlowNotice(auth, provider);
+            await auth.signInWithRedirect(provider);
+          } catch (e2) {
+            console.warn('Auto-redirect fallback failed:', e2);
+          }
+        }, 3500);
+
         try {
           await auth.signInWithPopup(provider);
+          pendingGoogleFlow = false;
+          if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
           setTimeout(() => { window.location.href = 'account.html'; }, 300);
         } catch (popupErr) {
-          if (popupErr.code === 'auth/popup-blocked') {
+          pendingGoogleFlow = false;
+          if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
+          if (
+            popupErr.code === 'auth/popup-blocked' ||
+            popupErr.code === 'auth/cancelled-popup-request' ||
+            popupErr.code === 'auth/operation-not-supported-in-this-environment'
+          ) {
             await auth.signInWithRedirect(provider);
             return;
           }
@@ -177,6 +225,8 @@
         let message = 'Google sign-in failed';
         if (err.code === 'auth/popup-blocked') message = 'Sign-in popup was blocked. Redirecting...';
         else if (err.code === 'auth/popup-closed-by-user') message = 'Sign-in was cancelled';
+        else if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
+        else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your internet connection.';
         showError(message);
       }
     });
