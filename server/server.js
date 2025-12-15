@@ -15,15 +15,24 @@ let firestoreReady = false;
 
 const initFirestore = () => {
   try {
-    const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
-    if (!fs.existsSync(serviceAccountPath)) {
-      console.warn('⚠️  serviceAccountKey.json not found. Using local JSON files only.');
-      console.warn('    To enable Firestore: See server/FIRESTORE_SETUP.md');
-      firestoreReady = false;
-      return;
+    // Prefer env-provided service account (JSON or base64-encoded JSON)
+    let serviceAccount = null;
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } else if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+      const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+    } else {
+      const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+      if (!fs.existsSync(serviceAccountPath)) {
+        console.warn('⚠️  serviceAccountKey.json not found. Using local JSON files only.');
+        console.warn('    To enable Firestore: See server/FIRESTORE_SETUP.md or set FIREBASE_SERVICE_ACCOUNT env.');
+        firestoreReady = false;
+        return;
+      }
+      serviceAccount = require(serviceAccountPath);
     }
 
-    const serviceAccount = require(serviceAccountPath);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       projectId: serviceAccount.project_id
@@ -51,6 +60,7 @@ const DB_DIR = path.join(__dirname, 'data');
 const VEHICLES_DB = path.join(DB_DIR, 'vehicles.json');
 const USERS_DB = path.join(DB_DIR, 'users.json');
 const BOOKINGS_DB = path.join(DB_DIR, 'bookings.json');
+const CONTACT_REPORTS_DB = path.join(DB_DIR, 'contact-reports.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(DB_DIR)) {
@@ -71,6 +81,10 @@ const initDB = () => {
 
   if (!fs.existsSync(BOOKINGS_DB)) {
     fs.writeFileSync(BOOKINGS_DB, JSON.stringify([], null, 2));
+  }
+
+  if (!fs.existsSync(CONTACT_REPORTS_DB)) {
+    fs.writeFileSync(CONTACT_REPORTS_DB, JSON.stringify([], null, 2));
   }
 };
 
@@ -175,6 +189,12 @@ const writeData = (filePath, data) => {
     console.error(`Error writing ${filePath}:`, error);
     return false;
   }
+};
+
+const appendContactReport = (report) => {
+  const existing = readData(CONTACT_REPORTS_DB);
+  existing.push(report);
+  writeData(CONTACT_REPORTS_DB, existing);
 };
 
 // ==================== HEALTH CHECK ====================
@@ -599,7 +619,7 @@ app.get('/api/bookings', (req, res) => {
 // POST create booking
 app.post('/api/bookings', (req, res) => {
   const bookings = readData(BOOKINGS_DB);
-  
+
   const newBooking = {
     id: uuidv4(),
     ...req.body,
@@ -620,6 +640,59 @@ app.post('/api/bookings', (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create booking'
+    });
+  }
+});
+
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, issueType, vehicleUrl, message } = req.body || {};
+  const trimmedName = (name || '').trim();
+  const trimmedEmail = (email || '').trim();
+  const trimmedSubject = (subject || '').trim();
+  const trimmedMessage = (message || '').trim();
+
+  if (!trimmedName || !trimmedEmail || !trimmedSubject || !trimmedMessage) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing required contact fields',
+      message: 'Please provide your name, email, subject, and message.'
+    });
+  }
+
+  const reportId = uuidv4();
+  const now = admin.firestore.Timestamp.now();
+  const payload = {
+    id: reportId,
+    name: trimmedName,
+    email: trimmedEmail,
+    subject: trimmedSubject,
+    issueType: issueType || 'General Inquiry',
+    vehicleUrl: (vehicleUrl || '').trim() || null,
+    message: trimmedMessage,
+    status: 'new',
+    createdAt: now
+  };
+
+  try {
+    if (firestoreReady && db) {
+      await db.collection('contactReports').doc(reportId).set(payload);
+    }
+    appendContactReport({
+      ...payload,
+      createdAt: now.toDate().toISOString()
+    });
+
+    res.status(201).json({
+      success: true,
+      id: reportId,
+      message: 'Report received. We will review it within 24-48 hours.'
+    });
+  } catch (error) {
+    console.error('Contact submission error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to store contact report',
+      message: error.message
     });
   }
 });

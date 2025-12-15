@@ -39,14 +39,14 @@
         </p>
       </div>
       
-      <form class="form-grid">
+      <form id="contactForm" class="form-grid">
         <div class="form-grid two">
-          <div><label>Name</label><input class="input" required /></div>
-          <div><label>Email</label><input type="email" class="input" required /></div>
-          <div><label>Subject</label><input class="input" required /></div>
+          <div><label>Name</label><input id="contactName" class="input" required /></div>
+          <div><label>Email</label><input id="contactEmail" type="email" class="input" required /></div>
+          <div><label>Subject</label><input id="contactSubject" class="input" required /></div>
           <div>
             <label>Issue type</label>
-            <select class="input">
+            <select id="contactIssue" class="input">
               <option>General Inquiry</option>
               <option>Report Scam / Fraud</option>
               <option>Report Fake Listing</option>
@@ -57,10 +57,11 @@
               <option>Other</option>
             </select>
           </div>
-          <div><label>Vehicle/Host link (optional)</label><input class="input" placeholder="Paste URL if reporting a specific listing" /></div>
-          <div style="grid-column: 1 / -1;"><label>Message</label><textarea class="input" rows="6" required placeholder="Provide as much detail as possible..."></textarea></div>
+          <div><label>Vehicle/Host link (optional)</label><input id="contactVehicle" class="input" placeholder="Paste URL if reporting a specific listing" /></div>
+          <div style="grid-column: 1 / -1;"><label>Message</label><textarea id="contactMessage" class="input" rows="6" required placeholder="Provide as much detail as possible..."></textarea></div>
         </div>
         <button class="button" type="submit">Send Report</button>
+        <p id="contactFeedback" class="helper-text" style="display:none;"></p>
       </form>
     </section>
 
@@ -102,6 +103,55 @@
   <script src="assets/firebase.js"></script>
   <script src="assets/auth.js"></script>
   <script src="assets/navBuilder.js"></script>
+  <script>
+    (function() {
+      const form = document.getElementById('contactForm');
+      const feedbackEl = document.getElementById('contactFeedback');
+      if (!form || !feedbackEl) return;
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      const setFeedback = (message, isError = false) => {
+        feedbackEl.textContent = message;
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.color = isError ? '#b91c1c' : '#0f172a';
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+
+        const payload = {
+          name: document.getElementById('contactName').value,
+          email: document.getElementById('contactEmail').value,
+          subject: document.getElementById('contactSubject').value,
+          issueType: document.getElementById('contactIssue').value,
+          vehicleUrl: document.getElementById('contactVehicle').value,
+          message: document.getElementById('contactMessage').value
+        };
+
+        try {
+          const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            setFeedback(data.error || data.message || 'Unable to send report right now.', true);
+            throw new Error(data.error || 'Contact submission failed');
+          }
+          setFeedback(data.message || 'Report submitted—thank you!');
+          form.reset();
+        } catch (error) {
+          console.error('Contact form submit error:', error);
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Report';
+          }
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
-
