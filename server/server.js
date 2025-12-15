@@ -11,7 +11,8 @@ const admin = require('firebase-admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SPECIAL_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'cjfvehicles@gmail.com';
+const ADMIN_EMAILS = (process.env.ADMIN_EMAIL || 'cjfvehicles@gmail.com')
+  .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 const ALLOW_UID_BEARER = String(process.env.ALLOW_UID_BEARER || 'true').toLowerCase() === 'true';
 
 // Cloud Run / proxies
@@ -265,7 +266,7 @@ const isAdmin = (req) => {
   if (!req.user) return false;
   if (req.user.role === 'admin') return true;
   const email = (req.user.email || '').toLowerCase();
-  return email && email === SPECIAL_ADMIN_EMAIL.toLowerCase();
+  return email && ADMIN_EMAILS.includes(email);
 };
 
 /**
@@ -1105,7 +1106,8 @@ const requireAdmin = async (req, res, next) => {
     });
   }
   // Check if admin
-  const isAdminUser = user.role === 'admin' || (user.email && user.email.toLowerCase() === SPECIAL_ADMIN_EMAIL.toLowerCase());
+  const userEmail = (user.email || '').toLowerCase();
+  const isAdminUser = user.role === 'admin' || (userEmail && ADMIN_EMAILS.includes(userEmail));
   if (!isAdminUser) {
     return res.status(403).json({
       success: false,
