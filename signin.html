@@ -100,6 +100,7 @@
     const errorDiv = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+    const USE_REDIRECT_ONLY = true; // Force reliable redirect flow across browsers
     let pendingGoogleFlow = false;
     let googleSafetyTimer = null;
 
@@ -152,7 +153,17 @@
             window.location.href = 'account.html';
           }
         })
-        .catch((err) => console.warn('Google redirect error:', err));
+        .catch((err) => {
+          console.warn('Google redirect error:', err);
+          let message = 'Google sign-in failed';
+          if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
+          else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your internet connection.';
+          else if (err.message) message = err.message;
+          // Show form again on redirect failure
+          form.style.display = 'block';
+          loading.style.display = 'none';
+          showError(message);
+        });
     }
 
     // Slow-flow helper: show a visible redirect option if things hang
@@ -185,8 +196,8 @@
         const provider = new window.firebase.auth.GoogleAuthProvider();
         pendingGoogleFlow = true;
 
-        // iOS (or environments not supporting popup): go straight to redirect
-        if (isIOS) {
+        // iOS or redirect-only mode: go straight to redirect
+        if (isIOS || USE_REDIRECT_ONLY) {
           await auth.signInWithRedirect(provider);
           return;
         }
