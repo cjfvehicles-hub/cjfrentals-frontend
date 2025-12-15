@@ -161,16 +161,26 @@
         }
         setFeedback('Sending your report…');
 
-        try {
-          const response = await fetch('/api/support/submit', {
+        const submitTo = async (endpoint) => {
+          const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
           const data = await response.json();
           if (!response.ok || !data.success) {
-            setFeedback(data.error || data.message || 'Unable to send report right now.', true);
-            throw new Error(data.error || 'Contact submission failed');
+            throw new Error(data.error || data.message || `Failed via ${endpoint}`);
+          }
+          return data;
+        };
+
+        try {
+          let data;
+          try {
+            data = await submitTo('/api/support/submit');
+          } catch (primaryErr) {
+            console.warn('Primary submit failed, retrying legacy /api/contact:', primaryErr.message);
+            data = await submitTo('/api/contact');
           }
           setFeedback('Report sent. We’ll review soon.');
           form.reset();
