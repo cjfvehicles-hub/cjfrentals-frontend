@@ -42,6 +42,8 @@
         window.location.assign(handlerUrl);
       }
 
+      let signInStarted = false;
+
       function checkRedirectResult() {
         if (!ready()) return;
         firebaseAuth.getRedirectResult().then(res=>{
@@ -61,17 +63,20 @@
             localStorage.removeItem('_forceSignOut');
             setStatus('Redirecting to account…');
             window.location.href = 'account.html';
+            return true; // Success
           }
+          return false; // No result yet
         }).catch((err)=>{
           console.warn('RedirectResult error:', err);
+          return false;
         });
       }
 
-      function go(){
+      function startSignIn() {
+        if (signInStarted) return; // Prevent duplicate calls
+        signInStarted = true;
         snapshot();
-        if (!ready()){ setStatus('Waiting for Firebase…'); return; }
-        // Check for redirect result FIRST before triggering new sign-in
-        checkRedirectResult();
+        if (!ready()){ setStatus('Waiting for Firebase…'); signInStarted = false; return; }
         try {
           const auth = window.firebaseAuth;
           const provider = new firebase.auth.GoogleAuthProvider();
@@ -81,6 +86,7 @@
             console.warn('signInWithRedirect error:', err);
             setStatus('Failed: ' + (err.message || err.code || 'Unknown'));
             setDiag('Error: '+(err.stack || err.message || err.code));
+            signInStarted = false;
             forceHandlerRedirect();
           });
           // If the browser swallows the promise without navigating, force handler after a short wait
@@ -89,20 +95,54 @@
           console.warn('Unexpected error:', e);
           setStatus('Unexpected error: ' + (e.message || e));
           setDiag('Exception: '+(e.stack || e));
+          signInStarted = false;
           forceHandlerRedirect();
         }
       }
+
+      // On load, check for redirect result FIRST
+      window.addEventListener('load', () => {
+        snapshot();
+        if (ready()) {
+          const hasResult = firebaseAuth.getRedirectResult().then(res=>{
+            if (res && res.user) {
+              setStatus('Signed in. Syncing…');
+              const localUser = {
+                id: res.user.uid,
+                name: res.user.displayName || (res.user.email || '').split('@')[0],
+                email: res.user.email || '',
+                phone: '',
+                role: 'host',
+                lastSync: new Date().toISOString(),
+              };
+              localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
+              localStorage.setItem('CJF_USER_ROLE', 'host');
+              localStorage.removeItem('_forceSignOut');
+              setStatus('Redirecting to account…');
+              window.location.href = 'account.html';
+              return true;
+            }
+            return false;
+          }).catch(() => false);
+        }
+      });
+
+      // Wait for auth ready, then offer to start sign-in
       let attempts = 0;
       const iv = setInterval(()=>{
         attempts++;
         snapshot();
-        if (ready() || attempts > 120){ clearInterval(iv); go(); }
+        if (ready()) {
+          clearInterval(iv);
+          setStatus('Ready. Starting sign-in...');
+          startSignIn();
+        } else if (attempts > 120) {
+          clearInterval(iv);
+          setStatus('Timeout waiting for Firebase.');
+        }
       }, 50);
-      document.getElementById('retry').onclick = function(e){ e.preventDefault(); go(); };
-      // Also check for a completed redirect when returning
-      window.addEventListener('load', () => {
-        checkRedirectResult();
-      });
+
+      document.getElementById('retry').onclick = function(e){ e.preventDefault(); signInStarted = false; startSignIn(); };
     })();
   </script>
 </body>
