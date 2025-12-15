@@ -300,10 +300,10 @@ const NavBuilder = (function() {
 				console.log(' AuthManager available on attempt', waitCount);
 				// Render according to real auth state
 				onAuthStateChange();
-			} else if (waitCount > 40) {
-				// Timeout after ~2 seconds (40 * 50ms) for faster fallback
+			} else if (waitCount > 20) {
+				// Timeout after ~1 second (20 * 50ms) for faster fallback
 				clearInterval(checkAuthManager);
-				console.warn(' AuthManager timeout after', waitCount, 'attempts');
+				console.log(' AuthManager not loaded after', waitCount, 'attempts, using guest menu');
 				
 				// Check Firebase directly if AuthManager not available
 				if (window.firebaseAuth && window.firebaseAuth.currentUser) {
