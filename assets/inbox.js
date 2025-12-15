@@ -139,19 +139,20 @@ const AdminInbox = (function() {
     const searchQuery = (document.getElementById('searchInput').value || '').toLowerCase();
     
     let filtered = messages.filter(msg => {
+      const status = (msg.status || 'unread').toLowerCase();
       // Status/filter match
-      if (currentFilter === 'unread') return msg.status === 'unread';
-      if (currentFilter === 'open') return msg.status === 'open';
-      if (currentFilter === 'pending') return msg.status === 'pending';
-      if (currentFilter === 'resolved') return msg.status === 'resolved';
+      if (currentFilter === 'unread') return status === 'unread';
+      if (currentFilter === 'open') return status === 'open';
+      if (currentFilter === 'pending') return status === 'pending';
+      if (currentFilter === 'resolved') return status === 'resolved';
       if (currentFilter === 'starred') return msg.starred === true;
-      if (currentFilter === 'status-unread') return msg.status === 'unread';
-      if (currentFilter === 'status-open') return msg.status === 'open';
-      if (currentFilter === 'status-pending') return msg.status === 'pending';
-      if (currentFilter === 'status-resolved') return msg.status === 'resolved';
+      if (currentFilter === 'status-unread') return status === 'unread';
+      if (currentFilter === 'status-open') return status === 'open';
+      if (currentFilter === 'status-pending') return status === 'pending';
+      if (currentFilter === 'status-resolved') return status === 'resolved';
       
       // Default: inbox = not archived/deleted
-      if (currentFilter === 'inbox') return !msg.archived && msg.status !== 'trash';
+      if (currentFilter === 'inbox') return status !== 'archived' && status !== 'trash';
       
       return true;
     });
@@ -421,10 +422,13 @@ const AdminInbox = (function() {
       const filter = item.dataset.filter;
       let count = 0;
       
-      if (filter === 'inbox') count = messages.filter(m => !m.archived && m.status !== 'trash').length;
-      if (filter === 'unread') count = messages.filter(m => m.status === 'unread').length;
-      if (filter === 'open') count = messages.filter(m => m.status === 'open').length;
-      if (filter === 'pending') count = messages.filter(m => m.status === 'pending').length;
+      if (filter === 'inbox') count = messages.filter(m => {
+        const status = (m.status || '').toLowerCase();
+        return status !== 'archived' && status !== 'trash';
+      }).length;
+      if (filter === 'unread') count = messages.filter(m => (m.status || '').toLowerCase() === 'unread').length;
+      if (filter === 'open') count = messages.filter(m => (m.status || '').toLowerCase() === 'open').length;
+      if (filter === 'pending') count = messages.filter(m => (m.status || '').toLowerCase() === 'pending').length;
       
       badge.textContent = count || '';
     });

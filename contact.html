@@ -116,38 +116,72 @@
         feedbackEl.style.color = isError ? '#b91c1c' : '#0f172a';
       };
 
+      const isValidEmail = (value) => /.+@.+\..+/.test(value);
+
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+
+        const name = document.getElementById('contactName').value.trim();
+        const email = document.getElementById('contactEmail').value.trim();
+        const subject = document.getElementById('contactSubject').value.trim();
+        const issueType = document.getElementById('contactIssue').value.trim() || 'General Inquiry';
+        const vehicleHostLink = document.getElementById('contactVehicle').value.trim();
+        const message = document.getElementById('contactMessage').value.trim();
+
+        // Basic client-side validation
+        if (!message) {
+          setFeedback('Message cannot be empty.', true);
+          return;
+        }
+        if (!email || !isValidEmail(email)) {
+          setFeedback('Please enter a valid email.', true);
+          return;
+        }
+        if (issueType.toLowerCase().includes('fraud') || issueType.toLowerCase().includes('scam')) {
+          if (message.length < 30) {
+            setFeedback('Please provide more detail for fraud/scam reports (at least 30 characters).', true);
+            return;
+          }
+        }
 
         const payload = {
-          name: document.getElementById('contactName').value,
-          email: document.getElementById('contactEmail').value,
-          subject: document.getElementById('contactSubject').value,
-          issueType: document.getElementById('contactIssue').value,
-          vehicleUrl: document.getElementById('contactVehicle').value,
-          message: document.getElementById('contactMessage').value
+          name,
+          email,
+          subject: subject || 'Support request',
+          issueType,
+          vehicleHostLink: vehicleHostLink || undefined,
+          message,
+          pageUrl: 'https://cjfrentals.com/contact.html'
         };
 
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Sending…';
+          submitBtn.classList.add('is-loading');
+        }
+        setFeedback('Sending your report…');
+
         try {
-          const response = await fetch('/api/contact', {
+          const response = await fetch('/api/support/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
           const data = await response.json();
-          if (!response.ok) {
+          if (!response.ok || !data.success) {
             setFeedback(data.error || data.message || 'Unable to send report right now.', true);
             throw new Error(data.error || 'Contact submission failed');
           }
-          setFeedback(data.message || 'Report submitted—thank you!');
+          setFeedback('Report sent. We’ll review soon.');
           form.reset();
         } catch (error) {
           console.error('Contact form submit error:', error);
+          setFeedback(error.message || 'Failed to send report.', true);
         } finally {
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Send Report';
+            submitBtn.classList.remove('is-loading');
           }
         }
       });

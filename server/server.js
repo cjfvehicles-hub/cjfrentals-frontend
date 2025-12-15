@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const admin = require('firebase-admin');
 
@@ -151,6 +152,7 @@ const VEHICLES_DB = path.join(DB_DIR, 'vehicles.json');
 const USERS_DB = path.join(DB_DIR, 'users.json');
 const BOOKINGS_DB = path.join(DB_DIR, 'bookings.json');
 const CONTACT_REPORTS_DB = path.join(DB_DIR, 'contact-reports.json');
+const SUPPORT_MESSAGES_DB = path.join(DB_DIR, 'support-messages.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(DB_DIR)) {
@@ -175,6 +177,10 @@ const initDB = () => {
 
   if (!fs.existsSync(CONTACT_REPORTS_DB)) {
     fs.writeFileSync(CONTACT_REPORTS_DB, JSON.stringify([], null, 2));
+  }
+
+  if (!fs.existsSync(SUPPORT_MESSAGES_DB)) {
+    fs.writeFileSync(SUPPORT_MESSAGES_DB, JSON.stringify([], null, 2));
   }
 };
 
@@ -303,6 +309,12 @@ const appendContactReport = (report) => {
   const existing = readData(CONTACT_REPORTS_DB);
   existing.push(report);
   writeData(CONTACT_REPORTS_DB, existing);
+};
+
+const appendSupportMessage = (message) => {
+  const existing = readData(SUPPORT_MESSAGES_DB);
+  existing.push(message);
+  writeData(SUPPORT_MESSAGES_DB, existing);
 };
 
 // ==================== HEALTH CHECK ====================
@@ -752,59 +764,115 @@ app.post('/api/bookings', (req, res) => {
   }
 });
 
-app.post('/api/contact', async (req, res) => {
-  const { name, email, subject, issueType, vehicleUrl, message } = req.body || {};
-  const trimmedName = (name || '').trim();
-  const trimmedEmail = (email || '').trim();
-  const trimmedSubject = (subject || '').trim();
-  const trimmedMessage = (message || '').trim();
+const supportSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-  if (!trimmedName || !trimmedEmail || !trimmedSubject || !trimmedMessage) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required contact fields',
-      message: 'Please provide your name, email, subject, and message.'
+const buildSupportMessagePayload = (body, req) => {
+  const name = (body.name || '').trim();
+  const email = (body.email || '').trim();
+  const subject = (body.subject || '').trim() || 'Support request';
+  const issueType = (body.issueType || 'General Inquiry').trim();
+  const vehicleHostLink = (body.vehicleHostLink || body.vehicleUrl || '').trim();
+  const message = (body.message || '').trim();
+  const pageUrl = (body.pageUrl || req?.headers?.referer || 'https://cjfrentals.com/contact.html').trim();
+
+  if (!message) {
+    throw new Error('Message is required');
+  }
+  if (!email || !/.+@.+\..+/.test(email)) {
+    throw new Error('Valid email is required');
+  }
+  if (issueType.toLowerCase().includes('fraud') || issueType.toLowerCase().includes('scam')) {
+    if (message.length < 30) {
+      throw new Error('Fraud/Scam reports need more detail (min 30 characters)');
+    }
+  }
+
+  const priority = (issueType.toLowerCase().includes('fraud') || issueType.toLowerCase().includes('scam'))
+    ? 'high'
+    : 'normal';
+
+  const now = firestoreReady && admin.firestore.Timestamp.now ? admin.firestore.Timestamp.now() : null;
+
+  return {
+    id: uuidv4(),
+    name: name || null,
+    email,
+    subject,
+    issueType,
+    vehicleHostLink: vehicleHostLink || null,
+    message,
+    pageUrl,
+    userAgent: (req?.headers?.['user-agent'] || '').substring(0, 300) || null,
+    ipHash: req?.ip ? crypto.createHash('sha256').update(req.ip).digest('hex') : null,
+    status: 'unread',
+    starred: false,
+    priority,
+    createdAt: now || new Date().toISOString(),
+    updatedAt: now || new Date().toISOString(),
+    assignedTo: null,
+    tags: []
+  };
+};
+
+const storeSupportMessage = async (message) => {
+  const { id, createdAt, updatedAt, ...rest } = message;
+  if (firestoreReady && db) {
+    const ts = admin.firestore.Timestamp;
+    const created = createdAt && createdAt.toDate ? createdAt : ts.now();
+    const updated = updatedAt && updatedAt.toDate ? updatedAt : ts.now();
+    await db.collection('support_messages').doc(id).set({
+      ...rest,
+      createdAt: created,
+      updatedAt: updated
     });
   }
 
-  const reportId = uuidv4();
-  const now = admin.firestore.Timestamp.now();
-  const payload = {
-    id: reportId,
-    name: trimmedName,
-    email: trimmedEmail,
-    subject: trimmedSubject,
-    issueType: issueType || 'General Inquiry',
-    vehicleUrl: (vehicleUrl || '').trim() || null,
-    message: trimmedMessage,
-    status: 'new',
-    createdAt: now
-  };
+  // Local fallback
+  appendSupportMessage({
+    id,
+    ...rest,
+    createdAt: createdAt && createdAt.toDate ? createdAt.toDate().toISOString() : createdAt,
+    updatedAt: updatedAt && updatedAt.toDate ? updatedAt.toDate().toISOString() : updatedAt
+  });
+};
 
+// Public: submit support message
+app.post('/api/support/submit', supportSubmitLimiter, async (req, res) => {
   try {
-    if (firestoreReady && db) {
-      await db.collection('contactReports').doc(reportId).set(payload);
-    }
-    appendContactReport({
-      ...payload,
-      createdAt: now.toDate().toISOString()
-    });
-
-    res.status(201).json({
-      success: true,
-      id: reportId,
-      message: 'Report received. We will review it within 24-48 hours.'
-    });
+    const payload = buildSupportMessagePayload(req.body || {}, req);
+    await storeSupportMessage(payload);
+    res.status(201).json({ success: true, id: payload.id });
   } catch (error) {
-    console.error('Contact submission error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to store contact report',
-      message: error.message
-    });
+    console.error('Support submit error:', error.message);
+    res.status(400).json({ success: false, error: error.message || 'Invalid request' });
   }
 });
 
+// Legacy alias
+app.post('/api/contact', supportSubmitLimiter, async (req, res) => {
+  try {
+    const payload = buildSupportMessagePayload({
+      name: req.body?.name,
+      email: req.body?.email,
+      subject: req.body?.subject,
+      issueType: req.body?.issueType,
+      vehicleHostLink: req.body?.vehicleUrl,
+      message: req.body?.message,
+      pageUrl: req.body?.pageUrl
+    }, req);
+    await storeSupportMessage(payload);
+    res.status(201).json({ success: true, id: payload.id });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message || 'Invalid request' });
+  }
+});
+
+// Legacy admin endpoint to list messages (now reads support_messages)
 app.get('/api/contact-reports', (req, res) => {
   const roleHeader = (req.headers['x-user-role'] || '').toLowerCase();
   if (!roleHeader || roleHeader !== 'admin') {
@@ -812,16 +880,16 @@ app.get('/api/contact-reports', (req, res) => {
   }
 
   try {
-    const reports = readData(CONTACT_REPORTS_DB);
+    const reports = readData(SUPPORT_MESSAGES_DB);
     const sorted = reports
       .slice()
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     res.json({ success: true, count: sorted.length, data: sorted });
   } catch (error) {
-    console.error('Failed to read contact reports:', error);
+    console.error('Failed to read support messages:', error);
     res.status(500).json({
       success: false,
-      error: 'Unable to load contact reports'
+      error: 'Unable to load reports'
     });
   }
 });
@@ -1048,24 +1116,52 @@ const requireAdmin = async (req, res, next) => {
   next();
 };
 
+const mapSupportDoc = (doc) => {
+  const data = doc.data();
+  const createdAt = data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt;
+  const updatedAt = data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt;
+  return {
+    id: doc.id,
+    ...data,
+    createdAt,
+    updatedAt
+  };
+};
+
 // GET admin messages with filters
-app.get('/admin/messages', requireAdmin, async (req, res) => {
+app.get('/api/admin/messages', requireAdmin, async (req, res) => {
   try {
-    if (!firestoreReady || !db) {
-      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    const filter = (req.query.filter || 'inbox').toString();
+    const sort = (req.query.sort || 'newest').toString();
+
+    let messages = [];
+
+    if (firestoreReady && db) {
+      const snapshot = await db.collection('support_messages').orderBy('createdAt', 'desc').get();
+      messages = snapshot.docs.map(mapSupportDoc);
+    } else {
+      messages = readData(SUPPORT_MESSAGES_DB).map(m => ({ ...m }));
     }
-    
-    const snapshot = await db.collection('contactReports').orderBy('createdAt', 'desc').get();
-    const messages = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt
-    }));
-    
-    res.json({
-      success: true,
-      data: messages
+
+    // Filter client-side
+    messages = messages.filter(m => {
+      const status = (m.status || 'unread').toLowerCase();
+      if (filter === 'unread') return status === 'unread';
+      if (filter === 'starred') return m.starred === true;
+      if (filter === 'open') return status === 'open';
+      if (filter === 'pending') return status === 'pending';
+      if (filter === 'resolved') return status === 'resolved';
+      if (filter === 'trash') return status === 'trash';
+      if (filter === 'archived') return status === 'archived';
+      // inbox default
+      return status !== 'archived' && status !== 'trash';
     });
+
+    if (sort === 'oldest') {
+      messages = messages.reverse();
+    }
+
+    res.json({ success: true, data: messages });
   } catch (error) {
     console.error('Error fetching messages:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch messages' });
@@ -1073,24 +1169,17 @@ app.get('/admin/messages', requireAdmin, async (req, res) => {
 });
 
 // GET single message
-app.get('/admin/messages/:id', requireAdmin, async (req, res) => {
+app.get('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   try {
-    if (!firestoreReady || !db) {
-      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    if (firestoreReady && db) {
+      const doc = await db.collection('support_messages').doc(req.params.id).get();
+      if (!doc.exists) return res.status(404).json({ success: false, error: 'Message not found' });
+      return res.json({ success: true, data: mapSupportDoc(doc) });
     }
-    
-    const doc = await db.collection('contactReports').doc(req.params.id).get();
-    if (!doc.exists) {
-      return res.status(404).json({ success: false, error: 'Message not found' });
-    }
-    
-    const message = {
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt
-    };
-    
-    res.json({ success: true, data: message });
+
+    const local = readData(SUPPORT_MESSAGES_DB).find(m => m.id === req.params.id);
+    if (!local) return res.status(404).json({ success: false, error: 'Message not found' });
+    return res.json({ success: true, data: local });
   } catch (error) {
     console.error('Error fetching message:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch message' });
@@ -1098,24 +1187,35 @@ app.get('/admin/messages/:id', requireAdmin, async (req, res) => {
 });
 
 // PATCH update message (status, starred, etc.)
-app.patch('/admin/messages/:id', requireAdmin, async (req, res) => {
+app.patch('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   try {
-    if (!firestoreReady || !db) {
-      return res.status(503).json({ success: false, error: 'Database unavailable' });
-    }
-    
-    const { status, starred, assignedTo, tags } = req.body;
+    const { status, starred, assignedTo, tags } = req.body || {};
     const updates = {};
-    
-    if (status !== undefined) updates.status = status;
-    if (starred !== undefined) updates.starred = starred;
+
+    const validStatuses = ['unread', 'open', 'pending', 'resolved', 'archived', 'trash'];
+    if (status !== undefined) {
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ success: false, error: 'Invalid status' });
+      }
+      updates.status = status;
+    }
+    if (starred !== undefined) updates.starred = !!starred;
     if (assignedTo !== undefined) updates.assignedTo = assignedTo;
-    if (tags !== undefined) updates.tags = tags;
-    
-    updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
-    
-    await db.collection('contactReports').doc(req.params.id).update(updates);
-    
+    if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags : [];
+
+    if (firestoreReady && db) {
+      updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+      await db.collection('support_messages').doc(req.params.id).update(updates);
+    }
+
+    // Local mirror
+    const local = readData(SUPPORT_MESSAGES_DB);
+    const idx = local.findIndex(m => m.id === req.params.id);
+    if (idx !== -1) {
+      local[idx] = { ...local[idx], ...updates, updatedAt: new Date().toISOString() };
+      writeData(SUPPORT_MESSAGES_DB, local);
+    }
+
     res.json({ success: true, message: 'Updated' });
   } catch (error) {
     console.error('Error updating message:', error);
@@ -1123,15 +1223,22 @@ app.patch('/admin/messages/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE message (hard delete)
-app.delete('/admin/messages/:id', requireAdmin, async (req, res) => {
+// DELETE message (soft delete -> trash)
+app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   try {
-    if (!firestoreReady || !db) {
-      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    const updates = { status: 'trash' };
+    if (firestoreReady && db) {
+      updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+      await db.collection('support_messages').doc(req.params.id).update(updates);
     }
-    
-    await db.collection('contactReports').doc(req.params.id).delete();
-    
+
+    const local = readData(SUPPORT_MESSAGES_DB);
+    const idx = local.findIndex(m => m.id === req.params.id);
+    if (idx !== -1) {
+      local[idx] = { ...local[idx], ...updates, updatedAt: new Date().toISOString() };
+      writeData(SUPPORT_MESSAGES_DB, local);
+    }
+
     res.json({ success: true, message: 'Deleted' });
   } catch (error) {
     console.error('Error deleting message:', error);
