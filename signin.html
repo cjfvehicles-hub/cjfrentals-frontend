@@ -261,25 +261,37 @@
         const provider = new window.firebase.auth.GoogleAuthProvider();
         pendingGoogleFlow = true;
 
-        // Try popup first; on specific errors, fall back to redirect
-        try {
-          setStatus('Opening Google (popup)...');
-          await auth.signInWithPopup(provider);
-          clearWatchdog();
-          window.location.href = 'account.html';
-          return;
-        } catch (popupErr) {
-          console.warn('Popup sign-in error:', popupErr);
-          setStatus('Redirecting to Google...');
-          // Start redirect without awaiting (navigation should occur immediately)
-          auth.signInWithRedirect(provider).catch(err => {
-            console.error('Redirect failed:', err);
-            showError(`Failed: ${err.message || err.code || 'Unknown error'}`);
-            form.style.display = 'block';
-            loading.style.display = 'none';
+        // Try popup first without awaiting; also set a short fallback timer to force redirect
+        setStatus('Opening Google (popup)...');
+        let completed = false;
+        auth.signInWithPopup(provider)
+          .then(() => {
+            completed = true;
+            clearWatchdog();
+            window.location.href = 'account.html';
+          })
+          .catch((popupErr) => {
+            completed = true;
+            console.warn('Popup sign-in error:', popupErr);
+            setStatus('Redirecting to Google...');
+            auth.signInWithRedirect(provider).catch(err => {
+              console.error('Redirect failed:', err);
+              showError(`Failed: ${err.message || err.code || 'Unknown error'}`);
+              form.style.display = 'block';
+              loading.style.display = 'none';
+            });
           });
-          return;
-        }
+
+        // Fallback: if popup neither resolves nor rejects quickly (blocked), start redirect
+        setTimeout(() => {
+          if (!completed) {
+            setStatus('Redirecting to Google...');
+            auth.signInWithRedirect(provider).catch(err => {
+              console.error('Redirect failed (timeout):', err);
+            });
+          }
+        }, 1200);
+        return;
       } catch (err) {
         console.warn('Google sign-in flow error:', err);
         let message = 'Google sign-in failed';
