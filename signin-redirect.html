@@ -77,7 +77,22 @@
         snapshot();
         if (ready()) {
           firebaseAuth.getRedirectResult().then(res=>{
-            if (res && res.user) { window.location.href = 'account.html'; }
+            if (res && res.user) {
+              // Sync user to localStorage so account.html can see auth state immediately
+              const localUser = {
+                id: res.user.uid,
+                name: res.user.displayName || (res.user.email || '').split('@')[0],
+                email: res.user.email || '',
+                phone: '',
+                role: 'host',
+                lastSync: new Date().toISOString(),
+              };
+              localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
+              localStorage.setItem('CJF_USER_ROLE', 'host');
+              localStorage.removeItem('_forceSignOut');
+              setStatus('Signed in. Redirecting...');
+              window.location.href = 'account.html';
+            }
           }).catch((err)=>{
             console.warn('RedirectResult error:', err);
             setDiag('RedirectResult error: '+(err.message||err.code));
