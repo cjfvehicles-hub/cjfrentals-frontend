@@ -103,6 +103,28 @@
     const USE_REDIRECT_ONLY = true; // Force reliable redirect flow across browsers
     let pendingGoogleFlow = false;
     let googleSafetyTimer = null;
+    let leaveTimer = null;
+    // Basic environment guard: Google sign-in needs HTTPS or localhost
+    (function envGuard(){
+      const proto = window.location.protocol;
+      const host = window.location.hostname;
+      const isLocal = /^(localhost|127\.0\.0\.1)$/.test(host);
+      if (proto === 'file:') {
+        showError('Google sign-in requires a web server. Please use your deployed site or run a local server (e.g., npm run dev).');
+      } else if (proto !== 'https:' && !isLocal) {
+        showError('Google sign-in requires HTTPS. Please use the secure site URL.');
+      }
+    })();
+
+    // Wait for Firebase Auth to be ready
+    async function ensureAuthReady(maxWaitMs = 3000) {
+      const start = Date.now();
+      while (!(window.firebaseAuth && window._firebaseInitialized)) {
+        if (Date.now() - start > maxWaitMs) break;
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return !!(window.firebaseAuth && window._firebaseInitialized);
+    }
 
     function showError(message) {
       errorDiv.textContent = message;
@@ -145,7 +167,9 @@
     });
 
     // Handle redirect result (iOS or popup-block fallback)
-    if (window.firebaseAuth) {
+    (async () => {
+      await ensureAuthReady();
+      if (!window.firebaseAuth) return;
       window.firebaseAuth.getRedirectResult()
         .then((result) => {
           if (result && result.user) {
@@ -164,7 +188,7 @@
           loading.style.display = 'none';
           showError(message);
         });
-    }
+    })();
 
     // Slow-flow helper: show a visible redirect option if things hang
     function showSlowNotice(auth, provider) {
@@ -198,7 +222,27 @@
 
         // iOS or redirect-only mode: go straight to redirect
         if (isIOS || USE_REDIRECT_ONLY) {
-          await auth.signInWithRedirect(provider);
+          // If navigation doesn’t occur quickly, show fallback button to retry
+          const slow = document.getElementById('slowNotice');
+          if (slow) slow.style.display = 'block';
+          const btn = document.getElementById('continueRedirect');
+          if (btn) btn.onclick = async () => { try { await auth.signInWithRedirect(provider); } catch(e) { showError('Google sign-in failed. Please try again.'); } };
+
+          // Try to start redirect; if page doesn’t unload in ~1.2s, user will still see the fallback
+          try {
+            // Track if we leave the page (unload/pagehide)
+            const markLeaving = () => { pendingGoogleFlow = false; if (leaveTimer) clearTimeout(leaveTimer); };
+            window.addEventListener('pagehide', markLeaving, { once: true });
+            window.addEventListener('beforeunload', markLeaving, { once: true });
+            pendingGoogleFlow = true;
+            leaveTimer = setTimeout(() => {
+              // Stay on spinner but user has retry button visible
+              pendingGoogleFlow = false;
+            }, 1200);
+            await auth.signInWithRedirect(provider);
+          } catch (e) {
+            showError('Google sign-in failed. Please try again.');
+          }
           return;
         }
 
