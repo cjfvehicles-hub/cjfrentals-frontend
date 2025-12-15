@@ -4,8 +4,8 @@
 // eslint-disable-next-line no-unused-vars
 const firebaseConfig = {
   apiKey: "AIzaSyBIneZxhMpn5BneMyZgRpdkMDW9dSIPplk",
-  // Use custom domain; Netlify proxies /__/auth/* to firebaseapp.com so handler still works
-  authDomain: "cjfrentals.com",
+  // Use firebaseapp.com for auth to work across all domains
+  authDomain: "cjf-rentals.firebaseapp.com",
   projectId: "cjf-rentals",
   storageBucket: "cjf-rentals.firebasestorage.app",
   messagingSenderId: "864727255016",
