@@ -99,6 +99,7 @@
     const googleBtn = document.getElementById('googleBtn');
     const errorDiv = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
+    const USE_REDIRECT_ONLY = true;
     const statusText = loading?.querySelector('p');
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
     const USE_REDIRECT_ONLY = false; // Desktop: popup first, redirect fallback; iOS stays redirect
@@ -347,4 +348,3 @@
   </script>
 </body>
 </html>
-

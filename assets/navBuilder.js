@@ -26,15 +26,15 @@ const NavBuilder = (function() {
 	];
 
 	const HOST_ITEMS = [
-		{ id: 'account', label: 'My Account', href: 'account.html' },
-		{ id: 'vehicles', label: 'Vehicles', href: 'vehicles.html' },
-		{ id: 'become-host', label: 'Become a Host', href: 'host-signup.html' },
-		{ id: 'upgrade', label: 'Upgrade Plan', href: 'upgrade.html' },
-		{ id: 'terms', label: 'Terms &amp; Conditions', href: 'terms.html' },
-		{ id: 'host-agreement', label: 'Host Agreement', href: 'host-agreement.html' },
-		{ id: 'safety', label: 'Safety Guidelines', href: 'safety.html' },
-		{ id: 'contact', label: 'Contact', href: 'contact.html' },
-		{ id: 'signout', label: 'Sign Out', href: '#', action: 'signout' },
+		{ id: 'account', label: 'My Account', href: 'account.html', hideWhenAdmin: false },
+		{ id: 'vehicles', label: 'Vehicles', href: 'vehicles.html', hideWhenAdmin: true },
+		{ id: 'become-host', label: 'Become a Host', href: 'host-signup.html', hideWhenAdmin: true },
+		{ id: 'upgrade', label: 'Upgrade Plan', href: 'upgrade.html', hideWhenAdmin: true },
+		{ id: 'terms', label: 'Terms &amp; Conditions', href: 'terms.html', hideWhenAdmin: true },
+		{ id: 'host-agreement', label: 'Host Agreement', href: 'host-agreement.html', hideWhenAdmin: true },
+		{ id: 'safety', label: 'Safety Guidelines', href: 'safety.html', hideWhenAdmin: true },
+		{ id: 'contact', label: 'Contact', href: 'contact.html', hideWhenAdmin: true },
+		{ id: 'signout', label: 'Sign Out', href: '#', action: 'signout', hideWhenAdmin: false },
 	];
 
 	/**
@@ -53,7 +53,10 @@ const NavBuilder = (function() {
 		navList.innerHTML = '';
 
 		// Choose items based on auth state
-		const items = isLoggedIn ? HOST_ITEMS : GUEST_ITEMS;
+		const isAdminMode = AuthManager?.isAdmin ? AuthManager.isAdmin() : false;
+		const items = isLoggedIn
+			? HOST_ITEMS.filter(item => !(isAdminMode && item.hideWhenAdmin))
+			: GUEST_ITEMS;
 
 		// Create each menu item
 		items.forEach((item) => {
@@ -86,6 +89,7 @@ const NavBuilder = (function() {
 		});
 
 		appendAdminToggle(navList);
+		appendAdminPages(navList);
 
 		// Mark menu as rendered
 		menuRendered = true;
@@ -136,9 +140,27 @@ const NavBuilder = (function() {
 			if (AuthManager?.setRole) {
 				AuthManager.setRole(nextRole);
 				AuthManager.updateUIForRole();
+				renderNav(true);
 			}
 			checkbox.checked = AuthManager.isAdmin();
 		});
+	}
+
+	function appendAdminPages(navList) {
+		if (!navList || typeof AuthManager === 'undefined' || !AuthManager.isAdmin()) return;
+		if (navList.querySelector('[data-menu-id="admin-inbox"]')) return;
+
+		const li = document.createElement('li');
+		li.className = 'menu-item';
+		li.setAttribute('data-menu-id', 'admin-inbox');
+
+		const a = document.createElement('a');
+		a.href = 'inbox.html';
+		a.textContent = 'Inbox';
+		a.addEventListener('click', () => closeMenu());
+
+		li.appendChild(a);
+		navList.appendChild(li);
 	}
 
 	/**

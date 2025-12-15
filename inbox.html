@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inbox | CJF Rentals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    .inbox-card { border-radius: 18px; padding: 32px; box-shadow: 0 20px 40px rgba(15,23,42,0.1); background:#fff; }
+    .inbox-title { font-size: clamp(24px, 3vw, 32px); margin: 0 0 6px; }
+    .inbox-subtitle { color: #4b5563; margin: 0 0 24px; }
+    .inbox-status { margin-bottom: 16px; font-size: 14px; }
+    .inbox-list { display:grid; gap:16px; }
+    .inbox-item { border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; background: #fdfdfd; }
+    .inbox-item strong { display:block; margin-bottom:6px; font-size:16px; }
+    .inbox-item .meta { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+    .inbox-item .message { white-space:pre-wrap; font-size: 14px; color: #111827; line-height: 1.5; }
+    .button.ghost-full { background: transparent; border-color: #e5e7eb; color: #0f172a; }
+    .loading.inbox-loading { display:flex; align-items:center; gap:10px; font-size:14px; color:#4b5563; }
+    .loading.inbox-loading .spinner { width:16px; height:16px; border-width:2px; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    </div>
+  </header>
+  <div class="backdrop" id="backdrop"></div>
+  <nav class="menu-panel" id="menuPanel" aria-label="Site menu">
+    <div class="menu-header">
+      <span class="menu-title">Navigation</span>
+      <button class="menu-close" id="menuClose" aria-label="Close menu">Close</button>
+    </div>
+    <ul class="menu-list" id="nav-list"></ul>
+  </nav>
+
+  <main class="page">
+    <section class="card inbox-card">
+      <div class="pill">Admin Inbox</div>
+      <h1 class="inbox-title">Support requests</h1>
+      <p class="inbox-subtitle">All visitor reports submitted through the contact form.</p>
+      <div id="statusText" class="inbox-status"></div>
+      <div id="inboxLoading" class="loading inbox-loading" style="display:none;">
+        <div class="spinner"></div>
+        Loading reports…
+      </div>
+      <div id="inboxError" class="error-message" style="display:none;"></div>
+      <div id="inboxList" class="inbox-list"></div>
+      <button id="refreshInbox" class="button ghost-full" style="margin-top:20px;">Refresh</button>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <script src="assets/auth.js"></script>
+  <script src="assets/navBuilder.js"></script>
+  <script>
+    (function() {
+      const loading = document.getElementById('inboxLoading');
+      const errorEl = document.getElementById('inboxError');
+      const listEl = document.getElementById('inboxList');
+      const statusText = document.getElementById('statusText');
+      const refreshBtn = document.getElementById('refreshInbox');
+
+      const showError = (message) => {
+        errorEl.textContent = message;
+        errorEl.classList.add('show');
+        errorEl.style.display = 'block';
+      };
+
+      const clearError = () => {
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
+        errorEl.style.display = 'none';
+      };
+
+      const renderReports = (reports) => {
+        listEl.innerHTML = '';
+        if (!reports.length) {
+          statusText.textContent = 'No reports yet.';
+          return;
+        }
+        statusText.textContent = `${reports.length} report(s)`;
+        reports.forEach((report) => {
+          const item = document.createElement('div');
+          item.className = 'inbox-item';
+          const subject = document.createElement('strong');
+          subject.textContent = report.subject;
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          meta.textContent = `${report.name} · ${report.issueType} · ${new Date(report.createdAt).toLocaleString()}`;
+          const message = document.createElement('p');
+          message.className = 'message';
+          message.textContent = report.message;
+          item.appendChild(subject);
+          item.appendChild(meta);
+          if (report.vehicleUrl) {
+            const link = document.createElement('a');
+            link.textContent = 'Vehicle / Host link';
+            link.href = report.vehicleUrl;
+            link.target = '_blank';
+            link.style.display = 'inline-block';
+            link.style.marginBottom = '8px';
+            item.appendChild(link);
+          }
+          item.appendChild(message);
+          listEl.appendChild(item);
+        });
+      };
+
+      const fetchReports = async () => {
+        clearError();
+        listEl.innerHTML = '';
+        statusText.textContent = '';
+        loading.style.display = 'flex';
+        try {
+          const role = AuthManager?.getUserRole?.() || 'guest';
+          const res = await fetch('/api/contact-reports', {
+            headers: {
+              'X-User-Role': role,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (!res.ok) {
+            if (res.status === 403) {
+              showError('Admin access is required to view the inbox.');
+              return;
+            }
+            const payload = await res.json().catch(() => ({}));
+            throw new Error(payload.error || 'Unable to load reports');
+          }
+          const payload = await res.json();
+          renderReports(payload.data || []);
+        } catch (err) {
+          console.error('Inbox error:', err);
+          showError(err.message || 'Failed to fetch reports.');
+        } finally {
+          loading.style.display = 'none';
+        }
+      };
+
+      refreshBtn.addEventListener('click', fetchReports);
+
+      document.addEventListener('authStateChanged', () => {
+        if (!AuthManager.isAdmin()) {
+          showError('Please enable Admin mode to view the inbox.');
+        }
+      });
+
+      fetchReports();
+    })();
+  </script>
+</body>
+</html>

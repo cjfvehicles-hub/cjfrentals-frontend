@@ -805,6 +805,27 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
+app.get('/api/contact-reports', (req, res) => {
+  const roleHeader = (req.headers['x-user-role'] || '').toLowerCase();
+  if (!roleHeader || roleHeader !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
+  try {
+    const reports = readData(CONTACT_REPORTS_DB);
+    const sorted = reports
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json({ success: true, count: sorted.length, data: sorted });
+  } catch (error) {
+    console.error('Failed to read contact reports:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Unable to load contact reports'
+    });
+  }
+});
+
 // ==================== REVIEW ROUTES ====================
 
 app.post('/api/review-tokens', requireAuth, async (req, res) => {
