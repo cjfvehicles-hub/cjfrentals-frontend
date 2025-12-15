@@ -63,6 +63,19 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
+// Optional HSTS and CSP for API-only responses
+if (String(process.env.ENABLE_HSTS || 'true').toLowerCase() === 'true') {
+  app.use(helmet.hsts({ maxAge: 15552000, includeSubDomains: true, preload: false }));
+}
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: true,
+  directives: {
+    defaultSrc: ["'none'"],
+    connectSrc: ["'self'"],
+    frameAncestors: ["'none'"],
+  }
+}));
+
 // CORS allowlist
 const parseOrigins = (val) => (val || '')
   .split(',')
@@ -93,6 +106,44 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(globalLimiter);
+
+// Enforce HTTPS (behind proxy)
+app.use((req, res, next) => {
+  const proto = (req.headers['x-forwarded-proto'] || '').toString().toLowerCase();
+  if (proto && proto !== 'https') {
+    return res.status(400).json({ success: false, error: 'HTTPS required' });
+  }
+  next();
+});
+
+// Origin/host validation for API routes
+const ALLOWED_HOSTS = parseOrigins(process.env.ALLOWED_HOSTS || '');
+const REQUIRE_FORWARDED_HOST = String(process.env.REQUIRE_FORWARDED_HOST || 'true').toLowerCase() === 'true';
+function isAllowedHost(host) {
+  if (!host) return false;
+  const h = host.toLowerCase();
+  return ALLOWED_HOSTS.length === 0 || ALLOWED_HOSTS.map(x => x.toLowerCase()).includes(h);
+}
+app.use('/api', (req, res, next) => {
+  const fwdHost = req.headers['x-forwarded-host'];
+  const origin = req.headers.origin;
+  const hostHeader = req.headers.host;
+
+  const allowedByForwarded = fwdHost && isAllowedHost(fwdHost);
+  const allowedByOrigin = origin && isAllowedHost(new URL(origin).host);
+
+  if (REQUIRE_FORWARDED_HOST && !allowedByForwarded) {
+    console.warn('Blocked non-proxied request', { ip: req.ip, fwdHost, origin, hostHeader });
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
+  if (!allowedByForwarded && !allowedByOrigin && ALLOWED_HOSTS.length > 0) {
+    console.warn('Blocked disallowed origin/host', { ip: req.ip, fwdHost, origin, hostHeader });
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
+  next();
+});
 
 // Database file paths
 const DB_DIR = path.join(__dirname, 'data');

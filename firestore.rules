@@ -2,6 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper: only allow server service accounts to write
+    function isServerServiceAccount() {
+      return request.auth != null && request.auth.token.email != null && (
+        // Firebase Admin SDK service accounts in this project
+        request.auth.token.email.matches('.*@cjf-rentals\\.iam\\.gserviceaccount\\.com') ||
+        // Default App Engine service account
+        request.auth.token.email == 'cjf-rentals@appspot.gserviceaccount.com' ||
+        // Default Compute Engine service account
+        request.auth.token.email.matches('864727255016-.*@developer\\.gserviceaccount\\.com')
+      );
+    }
+
     // Public can read active vehicles; owners can read/write their own
     match /vehicles/{vehicleId} {
       // Public: read if status is 'active'
@@ -24,19 +36,31 @@ service cloud.firestore {
 
     // Hosts collection and verified review subcollection
     match /hosts/{hostId} {
+      // Public may read host profiles
       allow read: if true;
+      // Only the authenticated owner may update their host document (non-sensitive fields)
       allow write: if request.auth != null && request.auth.uid == hostId;
 
+      // Reviews are server-verified only; public can read verified reviews
       match /reviews/{reviewId} {
-        allow read: if true;
-        allow write: if false;
+        // Only read verified content
+        allow read: if resource.data.verified == true;
+        // Only server may create/update/delete reviews
+        allow write: if isServerServiceAccount();
       }
     }
 
     // Review tokens are managed server-side only
     match /reviewTokens/{tokenId} {
       allow read: if false;
-      allow write: if false;
+      // Only server may create/update tokens
+      allow write: if isServerServiceAccount();
+    }
+
+    // Contact reports: server only writes, no public reads
+    match /contactReports/{reportId} {
+      allow read: if false;
+      allow write: if isServerServiceAccount();
     }
 
     // Bookings: owner read/write
