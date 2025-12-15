@@ -343,7 +343,22 @@
   <script>
     (function() {
       const token = new URLSearchParams(window.location.search).get('token');
-      const API_BASE = window.location.hostname === 'localhost' ? '/api' : 'https://cjf-api-864727255016.us-east1.run.app/api';
+      const API_BASES = window.location.hostname === 'localhost'
+        ? ['/api']
+        : ['/api', 'https://cjf-api-864727255016.us-east1.run.app/api'];
+
+      const fetchWithFallback = async (path, options = {}) => {
+        for (const base of API_BASES) {
+          try {
+            const resp = await fetch(`${base}${path}`, options);
+            if (resp.ok) return resp;
+          } catch (err) {
+            // try next base
+          }
+        }
+        // last attempt with first base to surface error
+        return fetch(`${API_BASES[0]}${path}`, options);
+      };
       const instructionsEl = document.getElementById('verificationLine');
       const expiryEl = document.getElementById('linkExpiry');
       const form = document.getElementById('reviewForm');
@@ -442,7 +457,7 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Submitting…';
         try {
-          const resp = await fetch(`${API_BASE}/reviews/submit`, {
+          const resp = await fetchWithFallback('/reviews/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -478,7 +493,7 @@
           return;
         }
         try {
-          const resp = await fetch(`${API_BASE}/review-tokens/${token}`);
+          const resp = await fetchWithFallback(`/review-tokens/${token}`);
           const data = await resp.json();
           if (!resp.ok || !data?.success) {
             instructionsEl.textContent = data?.error || 'This link is no longer valid.';
