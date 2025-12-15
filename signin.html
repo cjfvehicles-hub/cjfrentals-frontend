@@ -99,6 +99,7 @@
     const googleBtn = document.getElementById('googleBtn');
     const errorDiv = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
+    const statusText = loading?.querySelector('p');
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
     const USE_REDIRECT_ONLY = false; // Desktop: popup first, redirect fallback; iOS stays redirect
     let pendingGoogleFlow = false;
@@ -132,6 +133,11 @@
       errorDiv.classList.add('show');
       loading.style.display = 'none';
       form.style.display = 'block';
+      if (statusText) statusText.textContent = 'Signing in...';
+    }
+
+    function setStatus(message) {
+      if (statusText) statusText.textContent = message;
     }
 
     async function signIn(email, password) {
@@ -200,6 +206,7 @@
       if (btn) {
         btn.onclick = async () => {
           try {
+            setStatus('Redirecting to Google...');
             await auth.signInWithRedirect(provider);
           } catch (e) {
             console.warn('Redirect start failed:', e);
@@ -215,6 +222,7 @@
         loading.style.display = 'block';
         form.style.display = 'none';
         errorDiv.classList.remove('show');
+        setStatus('Preparing sign-in...');
         const auth = window.firebaseAuth;
         localStorage.removeItem('_forceSignOut');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
@@ -254,6 +262,7 @@
           showSlowNotice(auth, provider);
           loading.style.display = 'block';
           form.style.display = 'none';
+          setStatus('Still working... you can click Continue with Google');
         }, 3500);
 
         // Safety timer: if popup doesn't resolve quickly, fallback to redirect
@@ -261,6 +270,7 @@
         googleSafetyTimer = setTimeout(async () => {
           if (!pendingGoogleFlow) return;
           try {
+            setStatus('Redirecting to Google...');
             await auth.signInWithRedirect(provider);
           } catch (e2) {
             console.warn('Auto-redirect fallback failed:', e2);
@@ -268,6 +278,7 @@
         }, 6000);
 
         try {
+          setStatus('Opening Google...');
           await auth.signInWithPopup(provider);
           pendingGoogleFlow = false;
           if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
@@ -277,17 +288,20 @@
           pendingGoogleFlow = false;
           if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
           if (stallTimer) clearTimeout(stallTimer);
+          console.warn('Popup sign-in error:', popupErr);
           if (
             popupErr.code === 'auth/popup-blocked' ||
             popupErr.code === 'auth/cancelled-popup-request' ||
             popupErr.code === 'auth/operation-not-supported-in-this-environment'
           ) {
+            setStatus('Redirecting to Google...');
             await auth.signInWithRedirect(provider);
             return;
           }
           throw popupErr;
         }
       } catch (err) {
+        console.warn('Google sign-in flow error:', err);
         let message = 'Google sign-in failed';
         if (err.code === 'auth/popup-blocked') message = 'Sign-in popup was blocked. Redirecting...';
         else if (err.code === 'auth/popup-closed-by-user') message = 'Sign-in was cancelled';
