@@ -95,6 +95,13 @@ const AdminInbox = (function() {
   async function loadMessages() {
     try {
       const token = await getIdToken();
+      if (!token) {
+        console.error('No Firebase ID token available');
+        showToast('Please sign in to access admin inbox', 'error');
+        setTimeout(() => window.location.href = 'signin.html', 2000);
+        return;
+      }
+      
       const response = await fetch(`${API_URL}/admin/messages`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -102,7 +109,11 @@ const AdminInbox = (function() {
         }
       });
       
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error:', response.status, errorData);
+        throw new Error(`API error: ${response.status} - ${errorData.error || errorData.message || 'Unknown error'}`);
+      }
       
       const data = await response.json();
       messages = data.data || [];
@@ -110,7 +121,7 @@ const AdminInbox = (function() {
       updateNavBadges();
     } catch (error) {
       console.error('LoadMessages error:', error);
-      showToast('Failed to load messages', 'error');
+      showToast(error.message || 'Failed to load messages', 'error');
     }
   }
 
