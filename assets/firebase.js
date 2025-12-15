@@ -13,6 +13,9 @@ const firebaseConfig = {
   measurementId: "G-B1P4X76KH2"
 };
 
+// Expose config for consumers that need to construct auth handler URLs
+window.firebaseConfig = firebaseConfig;
+
 (function initFirebase(){
   if (!window.firebase) {
     console.error("Firebase SDK not loaded. Ensure CDN scripts are included before firebase.js");
@@ -23,7 +26,9 @@ const firebaseConfig = {
   try {
     const app = firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db = firebase.firestore();
+    let db = null;
+    try { if (firebase.firestore) db = firebase.firestore(); }
+    catch (e) { console.warn("Firestore not available:", e.message); }
 
     let storage = null;
     let analytics = null;

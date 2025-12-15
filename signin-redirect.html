@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Signing In…</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="assets/firebase.js"></script>
+  <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f7fb} .card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.08);max-width:520px;width:100%;text-align:center} .muted{color:#666} .small{font-size:13px;color:#444;margin-top:12px;line-height:1.4}</style>
+</head>
+<body>
+  <div class="card">
+    <h2>Redirecting to Google…</h2>
+    <p class="muted" id="status">Preparing sign-in</p>
+    <p class="small" id="diag">Loading…</p>
+    <p class="muted" style="margin-top:12px">If nothing happens, <a id="retry" href="#">try again</a>.</p>
+  </div>
+  <script>
+    (function(){
+      const statusEl = document.getElementById('status');
+      const diagEl = document.getElementById('diag');
+      function setStatus(s){ console.log('[signin-redirect]', s); statusEl.textContent = s; }
+      function setDiag(s){ diagEl.textContent = s; }
+      function ready(){ return !!(window.firebaseAuth && window._firebaseInitialized); }
+      function snapshot(){
+        const snap = {
+          firebaseLoaded: !!window.firebase,
+          authReady: !!window.firebaseAuth,
+          initializedFlag: !!window._firebaseInitialized,
+          location: window.location.href
+        };
+        setDiag('firebaseLoaded: '+snap.firebaseLoaded+' | authReady: '+snap.authReady+' | initFlag: '+snap.initializedFlag);
+      }
+      function forceHandlerRedirect() {
+        if (!(window.firebaseConfig && window.firebaseConfig.apiKey && window.firebaseConfig.authDomain)) {
+          setDiag('Cannot build fallback URL (missing firebaseConfig)');
+          return;
+        }
+        const handlerUrl = `https://${window.firebaseConfig.authDomain}/__/auth/handler?apiKey=${encodeURIComponent(window.firebaseConfig.apiKey)}&appName=%5BDEFAULT%5D&authType=signInViaRedirect&providerId=google.com&redirectUrl=${encodeURIComponent(window.location.href)}`;
+        setDiag('Fallback navigating to handler…');
+        window.location.assign(handlerUrl);
+      }
+
+      function go(){
+        snapshot();
+        if (!ready()){ setStatus('Waiting for Firebase…'); return; }
+        try {
+          const auth = window.firebaseAuth;
+          const provider = new firebase.auth.GoogleAuthProvider();
+          setStatus('Starting Google redirect…');
+          let kicked = false;
+          auth.signInWithRedirect(provider).then(()=>{ kicked = true; }).catch(err=>{
+            console.warn('signInWithRedirect error:', err);
+            setStatus('Failed: ' + (err.message || err.code || 'Unknown'));
+            setDiag('Error: '+(err.stack || err.message || err.code));
+            forceHandlerRedirect();
+          });
+          // If the browser swallows the promise without navigating, force handler after a short wait
+          setTimeout(() => { if (!kicked) { forceHandlerRedirect(); } }, 1200);
+        } catch (e) {
+          console.warn('Unexpected error:', e);
+          setStatus('Unexpected error: ' + (e.message || e));
+          setDiag('Exception: '+(e.stack || e));
+          forceHandlerRedirect();
+        }
+      }
+      let attempts = 0;
+      const iv = setInterval(()=>{
+        attempts++;
+        snapshot();
+        if (ready() || attempts > 120){ clearInterval(iv); go(); }
+      }, 50);
+      document.getElementById('retry').onclick = function(e){ e.preventDefault(); go(); };
+      // Also check for a completed redirect when returning
+      window.addEventListener('load', () => {
+        snapshot();
+        if (ready()) {
+          firebaseAuth.getRedirectResult().then(res=>{
+            if (res && res.user) { window.location.href = 'account.html'; }
+          }).catch((err)=>{
+            console.warn('RedirectResult error:', err);
+            setDiag('RedirectResult error: '+(err.message||err.code));
+          });
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
