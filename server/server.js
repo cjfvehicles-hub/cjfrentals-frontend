@@ -1023,6 +1023,122 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ==================== ADMIN INBOX ROUTES ====================
+
+/**
+ * Middleware: require admin role
+ */
+const requireAdmin = async (req, res, next) => {
+  const user = await extractUser(req);
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required'
+    });
+  }
+  // Check if admin
+  const isAdminUser = user.role === 'admin' || (user.email && user.email.toLowerCase() === SPECIAL_ADMIN_EMAIL.toLowerCase());
+  if (!isAdminUser) {
+    return res.status(403).json({
+      success: false,
+      error: 'Admin access required'
+    });
+  }
+  req.user = user;
+  next();
+};
+
+// GET admin messages with filters
+app.get('/admin/messages', requireAdmin, async (req, res) => {
+  try {
+    if (!firestoreReady || !db) {
+      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    }
+    
+    const snapshot = await db.collection('contactReports').orderBy('createdAt', 'desc').get();
+    const messages = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt
+    }));
+    
+    res.json({
+      success: true,
+      data: messages
+    });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch messages' });
+  }
+});
+
+// GET single message
+app.get('/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!firestoreReady || !db) {
+      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    }
+    
+    const doc = await db.collection('contactReports').doc(req.params.id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, error: 'Message not found' });
+    }
+    
+    const message = {
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt
+    };
+    
+    res.json({ success: true, data: message });
+  } catch (error) {
+    console.error('Error fetching message:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch message' });
+  }
+});
+
+// PATCH update message (status, starred, etc.)
+app.patch('/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!firestoreReady || !db) {
+      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    }
+    
+    const { status, starred, assignedTo, tags } = req.body;
+    const updates = {};
+    
+    if (status !== undefined) updates.status = status;
+    if (starred !== undefined) updates.starred = starred;
+    if (assignedTo !== undefined) updates.assignedTo = assignedTo;
+    if (tags !== undefined) updates.tags = tags;
+    
+    updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    
+    await db.collection('contactReports').doc(req.params.id).update(updates);
+    
+    res.json({ success: true, message: 'Updated' });
+  } catch (error) {
+    console.error('Error updating message:', error);
+    res.status(500).json({ success: false, error: 'Failed to update message' });
+  }
+});
+
+// DELETE message (hard delete)
+app.delete('/admin/messages/:id', requireAdmin, async (req, res) => {
+  try {
+    if (!firestoreReady || !db) {
+      return res.status(503).json({ success: false, error: 'Database unavailable' });
+    }
+    
+    await db.collection('contactReports').doc(req.params.id).delete();
+    
+    res.json({ success: true, message: 'Deleted' });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete message' });
+  }
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
