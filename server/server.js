@@ -712,7 +712,7 @@ app.get('/api/review-tokens/:token', async (req, res) => {
 
 app.post('/api/reviews/submit', async (req, res) => {
   if (!ensureFirestoreAvailable(res)) return;
-  const { token, rating, comment, displayName } = req.body || {};
+  const { token, rating, comment, displayName, firstName, lastName, email } = req.body || {};
   if (!token) {
     return res.status(400).json({ success: false, error: 'Missing review token' });
   }
@@ -762,10 +762,13 @@ app.post('/api/reviews/submit', async (req, res) => {
         rating: ratingValue,
         comment: trimmedComment || null,
         displayName: safeDisplayName,
+        firstName: (firstName || '').trim() || null,
+        lastName: (lastName || '').trim() || null,
         hostId,
         vehicleId: tokenData.vehicleId || null,
         verified: true,
         token,
+        email: (email || '').trim() || null,
         createdAt: now,
         customerLabel: tokenData.customerLabel || null
       });
