@@ -238,15 +238,42 @@
       }
     }
 
-    googleBtn.addEventListener('click', (e) => {
+    googleBtn.addEventListener('click', async (e) => {
       e.preventDefault();
-      console.log('signin: navigate to signin-redirect.html');
+      console.log('signin: Google sign-in (popup)');
       errorDiv.classList.remove('show');
       form.style.display = 'none';
       loading.style.display = 'block';
-      setStatus('Taking you to Google…');
-      // Navigate to a dedicated page that triggers the redirect immediately
-      window.location.href = 'signin-redirect.html';
+      setStatus('Opening Google…');
+      
+      const auth = window.firebaseAuth;
+      if (!auth) {
+        showError('Firebase not initialized. Refresh and try again.');
+        form.style.display = 'block';
+        loading.style.display = 'none';
+        return;
+      }
+
+      try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        if (result && result.user) {
+          console.log('signin: popup success, user:', result.user.email);
+          localStorage.removeItem('_forceSignOut');
+          window.location.href = 'account.html';
+        }
+      } catch (err) {
+        console.warn('Google popup error:', err);
+        let message = 'Google sign-in failed';
+        if (err.code === 'auth/popup-blocked') message = 'Popup was blocked. Check your browser settings.';
+        else if (err.code === 'auth/popup-closed-by-user') message = 'Sign-in was cancelled.';
+        else if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
+        else if (err.message) message = err.message;
+        showError(message);
+        form.style.display = 'block';
+        loading.style.display = 'none';
+      }
     });
 
     // Redirect if already signed in
