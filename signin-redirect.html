@@ -42,9 +42,36 @@
         window.location.assign(handlerUrl);
       }
 
+      function checkRedirectResult() {
+        if (!ready()) return;
+        firebaseAuth.getRedirectResult().then(res=>{
+          if (res && res.user) {
+            setStatus('Signed in. Syncing…');
+            // Sync user to localStorage so account.html can see auth state immediately
+            const localUser = {
+              id: res.user.uid,
+              name: res.user.displayName || (res.user.email || '').split('@')[0],
+              email: res.user.email || '',
+              phone: '',
+              role: 'host',
+              lastSync: new Date().toISOString(),
+            };
+            localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
+            localStorage.setItem('CJF_USER_ROLE', 'host');
+            localStorage.removeItem('_forceSignOut');
+            setStatus('Redirecting to account…');
+            window.location.href = 'account.html';
+          }
+        }).catch((err)=>{
+          console.warn('RedirectResult error:', err);
+        });
+      }
+
       function go(){
         snapshot();
         if (!ready()){ setStatus('Waiting for Firebase…'); return; }
+        // Check for redirect result FIRST before triggering new sign-in
+        checkRedirectResult();
         try {
           const auth = window.firebaseAuth;
           const provider = new firebase.auth.GoogleAuthProvider();
@@ -74,30 +101,7 @@
       document.getElementById('retry').onclick = function(e){ e.preventDefault(); go(); };
       // Also check for a completed redirect when returning
       window.addEventListener('load', () => {
-        snapshot();
-        if (ready()) {
-          firebaseAuth.getRedirectResult().then(res=>{
-            if (res && res.user) {
-              // Sync user to localStorage so account.html can see auth state immediately
-              const localUser = {
-                id: res.user.uid,
-                name: res.user.displayName || (res.user.email || '').split('@')[0],
-                email: res.user.email || '',
-                phone: '',
-                role: 'host',
-                lastSync: new Date().toISOString(),
-              };
-              localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
-              localStorage.setItem('CJF_USER_ROLE', 'host');
-              localStorage.removeItem('_forceSignOut');
-              setStatus('Signed in. Redirecting...');
-              window.location.href = 'account.html';
-            }
-          }).catch((err)=>{
-            console.warn('RedirectResult error:', err);
-            setDiag('RedirectResult error: '+(err.message||err.code));
-          });
-        }
+        checkRedirectResult();
       });
     })();
   </script>
