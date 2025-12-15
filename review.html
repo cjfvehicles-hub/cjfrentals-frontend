@@ -11,7 +11,7 @@
   <style>
     :root {
       --bg: #f6f7f9;
-      --card-bg: #fff;
+      --card-bg: #ffffff;
       --accent: #0f172a;
       --stroke: #e2e8f0;
       --sunny: #dcfce7;
@@ -28,12 +28,12 @@
     .review-shell {
       max-width: 720px;
       margin: 0 auto;
-      padding: 48px 24px 96px;
+      padding: 96px 24px 120px;
     }
     .review-card {
       background: var(--card-bg);
       border-radius: 28px;
-      padding: 32px;
+      padding: 28px;
       box-shadow: 0 24px 40px rgba(15, 23, 42, 0.08);
       border: 1px solid var(--stroke);
       display: flex;
@@ -43,7 +43,7 @@
     .header-block .badge-pill {
       display: inline-flex;
       align-items: center;
-      padding: 6px 14px;
+      padding: 6px 18px;
       border-radius: 999px;
       background: #d1fae5;
       color: #166534;
@@ -57,11 +57,17 @@
       margin: 12px 0 6px;
       font-size: clamp(22px, 3vw, 32px);
       line-height: 1.2;
+      font-weight: 800;
     }
     .subtitle-line {
       margin: 0;
       color: #475569;
       font-size: 14px;
+    }
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
     .section-label {
       font-size: 13px;
@@ -88,8 +94,8 @@
       border-radius: 16px;
       border: 1px solid var(--stroke);
       background: #f8fafc;
-      font-size: 24px;
-      font-weight: 700;
+      font-size: 28px;
+      line-height: 1;
       color: #d1d5db;
       display: grid;
       place-items: center;
@@ -108,8 +114,9 @@
     }
     .rating-feedback {
       font-size: 14px;
-      color: var(--accent);
       min-height: 20px;
+      color: #0f172a;
+      font-weight: 600;
     }
     textarea, .input-field {
       width: 100%;
@@ -120,19 +127,15 @@
       font-family: inherit;
       background: #fbfcfd;
       min-height: 48px;
+      box-shadow: inset 0 0 4px rgba(15, 23, 42, 0.05);
     }
     textarea {
       min-height: 130px;
       resize: vertical;
     }
-    .textarea-note {
+    .helper-text {
       font-size: 13px;
-      color: #9ca3af;
-    }
-    .section-divider {
-      height: 1px;
-      background: var(--stroke);
-      margin: 0;
+      color: #6b7280;
     }
     .collapsible-trigger {
       border: none;
@@ -174,18 +177,17 @@
     .identity-grid .full {
       grid-column: 1 / -1;
     }
-    .helper-text {
-      font-size: 13px;
-      color: #6b7280;
-    }
     .submit-area {
-      position: relative;
+      position: sticky;
+      bottom: 0;
+      background: transparent;
+      margin-top: 8px;
     }
     .submit-area button {
       width: 100%;
-      padding: 14px;
+      padding: 16px;
       font-size: 16px;
-      border-radius: 14px;
+      border-radius: 16px;
       border: none;
       background: #0f172a;
       color: #fff;
@@ -218,15 +220,18 @@
       color: #475569;
       margin: 0;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
       .review-shell {
-        padding: 28px 16px 96px;
+        padding: 80px 16px 120px;
       }
       .review-card {
         padding: 24px;
       }
       .identity-grid {
         grid-template-columns: 1fr;
+      }
+      .submit-area {
+        position: static;
       }
     }
   </style>
