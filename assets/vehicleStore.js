@@ -17,82 +17,19 @@ if (typeof window !== 'undefined') {
 const VehicleStore = (function() {
 	'use strict';
     
-	const API_URL = 'http://localhost:3000/api';
+	// Resolve API base: use Netlify proxy in production, localhost in dev
+	const API_URL = (typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname))
+		? 'http://localhost:3000/api'
+		: '/api';
 	const STORAGE_KEY = 'CJF_VEHICLES_CACHE';
 	const PENDING_DELETES_KEY = 'CJF_PENDING_DELETES';
 	const FIREBASE_BACKOFF_MS = 60000; // Avoid spamming Firebase when offline
-	const SAMPLE_VEHICLES = [
-		{
-			id: 'demo-1',
-			make: 'Tesla',
-			model: 'Model 3',
-			year: 2022,
-			category: 'Sedan',
-			fuel: 'Electric',
-			country: 'USA',
-			state: 'CA',
-			city: 'San Francisco',
-			price: 129,
-			frequency: 'Daily',
-			status: 'active',
-			image: 'assets - Copy/default-car.jpg',
-			hostId: 'demo-host',
-			hostName: 'Demo Host',
-			hostEmail: 'host@example.com',
-			hostAvatar: 'assets - Copy/default-car.jpg',
-			trips: 18
-		},
-		{
-			id: 'demo-2',
-			make: 'Range Rover',
-			model: 'Velar',
-			year: 2021,
-			category: 'SUV',
-			fuel: 'Gas',
-			country: 'USA',
-			state: 'NY',
-			city: 'New York',
-			price: 189,
-			frequency: 'Daily',
-			status: 'active',
-			image: 'assets - Copy/default-car.jpg',
-			hostId: 'demo-host',
-			hostName: 'Demo Host',
-			hostEmail: 'host@example.com',
-			hostAvatar: 'assets - Copy/default-car.jpg',
-			trips: 25
-		},
-		{
-			id: 'demo-3',
-			make: 'BMW',
-			model: 'M4',
-			year: 2020,
-			category: 'Coupe',
-			fuel: 'Gas',
-			country: 'USA',
-			state: 'FL',
-			city: 'Miami',
-			price: 175,
-			frequency: 'Daily',
-			status: 'active',
-			image: 'assets - Copy/default-car.jpg',
-			hostId: 'demo-host',
-			hostName: 'Demo Host',
-			hostEmail: 'host@example.com',
-			hostAvatar: 'assets - Copy/default-car.jpg',
-			trips: 12
-		}
-	];
 	
 	// Cache for offline support
 	let vehicleCache = [];
 	let lastSync = null;
 	let firebaseUnavailable = false;
 	let firebaseLastFail = 0;
-	function loadSampleVehicles() {
-		saveToCache(SAMPLE_VEHICLES);
-		return SAMPLE_VEHICLES;
-	}
 
 	// Pending delete queue (IDs we failed to delete on Firebase due to offline/permission issues)
 	function loadPendingDeletes() {
@@ -116,12 +53,14 @@ const VehicleStore = (function() {
 	/**
 	 * Get authorization header if user is logged in
 	 */
-	function getAuthHeader() {
-		const user = AuthManager.getCurrentUser ? AuthManager.getCurrentUser() : null;
-		if (user && user.id) {
-			return {
-				'Authorization': `Bearer ${user.id}`
-			};
+	async function getAuthHeader() {
+		try {
+			if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+				const token = await window.firebaseAuth.currentUser.getIdToken();
+				return { 'Authorization': `Bearer ${token}` };
+			}
+		} catch (e) {
+			console.warn(' Failed to get ID token:', e.message);
 		}
 		return {};
 	}
@@ -133,12 +72,13 @@ const VehicleStore = (function() {
 		if (!USE_BACKEND) {
 			throw new Error('Backend disabled, using localStorage');
 		}
-		
+			
 		   try {
+			   const authHeader = await getAuthHeader();
 			   const response = await fetch(`${API_URL}${endpoint}`, {
 				   headers: {
 					   'Content-Type': 'application/json',
-					   ...getAuthHeader(),
+					   ...authHeader,
 					   ...options.headers
 				   },
 				   ...options
@@ -329,27 +269,23 @@ const VehicleStore = (function() {
 			if (db && canUseFirebase()) {
 				try {
 					// Only fetch active vehicles to align with Firestore security rules
-						const snap = await db.collection('vehicles').where('status','==','active').get();
-						const pendingDeletes = new Set(loadPendingDeletes().map(String));
-						let vehicles = snap.docs
-							.map(d => ({ id: d.id, ...d.data() }))
-							.filter(v => !pendingDeletes.has(String(v.id)))
-							.sort((a,b)=>{
-								const aa = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-								const bb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-								return bb - aa;
-							});
-						if (!IS_PROD && vehicles.length === 0) {
-							console.log(' VehicleStore: Firebase empty, using demo vehicles (dev only)');
-							vehicles = loadSampleVehicles();
-						}
-						saveToCache(vehicles);
-						console.log(` VehicleStore: Loaded ${vehicles.length} vehicles from Firebase`);
-						firebaseUnavailable = false; // Reset on success
-						return vehicles;
-					} catch (e) {
-						if (noteFirebaseFailure()) {
-							if (IS_PROD) {
+					const snap = await db.collection('vehicles').where('status','==','active').get();
+					const pendingDeletes = new Set(loadPendingDeletes().map(String));
+					const vehicles = snap.docs
+						.map(d => ({ id: d.id, ...d.data() }))
+						.filter(v => !pendingDeletes.has(String(v.id)))
+						.sort((a,b)=>{
+						const aa = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+						const bb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+						return bb - aa;
+					});
+					saveToCache(vehicles);
+					console.log(` VehicleStore: Loaded ${vehicles.length} vehicles from Firebase`);
+					firebaseUnavailable = false; // Reset on success
+					return vehicles;
+				} catch (e) {
+					if (noteFirebaseFailure()) {
+						if (IS_PROD) {
 							console.error(' Firebase load failed in production:', e);
 							throw e;
 						} else {
@@ -366,9 +302,9 @@ const VehicleStore = (function() {
 				return cached;
 			}
 			
-			// No vehicles available - use local demo data for offline view
-			console.log(' VehicleStore: No vehicles available; loading offline demo vehicles');
-			return loadSampleVehicles();
+			// No vehicles available - return empty array (no demo fallback)
+			console.log(' VehicleStore: No vehicles available');
+			return [];
 	}
 	
 	/**
@@ -830,3 +766,6 @@ setTimeout(() => {
 		retryPendingDeletes();
 	}
 }, 500);
+
+
+
