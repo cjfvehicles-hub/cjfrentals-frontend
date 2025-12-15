@@ -255,7 +255,12 @@
 
         // Always use redirect for reliability
         setStatus('Redirecting to Google...');
-        await auth.signInWithRedirect(provider);
+        auth.signInWithRedirect(provider).catch(err => {
+          console.error('Redirect failed:', err);
+          showError('Failed to redirect to Google. Try again.');
+          form.style.display = 'block';
+          loading.style.display = 'none';
+        });
         return;
 
         // iOS or redirect-only mode: go straight to redirect
