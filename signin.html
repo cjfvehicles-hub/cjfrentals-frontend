@@ -106,6 +106,7 @@
     let googleSafetyTimer = null;
     let leaveTimer = null;
     let stallTimer = null;
+    let watchdogTimer = null;
     // Basic environment guard: Google sign-in needs HTTPS or localhost
     (function envGuard(){
       const proto = window.location.protocol;
@@ -126,6 +127,23 @@
         await new Promise(r => setTimeout(r, 50));
       }
       return !!(window.firebaseAuth && window._firebaseInitialized);
+    }
+
+    function armWatchdog() {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      watchdogTimer = setTimeout(() => {
+        if (pendingGoogleFlow) {
+          console.warn('Watchdog: sign-in taking too long; showing retry');
+          pendingGoogleFlow = false;
+          loading.style.display = 'none';
+          form.style.display = 'block';
+          showError('Sign-in is taking too long. Please try again. If popups are blocked, allow them or click Continue with Google.');
+        }
+      }, 8000);
+    }
+
+    function clearWatchdog() {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
     }
 
     function showError(message) {
@@ -175,14 +193,18 @@
 
     // Handle redirect result (iOS or popup-block fallback)
     (async () => {
+      console.log('signin: waiting for auth ready...');
       await ensureAuthReady();
-      if (!window.firebaseAuth) return;
+      if (!window.firebaseAuth) { console.warn('signin: firebaseAuth not available'); return; }
+      console.log('signin: running getRedirectResult');
       window.firebaseAuth.getRedirectResult()
         .then((result) => {
           if (result && result.user) {
+            console.log('signin: redirect result user found');
             localStorage.removeItem('_forceSignOut');
             window.location.href = 'account.html';
           }
+          console.log('signin: redirect result done, no user');
         })
         .catch((err) => {
           console.warn('Google redirect error:', err);
@@ -219,11 +241,13 @@
     googleBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
+        console.log('signin: click google');
         loading.style.display = 'block';
         form.style.display = 'none';
         errorDiv.classList.remove('show');
         setStatus('Preparing sign-in...');
         const auth = window.firebaseAuth;
+        armWatchdog();
         localStorage.removeItem('_forceSignOut');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         const provider = new window.firebase.auth.GoogleAuthProvider();
@@ -283,6 +307,7 @@
           pendingGoogleFlow = false;
           if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
           if (stallTimer) clearTimeout(stallTimer);
+          clearWatchdog();
           setTimeout(() => { window.location.href = 'account.html'; }, 300);
         } catch (popupErr) {
           pendingGoogleFlow = false;
@@ -308,6 +333,7 @@
         else if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
         else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your internet connection.';
         showError(message);
+        clearWatchdog();
       }
     });
 
