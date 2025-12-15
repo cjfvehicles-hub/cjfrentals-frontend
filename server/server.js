@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -8,6 +10,11 @@ const admin = require('firebase-admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SPECIAL_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'cjfvehicles@gmail.com';
+const ALLOW_UID_BEARER = String(process.env.ALLOW_UID_BEARER || 'true').toLowerCase() === 'true';
+
+// Cloud Run / proxies
+app.set('trust proxy', 1);
 
 // Initialize Firebase Admin
 let db = null;
@@ -50,10 +57,42 @@ const initFirestore = () => {
 
 initFirestore();
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+// Security & middleware
+app.disable('x-powered-by');
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
+// CORS allowlist
+const parseOrigins = (val) => (val || '')
+  .split(',')
+  .map(v => v.trim())
+  .filter(Boolean);
+const ALLOWED_ORIGINS = parseOrigins(process.env.ALLOWED_ORIGINS || '');
+const corsOptions = {
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // same-origin or curl
+    if (ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Body limits
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '200kb' }));
+
+// Global rate limit (per IP)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(globalLimiter);
 
 // Database file paths
 const DB_DIR = path.join(__dirname, 'data');
@@ -109,16 +148,31 @@ const ensureFirestoreAvailable = (res) => {
 
 /**
  * Extract user from request header
- * Client sends: Authorization: Bearer {userId}
+ * Preferred: Authorization: Bearer {Firebase ID Token}
+ * Dev fallback (if ALLOW_UID_BEARER=true): Bearer {userId}
  */
-const extractUser = (req) => {
+const extractUser = async (req) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return null;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    const token = authHeader.substring(7);
+
+    // Likely a JWT if it has two dots
+    if (token.split('.').length === 3 && admin.apps.length) {
+      try {
+        const decoded = await admin.auth().verifyIdToken(token);
+        const role = (decoded.email && decoded.email.toLowerCase() === SPECIAL_ADMIN_EMAIL.toLowerCase()) ? 'admin' : 'host';
+        return { id: decoded.uid, email: decoded.email || null, role };
+      } catch (e) {
+        // fall through to dev mode if enabled
+        if (!ALLOW_UID_BEARER) return null;
+      }
     }
-    const userId = authHeader.substring(7);
-    return { id: userId };
+
+    if (ALLOW_UID_BEARER) {
+      return { id: token };
+    }
+    return null;
   } catch (error) {
     return null;
   }
@@ -127,13 +181,13 @@ const extractUser = (req) => {
 /**
  * Middleware: Require authentication
  */
-const requireAuth = (req, res, next) => {
-  const user = extractUser(req);
+const requireAuth = async (req, res, next) => {
+  const user = await extractUser(req);
   if (!user) {
     return res.status(401).json({
       success: false,
       error: 'Authentication required',
-      message: 'Please provide a valid authorization token'
+      message: 'Provide a valid Firebase ID token in Authorization header'
     });
   }
   req.user = user;
@@ -151,7 +205,10 @@ const isOwner = (req, resourceHostId) => {
  * Check if user is admin
  */
 const isAdmin = (req) => {
-  return req.user && req.user.id === 'admin';
+  if (!req.user) return false;
+  if (req.user.role === 'admin') return true;
+  const email = (req.user.email || '').toLowerCase();
+  return email && email === SPECIAL_ADMIN_EMAIL.toLowerCase();
 };
 
 /**
@@ -784,6 +841,19 @@ app.get('/api/review-tokens/:token', async (req, res) => {
 });
 
 app.post('/api/reviews/submit', async (req, res) => {
+  // Per-route limiter for review submissions to reduce abuse
+  // Applied inline to avoid global state across module reloads
+  // Uses a simple token bucket with in-memory map keyed by IP
+  const ip = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const now = Date.now();
+  if (!app._reviewLimiters) app._reviewLimiters = new Map();
+  const rec = app._reviewLimiters.get(ip) || { count: 0, windowStart: now };
+  if (now - rec.windowStart > 60 * 1000) { rec.count = 0; rec.windowStart = now; }
+  rec.count += 1;
+  app._reviewLimiters.set(ip, rec);
+  if (rec.count > 10) {
+    return res.status(429).json({ success: false, error: 'Too many requests. Please slow down.' });
+  }
   if (!ensureFirestoreAvailable(res)) return;
   const { token, rating, comment, displayName, firstName, lastName, email } = req.body || {};
   if (!token) {
@@ -893,6 +963,18 @@ app.get('/', (req, res) => {
       health: '/api/health'
     }
   });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ success: false, error: 'Not Found' });
+});
+
+// Error handler (no stack traces leaked in production)
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err && err.message ? err.message : err);
+  res.status(500).json({ success: false, error: 'Internal Server Error' });
 });
 
 // Start server
