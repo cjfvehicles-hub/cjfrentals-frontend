@@ -100,10 +100,11 @@
     const errorDiv = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-    const USE_REDIRECT_ONLY = true; // Force reliable redirect flow across browsers
+    const USE_REDIRECT_ONLY = false; // Desktop: popup first, redirect fallback; iOS stays redirect
     let pendingGoogleFlow = false;
     let googleSafetyTimer = null;
     let leaveTimer = null;
+    let stallTimer = null;
     // Basic environment guard: Google sign-in needs HTTPS or localhost
     (function envGuard(){
       const proto = window.location.protocol;
@@ -246,26 +247,36 @@
           return;
         }
 
+        // Stall timer to show retry UI if nothing happens
+        if (stallTimer) clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => {
+          if (!pendingGoogleFlow) return;
+          showSlowNotice(auth, provider);
+          loading.style.display = 'block';
+          form.style.display = 'none';
+        }, 3500);
+
         // Safety timer: if popup doesn't resolve quickly, fallback to redirect
         if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
         googleSafetyTimer = setTimeout(async () => {
           if (!pendingGoogleFlow) return;
           try {
-            showSlowNotice(auth, provider);
             await auth.signInWithRedirect(provider);
           } catch (e2) {
             console.warn('Auto-redirect fallback failed:', e2);
           }
-        }, 3500);
+        }, 6000);
 
         try {
           await auth.signInWithPopup(provider);
           pendingGoogleFlow = false;
           if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
+          if (stallTimer) clearTimeout(stallTimer);
           setTimeout(() => { window.location.href = 'account.html'; }, 300);
         } catch (popupErr) {
           pendingGoogleFlow = false;
           if (googleSafetyTimer) clearTimeout(googleSafetyTimer);
+          if (stallTimer) clearTimeout(stallTimer);
           if (
             popupErr.code === 'auth/popup-blocked' ||
             popupErr.code === 'auth/cancelled-popup-request' ||
