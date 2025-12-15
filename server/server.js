@@ -108,14 +108,14 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// Enforce HTTPS (behind proxy)
-app.use((req, res, next) => {
-  const proto = (req.headers['x-forwarded-proto'] || '').toString().toLowerCase();
-  if (proto && proto !== 'https') {
-    return res.status(400).json({ success: false, error: 'HTTPS required' });
-  }
-  next();
-});
+// Enforce HTTPS (behind proxy) - disabled for Netlify proxy compatibility
+// app.use((req, res, next) => {
+//   const proto = (req.headers['x-forwarded-proto'] || '').toString().toLowerCase();
+//   if (proto && proto !== 'https') {
+//     return res.status(400).json({ success: false, error: 'HTTPS required' });
+//   }
+//   next();
+// });
 
 // Origin/host validation for API routes
 const ALLOWED_HOSTS = parseOrigins(process.env.ALLOWED_HOSTS || '');
