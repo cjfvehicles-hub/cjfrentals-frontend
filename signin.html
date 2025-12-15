@@ -245,13 +245,18 @@
         loading.style.display = 'block';
         form.style.display = 'none';
         errorDiv.classList.remove('show');
-        setStatus('Preparing sign-in...');
+        setStatus('Opening Google sign-in...');
         const auth = window.firebaseAuth;
         armWatchdog();
         localStorage.removeItem('_forceSignOut');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         const provider = new window.firebase.auth.GoogleAuthProvider();
         pendingGoogleFlow = true;
+
+        // Always use redirect for reliability
+        setStatus('Redirecting to Google...');
+        await auth.signInWithRedirect(provider);
+        return;
 
         // iOS or redirect-only mode: go straight to redirect
         if (isIOS || USE_REDIRECT_ONLY) {
