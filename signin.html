@@ -247,17 +247,38 @@
         errorDiv.classList.remove('show');
         setStatus('Opening Google sign-in...');
         const auth = window.firebaseAuth;
+        
+        if (!auth) {
+          showError('Firebase not initialized. Refresh and try again.');
+          form.style.display = 'block';
+          loading.style.display = 'none';
+          return;
+        }
+        
         armWatchdog();
         localStorage.removeItem('_forceSignOut');
         await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
         const provider = new window.firebase.auth.GoogleAuthProvider();
         pendingGoogleFlow = true;
 
+        // Timeout if redirect doesn't happen in 3 seconds
+        setTimeout(() => {
+          if (window.location.href.includes('signin.html')) {
+            console.error('Redirect timeout - still on signin page');
+            showError('Redirect failed. Check if popups are blocked.');
+            form.style.display = 'block';
+            loading.style.display = 'none';
+          }
+        }, 3000);
+
         // Always use redirect for reliability
         setStatus('Redirecting to Google...');
-        auth.signInWithRedirect(provider).catch(err => {
+        console.log('Calling signInWithRedirect...');
+        auth.signInWithRedirect(provider).then(() => {
+          console.log('signInWithRedirect started');
+        }).catch(err => {
           console.error('Redirect failed:', err);
-          showError('Failed to redirect to Google. Try again.');
+          showError(`Failed: ${err.message || err.code || 'Unknown error'}`);
           form.style.display = 'block';
           loading.style.display = 'none';
         });
