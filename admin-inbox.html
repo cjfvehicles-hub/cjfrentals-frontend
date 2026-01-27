@@ -397,11 +397,22 @@
     /* Mobile */
     @media (max-width: 1024px) {
       body { overflow-x: hidden; }
+      .inbox-header {
+        padding: 0 12px;
+        gap: 8px;
+      }
+      .inbox-header-logo {
+        font-size: 16px;
+        white-space: nowrap;
+      }
+      .inbox-header-actions {
+        margin-left: auto;
+      }
       .inbox-container,
       .inbox-content { width: 100%; max-width: 100%; }
       .inbox-content { display: block; }
       .inbox-sidebar { display: none; }
-      .inbox-list-panel { width: 100%; max-width: 100%; flex: none; border-right: none; }
+      .inbox-list-panel { width: 100%; max-width: 100%; flex: none; border-right: none; min-width: 0; }
       .inbox-detail-panel { display: none; position: fixed; inset: 64px 0 0 0; z-index: 999; }
       .inbox-detail-panel.active { display: flex; }
       .inbox-mobile-back { display: inline-flex; }
