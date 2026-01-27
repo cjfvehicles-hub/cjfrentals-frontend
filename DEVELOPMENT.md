@@ -24,7 +24,7 @@ git init
 git add .
 
 # First commit
-git commit -m "Initial commit: CCR vehicle rental platform"
+git commit -m "Initial commit: CJF vehicle rental platform"
 
 # Add remote (replace with your repo)
 git remote add origin https://github.com/clyderoccr-beep/clyderocashcarrental.git

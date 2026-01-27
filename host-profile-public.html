@@ -17,23 +17,16 @@
 		/* Public Host Profile Page */
 		.host-profile-page { 
 			min-height: 100vh; 
-			padding: 120px 0 40px; 
+			/* Account for fixed header (see assets/style.css .header) */
+			padding: 78px 0 0;
 		}
 
-		.back-button {
-			display: inline-block;
-			margin: 20px 0 0 20px;
-			padding: 8px 12px;
-			background: none;
-			border: none;
-			color: var(--accent);
-			cursor: pointer;
-			font-size: 16px;
-		}
-
-		.back-button:hover {
-			background: rgba(0,0,0,0.05);
-			border-radius: 6px;
+		/* Cover Photo */
+		.profile-cover {
+			width: 100%;
+			height: clamp(180px, 26vh, 260px);
+			object-fit: cover;
+			background: #f0f0f0;
 		}
 
 		/* Profile Header Container */
@@ -45,7 +38,7 @@
 
 		/* Host Card Section */
 		.host-card-section {
-			margin-top: -60px;
+			margin-top: 16px;
 			position: relative;
 			z-index: 10;
 			margin-bottom: 28px;
@@ -80,18 +73,12 @@
 		}
 
 		.host-verified {
-			display: inline-flex;
+			display: flex;
 			align-items: center;
-			gap: 6px;
-			font-size: 13px;
-			color: #1f6f3c;
+			gap: 4px;
+			font-size: 14px;
+			color: #4CAF50;
 			font-weight: 600;
-			padding: 4px 12px;
-			border: 1px solid rgba(34, 139, 34, 0.5);
-			background: rgba(46, 204, 113, 0.15);
-			border-radius: 999px;
-			text-transform: none;
-			letter-spacing: 0;
 		}
 
 		/* Host Info */
@@ -117,21 +104,6 @@
 			align-items: center;
 			gap: 8px;
 			font-size: 14px;
-		}
-
-		.verified-note {
-			display: inline-flex;
-			align-items: center;
-			gap: 6px;
-			font-size: 14px;
-			font-weight: 600;
-			color: #1f6f3c;
-			margin-top: 4px;
-		}
-
-		.verified-note::before {
-			content: '✔';
-			font-size: 15px;
 		}
 
 		.stars {
@@ -181,10 +153,53 @@
 		.host-actions {
 			display: grid;
 			gap: 12px;
+			min-width: 220px;
 		}
 
 		.host-actions .button {
 			width: 100%;
+		}
+
+		.contact-options-toggle {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.contact-chev {
+			width: 10px;
+			height: 10px;
+			border-right: 2px solid currentColor;
+			border-bottom: 2px solid currentColor;
+			transform: rotate(45deg);
+			opacity: .85;
+			flex: 0 0 auto;
+		}
+
+		.contact-options-toggle[aria-expanded="true"] .contact-chev {
+			transform: rotate(-135deg);
+		}
+
+		.contact-options-panel {
+			border: 1px solid var(--stroke);
+			border-radius: 12px;
+			background: #fff;
+			padding: 12px;
+			display: grid;
+			gap: 10px;
+		}
+
+		.contact-options-actions {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+		}
+
+		.contact-disclaimer {
+			font-size: 12.5px;
+			line-height: 1.35;
+			color: #666;
 		}
 
 		/* Fleet Section */
@@ -296,13 +311,6 @@
 			gap: 8px;
 		}
 
-		.legal-note {
-			font-size: 13px;
-			color: #475569;
-			margin: 0;
-			max-width: 640px;
-		}
-
 		.reviews-header h2 {
 			margin: 0;
 			font-size: 24px;
@@ -310,12 +318,38 @@
 		}
 
 		.review-card {
-			background: white;
-			border: 1px solid var(--stroke);
+			position: relative;
+			overflow: hidden;
+			background: linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(14, 165, 233, 0.04));
+			border: 1px solid rgba(99, 102, 241, 0.22);
 			border-radius: 12px;
 			padding: 20px;
 			margin-bottom: 16px;
+			box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+			transition: transform 0.15s ease, box-shadow 0.15s ease;
 		}
+
+		.review-card::before {
+			content: "";
+			position: absolute;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			width: 6px;
+			background: linear-gradient(180deg, var(--accent), #06b6d4);
+		}
+
+		.review-card:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 14px 28px rgba(15, 23, 42, 0.10);
+		}
+
+		.review-card[data-rating="5"]::before { background: linear-gradient(180deg, #16a34a, #22c55e); }
+		.review-card[data-rating="4"]::before { background: linear-gradient(180deg, #22c55e, #a3e635); }
+		.review-card[data-rating="3"]::before { background: linear-gradient(180deg, #f59e0b, #fbbf24); }
+		.review-card[data-rating="2"]::before { background: linear-gradient(180deg, #f97316, #fb7185); }
+		.review-card[data-rating="1"]::before,
+		.review-card[data-rating="0"]::before { background: linear-gradient(180deg, #ef4444, #f43f5e); }
 
 		.review-header {
 			display: flex;
@@ -327,6 +361,7 @@
 		.review-author {
 			font-weight: 600;
 			font-size: 16px;
+			color: #0f172a;
 		}
 
 		.review-date {
@@ -335,19 +370,16 @@
 		}
 
 		.review-rating {
-			color: #ffc107;
-			font-size: 14px;
-			margin-bottom: 8px;
-		}
-
-		.review-badge {
-			font-size: 12px;
-			color: #1f6f3c;
-			font-weight: 700;
 			display: inline-flex;
 			align-items: center;
-			gap: 4px;
-			margin-left: 12px;
+			gap: 6px;
+			padding: 6px 10px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.75);
+			border: 1px solid rgba(99, 102, 241, 0.18);
+			color: #f59e0b;
+			font-size: 14px;
+			margin-bottom: 8px;
 		}
 
 		.review-text {
@@ -366,14 +398,27 @@
 
 		/* Responsive */
 		@media (max-width: 768px) {
-			.host-card { grid-template-columns: 1fr; text-align: center; }
-			.host-card-section { margin-top: -48px; }
+			.host-card {
+				grid-template-columns: 1fr;
+				text-align: center;
+				justify-items: center;
+			}
+			.host-card-section { margin-top: 16px; }
 			.host-avatar { width: 80px; height: 80px; }
-			.profile-cover { height: 200px; }
 			.vehicles-grid { grid-template-columns: 1fr; }
 			.host-stats { grid-template-columns: 1fr; }
+			.host-info { justify-items: center; }
+			.host-rating { justify-content: center; }
+			.host-location { justify-content: center; }
+			.host-actions { width: 100%; min-width: 0; }
+			.contact-options-actions { grid-template-columns: 1fr; }
 		}
+
+		.review-text { position: relative; }
+		.review-delete-btn { float: right; margin-left: 10px; padding: 6px 10px; font-size: 13px; }
 	</style>
+
+	<!-- Firebase and Auth Scripts (required for public profile data loading) -->
 	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -384,18 +429,18 @@
 <body>
 	<header class="header">
 		<div class="header-inner">
-			<a class="brand" href="index.html">
-				<span class="brand-mark">CJF</span>
-				<span>Car Connect Rentals</span>
-			</a>
-			<button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+				<a class="brand" href="index.html">
+					<span class="brand-mark">CJF</span>
+					<span>CJF Rentals</span>
+				</a>
+			<button class="menu-button" id="menuToggle" aria-label="Open menu">☰</button>
 		</div>
 	</header>
 	<div class="backdrop" id="backdrop"></div>
 	<nav class="menu-panel" id="menuPanel" aria-label="Site menu">
 		<div class="brand" style="justify-content: space-between; align-items: center;">
 			<span>Navigation</span>
-			<button class="menu-button" id="menuClose" aria-label="Close menu">Close</button>
+			<button class="menu-close" id="menuClose" aria-label="Close menu"></button>
 		</div>
 		<ul class="menu-list">
 			<li class="menu-account"><a href="account.html">My Account</a></li>
@@ -415,39 +460,32 @@
 					<!-- Avatar -->
 					<div class="host-avatar-container">
 						<img id="hostAvatarImg" class="host-avatar" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23ddd%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2216%22 fill=%22%23999%22%3EHost%3C/text%3E%3C/svg%3E" alt="Host Avatar" />
-						<div class="host-verified" id="verificationBadge" style="display:none;">
-							Verified
-						</div>
+						<div class="host-verified" id="verificationBadge" style="display:none;">Verified</div>
 					</div>
 
 					<!-- Host Info -->
 					<div class="host-info">
 						<div class="host-header-text">
 							<h1 id="hostNameText">Loading...</h1>
-							<p id="hostOwnerTypeText">---</p>
+							<p id="hostOwnerTypeText">Vehicle Owner</p>
 						</div>
 
 						<div class="host-rating">
-							<span class="stars" id="hostStars">*****</span>
+							<span class="stars" id="hostStars">★★★★★</span>
 							<span class="rating-count">
 								<span id="hostRatingValue">5.0</span> 
 								(<span id="hostReviewCount">0</span> reviews)
 							</span>
 						</div>
-						<div class="verified-note" id="verifiedNote" style="display:none;">Verified customer reviews</div>
 
-						<div class="host-location">
-							---- <span id="hostLocationText">Location</span>
+						<div class="host-location" id="hostLocationRow" style="display:none;">
+							<span id="hostLocationText">Location</span>
 						</div>
 
 						<div class="host-stats">
 							<div class="stat-item">
 								<div class="stat-value" id="vehicleCount">0</div>
 								<div class="stat-label">Vehicles</div>
-							</div>
-							<div class="stat-item">
-								<div class="stat-value" id="rentalCount">0</div>
-								<div class="stat-label">Rentals</div>
 							</div>
 							<div class="stat-item">
 								<div class="stat-value" id="joiningYear">2024</div>
@@ -458,7 +496,17 @@
 
 					<!-- Actions -->
 					<div class="host-actions">
-						<button class="button" id="contactHostBtn">Contact Host</button>
+						<button class="button contact-options-toggle" id="contactOptionsBtn" type="button" aria-expanded="false" aria-controls="contactOptionsPanel">
+							<span>View Contact Options</span>
+							<span class="contact-chev" aria-hidden="true"></span>
+						</button>
+						<div id="contactOptionsPanel" class="contact-options-panel" hidden>
+							<div class="contact-options-actions">
+								<button class="button ghost" id="emailHostBtn" type="button">Email</button>
+								<button class="button ghost" id="callHostBtn" type="button">Phone</button>
+							</div>
+							<div class="contact-disclaimer">CJF Rentals is an advertising platform. Arrangements, availability, and payments are handled directly with the host.</div>
+						</div>
 						<button class="button ghost" id="visitWebsiteBtn" style="display:none;">Visit Website</button>
 					</div>
 				</div>
@@ -486,11 +534,6 @@
 			<section class="reviews-section">
 				<div class="reviews-header">
 					<h2>Reviews</h2>
-					<p class="legal-note">
-						Reviews and star ratings are submitted by customers after direct interactions with hosts.
-						Verified reviews are collected using secure, one-time review links or phone confirmation.
-						Customers are not required to create an account.
-					</p>
 				</div>
 
 				<div id="reviewsContainer">
@@ -557,6 +600,107 @@
 			}
 		};
 
+		async function getFirebaseIdToken() {
+			try {
+				const user = window.firebaseAuth?.currentUser;
+				if (!user || typeof user.getIdToken !== 'function') return null;
+				return await user.getIdToken();
+			} catch (e) {
+				return null;
+			}
+		}
+
+		function canAdminDeleteReviews() {
+			try {
+				const SPECIAL_ADMIN_EMAIL = 'cjfvehicles@gmail.com';
+				const rawUser = localStorage.getItem('CJF_CURRENT_USER');
+				const localUser = rawUser ? JSON.parse(rawUser) : null;
+				const email = String((window.firebaseAuth?.currentUser?.email || localUser?.email || '')).toLowerCase();
+				if (!email || email !== SPECIAL_ADMIN_EMAIL) return false;
+				const rawMode = localStorage.getItem('CJF_ADMIN_MODE');
+				const adminMode = rawMode === null ? true : rawMode === 'true';
+				return adminMode === true;
+			} catch (e) {
+				return false;
+			}
+		}
+
+		function injectAdminDeleteButtons({ hostId }) {
+			const enabled = canAdminDeleteReviews();
+			const container = document.getElementById('reviewsContainer');
+			if (!container) return;
+			container.querySelectorAll('.review-card[data-review-id]').forEach((card) => {
+				const reviewId = card.getAttribute('data-review-id');
+				if (!reviewId) return;
+				const body = card.querySelector('.review-text');
+				if (!body) return;
+				const existing = body.querySelector('.review-delete-btn');
+				if (!enabled) {
+					if (existing) existing.remove();
+					return;
+				}
+				if (existing) return;
+
+				const delBtn = document.createElement('button');
+				delBtn.className = 'button ghost review-delete-btn';
+				delBtn.type = 'button';
+				delBtn.textContent = 'Delete';
+				delBtn.addEventListener('click', async (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					const ok = window.confirm('Delete this review?');
+					if (!ok) return;
+					delBtn.disabled = true;
+					try {
+						const result = await deleteHostReview({ hostId, reviewId });
+						if (!result?.success) {
+							delBtn.disabled = false;
+							showToast(result?.error || 'Delete failed');
+							return;
+						}
+						card.remove();
+						showToast('Review deleted');
+						const countEl = document.getElementById('hostReviewCount');
+						if (countEl) {
+							const current = Number.parseInt(countEl.textContent, 10);
+							if (Number.isFinite(current) && current > 0) {
+								countEl.textContent = String(current - 1);
+							}
+						}
+						const emptyReviewsMsg = document.getElementById('emptyReviewsMsg');
+						if (container.querySelectorAll('.review-card').length === 0) {
+							if (emptyReviewsMsg) emptyReviewsMsg.style.display = 'block';
+						}
+					} catch (err) {
+						delBtn.disabled = false;
+						showToast(err?.message || 'Delete failed');
+					}
+				});
+				body.insertBefore(delBtn, body.firstChild);
+			});
+		}
+
+		async function deleteHostReview({ hostId, reviewId }) {
+			const token = await getFirebaseIdToken();
+			if (!token) {
+				showToast('Sign in as admin to delete reviews');
+				return { success: false, error: 'Not authenticated' };
+			}
+
+			const resp = await fetch(`/api/hosts/${encodeURIComponent(String(hostId))}/reviews/${encodeURIComponent(String(reviewId))}`, {
+				method: 'DELETE',
+				headers: {
+					'Accept': 'application/json',
+					'Authorization': `Bearer ${token}`
+				}
+			});
+			const data = await resp.json().catch(() => null);
+			if (!resp.ok || !data?.success) {
+				return { success: false, error: data?.error || `Delete failed (${resp.status})` };
+			}
+			return { success: true };
+		}
+
 		// Load host profile from URL parameter
 		async function loadHostProfile() {
 			try {
@@ -569,24 +713,35 @@
 						<div style="padding: 40px; text-align: center;">
 							<h2>Host Profile Not Found</h2>
 							<p>No host ID provided.</p>
-							<a href="index.html" style="color: var(--accent);">--- Back to Home</a>
+							<a href="index.html" style="color: var(--accent);">Back to Home</a>
 						</div>
 					`;
 					return;
 				}
 
-				// Get all vehicles from this host (keep page even if none)
-				const allVehicles = await VehicleStore.getAllVehicles();
-				const normalizedHostId = String(hostId || '').trim();
-				const hostVehicles = allVehicles.filter((v) => {
-					const vehicleHostId = String(v.hostId || v.ownerId || '').trim();
-					const status = (v.status || 'active').toLowerCase();
-					return vehicleHostId === normalizedHostId && status === 'active';
+				// Get vehicles from this host (public-safe)
+				let allVehicles = [];
+				try {
+					if (window.VehicleStore && typeof VehicleStore.getActiveVehicles === 'function') {
+						allVehicles = await VehicleStore.getActiveVehicles();
+					} else if (typeof window.getActiveVehicles === 'function') {
+						allVehicles = await window.getActiveVehicles();
+					} else {
+						console.warn('VehicleStore not available; showing empty fleet');
+					}
+				} catch (e) {
+					console.warn('Vehicle load failed; showing empty fleet:', e?.message || e);
+					allVehicles = [];
+				}
+				const hostVehicles = (Array.isArray(allVehicles) ? allVehicles : []).filter(v => {
+					const owner = (v && (v.hostId || v.ownerId)) ? String(v.hostId || v.ownerId) : '';
+					const isMine = owner && owner === String(hostId);
+					const isActive = (v && (v.status === 'active' || !v.status));
+					return isMine && isActive;
 				});
 
 				// Get host profile (Firestore only; if missing, show placeholder)
 				let hostProfile = null;
-				let hostMeta = null;
 				if (window.firebaseDb) {
 					try {
 						const snap = await firebaseDb.collection('users').doc(String(hostId)).get();
@@ -595,14 +750,6 @@
 						}
 					} catch (e) {
 						console.warn('Host fetch failed:', e.message);
-					}
-					try {
-						const metaSnap = await firebaseDb.collection('hosts').doc(String(hostId)).get();
-						if (metaSnap.exists) {
-							hostMeta = metaSnap.data();
-						}
-					} catch (metaErr) {
-						console.warn('Host meta fetch failed:', metaErr.message);
 					}
 				}
 				if (!hostProfile) {
@@ -629,17 +776,21 @@
 				// Populate host card
 				document.getElementById('hostNameText').textContent = hostName;
 				document.getElementById('hostOwnerTypeText').textContent = hostProfile.ownerType || hostProfile.hostType || 'Vehicle Owner';
-				document.getElementById('hostLocationText').textContent = 
-					`${hostProfile.city || ''}, ${hostProfile.state || ''}, ${hostProfile.country || ''}`.replace(/^,\s*|,\s*$/g, '');
+				const locationParts = [hostProfile.city, hostProfile.state, hostProfile.country].filter(Boolean);
+				const locationText = locationParts.join(', ');
+				const locationRow = document.getElementById('hostLocationRow');
+				const locationEl = document.getElementById('hostLocationText');
+				if (locationEl) locationEl.textContent = locationText;
+				if (locationRow) locationRow.style.display = locationText ? 'flex' : 'none';
 				
 				// Host avatar
 				const hostAvatar = hostProfile.avatar || hostProfile.photoURL ||
 					'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23e0e7ff"/><circle cx="50" cy="35" r="20" fill="%236366f1"/><path d="M 30 70 Q 50 60 70 70 Q 70 85 50 90 Q 30 85 30 70" fill="%236366f1"/></svg>';
 				document.getElementById('hostAvatarImg').src = hostAvatar;
 
-				// Set OG image (use host cover or first vehicle photo)
-				const coverPhoto = hostProfile.coverPhoto || hostProfile.cover || hostVehicles[0]?.photos?.[0] || '';
-				document.getElementById('hostOgImage').content = coverPhoto;
+				// OG image (no cover photo on public profile)
+				const ogImage = (hostVehicles[0]?.photos?.[0]) || hostAvatar || '';
+				document.getElementById('hostOgImage').content = ogImage;
 
 				// Verification badge
 				const verified = !!(hostProfile.email && hostProfile.phone);
@@ -647,8 +798,7 @@
 
 				// Stats
 				document.getElementById('vehicleCount').textContent = hostVehicles.length;
-				document.getElementById('rentalCount').textContent = hostProfile.trips || hostProfile.completedTrips || '0';
-				let createdYear = 'N/A';
+				let createdYear = '—';
 				if (hostProfile.createdAt) {
 					const ts = hostProfile.createdAt.seconds ? hostProfile.createdAt.seconds * 1000 : hostProfile.createdAt;
 					createdYear = new Date(ts).getFullYear();
@@ -656,31 +806,47 @@
 				document.getElementById('joiningYear').textContent = createdYear;
 
 				// Rating
-				const ratingSource = hostMeta?.ratingAvg ?? hostProfile.rating ?? hostProfile.ratingAvg ?? hostProfile.avgRating ?? 5;
-				const ratingVal = Number(ratingSource).toFixed(1);
-				const reviews = hostMeta?.ratingCount ?? hostProfile.reviewCount ?? hostProfile.reviewsCount ?? 0;
+				const ratingVal = Number(hostProfile.rating || hostProfile.ratingAvg || hostProfile.avgRating || 5).toFixed(1);
+				const reviews = hostProfile.ratingCount || hostProfile.reviewCount || hostProfile.reviewsCount || 0;
 				document.getElementById('hostRatingValue').textContent = ratingVal;
 				document.getElementById('hostReviewCount').textContent = reviews;
-				const hostStarsEl = document.getElementById('hostStars');
-				if (hostStarsEl) {
-					hostStarsEl.textContent = '*****';
-					hostStarsEl.setAttribute('aria-label', `Rating: ${ratingVal} / 5`);
-				}
-				const verifiedNoteEl = document.getElementById('verifiedNote');
-				if (verifiedNoteEl) {
-					verifiedNoteEl.style.display = reviews > 0 ? 'flex' : 'none';
+				document.getElementById('hostStars').textContent = '★★★★★';
+
+				// Contact (explicit choice required)
+				const email = (hostProfile.email || '').toString().trim();
+				const phone = (hostProfile.phone || '').toString().trim();
+				const optionsBtn = document.getElementById('contactOptionsBtn');
+				const panel = document.getElementById('contactOptionsPanel');
+				const emailBtn = document.getElementById('emailHostBtn');
+				const callBtn = document.getElementById('callHostBtn');
+
+				const setPanelOpen = (open) => {
+					panel.hidden = !open;
+					optionsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+				};
+
+				const emailAvailable = !!email;
+				const phoneAvailable = !!phone;
+				emailBtn.disabled = !emailAvailable;
+				callBtn.disabled = !phoneAvailable;
+
+				if (!emailAvailable && !phoneAvailable) {
+					optionsBtn.disabled = true;
+					optionsBtn.textContent = 'Contact info unavailable';
+					setPanelOpen(false);
+				} else {
+					optionsBtn.onclick = () => setPanelOpen(panel.hidden);
+					setPanelOpen(false);
 				}
 
-				// Contact button
-				const contactBtn = document.getElementById('contactHostBtn');
-				if (hostProfile.email) {
-					contactBtn.onclick = () => window.location.href = `mailto:${hostProfile.email}`;
-				} else if (hostProfile.phone) {
-					contactBtn.onclick = () => window.location.href = `tel:${hostProfile.phone}`;
-				} else {
-					contactBtn.disabled = true;
-					contactBtn.textContent = 'Contact info unavailable';
-				}
+				emailBtn.onclick = () => {
+					if (!emailAvailable) return;
+					window.location.href = `mailto:${email}`;
+				};
+				callBtn.onclick = () => {
+					if (!phoneAvailable) return;
+					window.location.href = `tel:${phone}`;
+				};
 				const websiteBtn = document.getElementById('visitWebsiteBtn');
 				if (websiteBtn) {
 					if (hostProfile.website) {
@@ -716,6 +882,7 @@
 									<span class="vehicle-price-amount">$${vehicle.price || 0}</span>
 									<span class="vehicle-frequency">/${(vehicle.frequency || 'day').toLowerCase()}</span>
 								</div>
+								${String(vehicle.availability || '').toLowerCase() === 'rented' ? '<div style="margin-top:8px;"><span style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background: rgba(239,68,68,0.12); color:#991b1b; border:1px solid rgba(239,68,68,0.22); font-weight:800; font-size:12px;">Rented</span></div>' : ''}
 							</div>
 						`;
 
@@ -727,7 +894,82 @@
 				document.getElementById('emptyFleetMsg').style.display = hostVehicles.length === 0 ? 'block' : 'none';
 				document.getElementById('fleetDescription').textContent = `All vehicles from ${hostName}`;
 
-				await renderVerifiedReviews(hostId);
+				// Load reviews
+				const reviewsContainer = document.getElementById('reviewsContainer');
+				const emptyReviewsMsg = document.getElementById('emptyReviewsMsg');
+				const renderStars = (rating) => {
+					const r = Math.max(0, Math.min(5, Number(rating) || 0));
+					return '★★★★★'.slice(0, r) + '☆☆☆☆☆'.slice(0, 5 - r);
+				};
+				const safeDate = (iso) => {
+					try {
+						return iso ? new Date(iso).toLocaleDateString() : '';
+					} catch (e) {
+						return '';
+					}
+				};
+
+				reviewsContainer.innerHTML = '';
+				if (emptyReviewsMsg) emptyReviewsMsg.style.display = 'none';
+				try {
+					const resp = await fetch(`/api/hosts/${encodeURIComponent(String(hostId))}/reviews?limit=20`, {
+						headers: { 'Accept': 'application/json' }
+					});
+					const data = await resp.json().catch(() => null);
+					const list = data?.success ? (data.data || []) : [];
+					if (!resp.ok || !Array.isArray(list) || list.length === 0) {
+						if (emptyReviewsMsg) emptyReviewsMsg.style.display = 'block';
+					} else {
+						list.forEach((rev) => {
+							const numericRating = Math.max(0, Math.min(5, Math.round(Number(rev?.rating) || 0)));
+							const card = document.createElement('div');
+							card.className = 'review-card';
+							card.setAttribute('data-rating', String(numericRating));
+							if (rev?.id) card.setAttribute('data-review-id', String(rev.id));
+
+							const header = document.createElement('div');
+							header.className = 'review-header';
+
+							const left = document.createElement('div');
+							const author = document.createElement('div');
+							author.className = 'review-author';
+							author.textContent = (rev?.displayName || 'Anonymous').toString();
+							const date = document.createElement('div');
+							date.className = 'review-date';
+							date.textContent = safeDate(rev?.createdAt);
+							left.appendChild(author);
+							left.appendChild(date);
+
+							const rating = document.createElement('div');
+							rating.className = 'review-rating';
+							rating.textContent = renderStars(rev?.rating);
+
+							header.appendChild(left);
+							header.appendChild(rating);
+
+							const body = document.createElement('div');
+							body.className = 'review-text';
+							const bodyText = document.createElement('span');
+							bodyText.textContent = (rev?.comment || '').toString() || 'No written feedback provided.';
+
+							body.appendChild(bodyText);
+							card.appendChild(header);
+							card.appendChild(body);
+
+							reviewsContainer.appendChild(card);
+						});
+						// Inject admin controls after render (auth may finish after DOMContentLoaded)
+						injectAdminDeleteButtons({ hostId });
+					}
+				} catch (e) {
+					console.warn('Failed to load reviews:', e?.message || e);
+					if (emptyReviewsMsg) emptyReviewsMsg.style.display = 'block';
+				}
+
+				// Re-check admin state later, on auth changes, and on focus (admin mode toggle lives on other pages)
+				setTimeout(() => injectAdminDeleteButtons({ hostId }), 800);
+				document.addEventListener('authStateChanged', () => injectAdminDeleteButtons({ hostId }));
+				window.addEventListener('focus', () => injectAdminDeleteButtons({ hostId }));
 
 				const safeUpdateMenuAuth = (typeof window.updateMenuAuth === 'function') ? window.updateMenuAuth : null;
 				if (safeUpdateMenuAuth) {
@@ -742,99 +984,9 @@
 			}
 		}
 
-		async function renderVerifiedReviews(hostId) {
-			const container = document.getElementById('reviewsContainer');
-			const emptyMsg = document.getElementById('emptyReviewsMsg');
-			if (!container) return;
-			container.innerHTML = '';
-
-			if (!window.firebaseDb) {
-				if (emptyMsg) emptyMsg.style.display = 'block';
-				return;
-			}
-
-			try {
-				const reviewsSnap = await firebaseDb
-					.collection('hosts')
-					.doc(hostId)
-					.collection('reviews')
-					.where('verified', '==', true)
-					.orderBy('createdAt', 'desc')
-					.limit(12)
-					.get();
-
-				if (reviewsSnap.empty) {
-					if (emptyMsg) emptyMsg.style.display = 'block';
-					return;
-				}
-
-				if (emptyMsg) emptyMsg.style.display = 'none';
-				reviewsSnap.forEach(doc => {
-					container.appendChild(buildReviewCard(doc.data()));
-				});
-			} catch (err) {
-				console.warn('Failed to load verified reviews:', err);
-				if (emptyMsg) {
-					emptyMsg.style.display = 'block';
-				}
-				container.innerHTML = '<div class="no-reviews"><p>Unable to load reviews right now.</p></div>';
-			}
-		}
-
-		function buildReviewCard(review) {
-			const card = document.createElement('div');
-			card.className = 'review-card';
-
-			const header = document.createElement('div');
-			header.className = 'review-header';
-
-			const author = document.createElement('div');
-			author.className = 'review-author';
-			author.textContent = review.displayName || 'Anonymous';
-
-			const date = document.createElement('div');
-			date.className = 'review-date';
-			date.textContent = formatReviewDate(review.createdAt);
-
-			const rating = document.createElement('div');
-			rating.className = 'review-rating';
-			const starValue = Math.max(0, Math.min(5, Number(review.rating) || 0));
-			rating.textContent = '★'.repeat(starValue) + '☆'.repeat(5 - starValue);
-
-			const badge = document.createElement('div');
-			badge.className = 'review-badge';
-			badge.textContent = 'Verified review';
-
-			header.appendChild(author);
-			header.appendChild(date);
-			header.appendChild(rating);
-			header.appendChild(badge);
-			card.appendChild(header);
-
-			if (review.comment) {
-				const text = document.createElement('div');
-				text.className = 'review-text';
-				text.textContent = review.comment;
-				card.appendChild(text);
-			} else {
-				const placeholder = document.createElement('div');
-				placeholder.className = 'muted';
-				placeholder.textContent = 'No written feedback provided.';
-				card.appendChild(placeholder);
-			}
-
-			return card;
-		}
-
-		function formatReviewDate(timestamp) {
-			if (!timestamp) return '';
-			const ms = timestamp.seconds ? timestamp.seconds * 1000 : new Date(timestamp).getTime();
-			const date = new Date(ms);
-			return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-		}
-
 		// Load profile on page load
 		document.addEventListener('DOMContentLoaded', loadHostProfile);
 	</script>
 </body>
 </html>
+

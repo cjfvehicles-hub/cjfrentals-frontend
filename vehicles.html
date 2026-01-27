@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -167,14 +167,14 @@
       <a class="brand" href="index.html">
         <span class="brand-mark">CJF</span><span>CJF Rentals</span>
       </a>
-      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">☰</button>
     </div>
   </header>
   <div class="backdrop" id="backdrop"></div>
   <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
     <div class="menu-header">
       <span class="menu-title">Navigation</span>
-      <button class="menu-close" aria-label="Close menu">Close</button>
+      <button class="menu-close" id="menuClose" aria-label="Close menu"></button>
     </div>
     <ul class="menu-list" id="nav-list">
       <!-- Menu items built dynamically by navBuilder.js -->
@@ -201,7 +201,7 @@
         <button class="button ghost" id="clearFiltersQuick" type="button">Clear all</button>
       </div>
 
-      <div class="grid three" id="vehiclesGrid">
+      <div class="vehicles-grid" id="vehiclesGrid">
         <!-- Vehicles will be loaded from shared storage -->
       </div>
       <div id="noVehiclesMsg" class="empty-state" style="display:none; text-align:center; padding:60px 20px;">
@@ -339,6 +339,131 @@
       return value.includes(filter);
     };
 
+    const toTitleCase = (value) => {
+      const s = clean(value);
+      if (!s) return '';
+      return s
+        .split(/\s+/g)
+        .map((w) => w ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : w)
+        .join(' ');
+    };
+
+    const sanitizeYear = (year) => {
+      const y = Number(year);
+      if (!Number.isFinite(y)) return '';
+      const max = new Date().getFullYear() + 1;
+      if (y < 1985 || y > max) return '';
+      return String(y);
+    };
+
+    const normalizeCategory = (value) => {
+      const raw = clean(value);
+      if (!raw) return 'Vehicle';
+      const normalized = toTitleCase(raw);
+      const allowed = new Set(['SUV','Sedan','Coupe','Truck','Bike','Convertible','Minivan','Hatchback','Station Wagon','Bus','Wagon']);
+      if (allowed.has(normalized)) return normalized;
+      if (normalized === 'Stationwagon') return 'Station Wagon';
+      return 'Vehicle';
+    };
+
+    const normalizeFuel = (value) => {
+      const raw = toTitleCase((value ?? '').toString().trim());
+      const allowed = new Set(['Gas','Diesel','Hybrid','Electric']);
+      return allowed.has(raw) ? raw : '';
+    };
+
+    const shouldHideMetaForMismatch = ({ make, model, category, fuel }) => {
+      const m = (model || '').toString().toLowerCase();
+      const mk = (make || '').toString().toLowerCase();
+      const cat = (category || '').toString().toLowerCase();
+      const fu = (fuel || '').toString().toLowerCase();
+
+      const looksPassenger = /(accord|civic|camry|corolla|altima|sentra|malibu|impala|elantra|sonata|fusion|focus|prius|model\s*3|model\s*s|model\s*y|model\s*x|a4|a6|c-?class|e-?class|3\s*series|5\s*series|golf|jetta)/.test(m);
+      const looksElectricModel = /(model\s*3|model\s*s|model\s*y|model\s*x|leaf|bolt|ioniq|ev|mach-?e|id\.?4|taycan)/.test(m);
+
+      const dieselUnlikelyMake = /^(honda|toyota|nissan|hyundai|kia)$/.test(mk);
+      const dieselUnlikelyModel = /(accord|civic|camry|corolla|altima|sentra|elantra|sonata|prius)/.test(m);
+
+      if ((cat === 'truck' || cat === 'bus' || cat === 'bike') && looksPassenger) return true;
+      if (looksElectricModel && fu === 'diesel') return true;
+      if (mk === 'honda' && cat === 'truck' && looksPassenger) return true;
+
+      if (fu === 'diesel' && (dieselUnlikelyMake || dieselUnlikelyModel)) return true;
+      return false;
+    };
+
+    const normalizeFrequency = (value) => {
+      const v = clean(value).toLowerCase();
+      if (!v) return 'Daily';
+      if (v.startsWith('day')) return 'Daily';
+      if (v.startsWith('week')) return 'Weekly';
+      if (v.startsWith('month')) return 'Monthly';
+      return 'Daily';
+    };
+
+    const formatPrice = (price, frequency) => {
+      const n = Number(price);
+      const freq = normalizeFrequency(frequency);
+      const unit = (freq === 'Weekly') ? 'week' : (freq === 'Monthly') ? 'month' : 'day';
+      if (!Number.isFinite(n) || n <= 0) return `Contact for price / ${unit}`;
+      return `$${n} / ${unit}`;
+    };
+
+    const normalizeVehicle = (v) => {
+      const make = toTitleCase(v?.make);
+      const model = toTitleCase(v?.model);
+      const country = toTitleCase(v?.country);
+      const state = toTitleCase(v?.state);
+      const city = toTitleCase(v?.city);
+      const category = normalizeCategory(v?.vehicleType || v?.category);
+      const fuel = normalizeFuel(v?.fuelType || v?.fuel);
+      const frequency = normalizeFrequency(v?.frequency || v?.priceFrequency);
+      const year = sanitizeYear(v?.year || v?.modelYear);
+      const price = (v?.price != null ? v.price : (v?.pricePerDay != null ? v.pricePerDay : v?.pricePerWeek != null ? v.pricePerWeek : v?.pricePerMonth != null ? v.pricePerMonth : 0));
+
+      const hideMeta = shouldHideMetaForMismatch({ make, model, category, fuel });
+      return {
+        ...v,
+        make,
+        model,
+        country,
+        state,
+        city,
+        category: hideMeta ? 'Vehicle' : category,
+        fuel: hideMeta ? '' : fuel,
+        frequency,
+        year,
+        price
+      };
+    };
+
+    const renderGridLoading = () => {
+      if (!vehiclesGrid) return;
+      if (noVehiclesMsg) noVehiclesMsg.style.display = 'none';
+      if (filterVehiclesMsg) filterVehiclesMsg.style.display = 'none';
+      if (vehicleCount) vehicleCount.textContent = 'Loading vehicles…';
+      vehiclesGrid.innerHTML = Array.from({ length: 8 }).map(() => {
+        return `
+          <article class="card vehicle-card" aria-hidden="true">
+            <div class="vehicle-card-link">
+              <div class="vehicle-card-image skeleton"></div>
+              <div class="vehicle-card-body">
+                <div class="vehicle-spec skeleton skeleton-line sm" style="width: 58%;"></div>
+                <div class="vehicle-title skeleton skeleton-line lg" style="width: 92%;"></div>
+                <div class="vehicle-location skeleton skeleton-line md" style="width: 70%;"></div>
+                <div class="vehicle-bottom" style="margin-top: 10px;">
+                  <div class="vehicle-price skeleton skeleton-line lg" style="width: 44%;"></div>
+                  <div class="badges" style="width: 40%;">
+                    <div class="badge skeleton" style="height: 26px; width: 100%; border-radius: 10px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    };
+
     const vehiclesGrid = document.getElementById("vehiclesGrid");
     const noVehiclesMsg = document.getElementById("noVehiclesMsg");
     const filterVehiclesMsg = document.getElementById("filterVehiclesMsg");
@@ -428,27 +553,55 @@
       }
     };
 
-    const hasRequiredFields = (vehicle) => (
-      vehicle &&
-      vehicle.year && vehicle.make && vehicle.model &&
-      vehicle.category && vehicle.country && vehicle.state &&
-      vehicle.city && vehicle.price
-    );
+    const hasMinimumFields = (vehicle) => {
+      if (!vehicle) return false;
+      // Keep the UI resilient: allow missing price/image/year/etc and fall back gracefully
+      const make = clean(vehicle.make);
+      const model = clean(vehicle.model);
+      return Boolean(make || model || clean(vehicle.category || vehicle.vehicleType));
+    };
 
-    const renderVehicles = (list) => {
+    const renderVehicles = (list, { isFiltered = false } = {}) => {
       if (!vehiclesGrid) return;
-      const validList = list.filter(hasRequiredFields);
+      const validList = (Array.isArray(list) ? list : []).filter(hasMinimumFields).map(normalizeVehicle);
 
       if (validList.length === 0) {
         vehiclesGrid.innerHTML = "";
+        if (noVehiclesMsg) noVehiclesMsg.style.display = "none";
+        if (filterVehiclesMsg) filterVehiclesMsg.style.display = "none";
+
+        const showEmptyBlock = (target) => {
+          if (!target) return;
+          target.innerHTML = `
+            <div class="empty-block">
+              <div class="empty-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 14l3-3 4 4 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              </div>
+              <div class="empty-title">No vehicles found</div>
+              <p class="muted">Try removing a filter, choosing a nearby city, or switching price frequency.</p>
+              <div class="empty-actions">
+                <button class="button ghost" type="button" id="clearFiltersCta">Clear filters</button>
+                <a class="button" href="vehicles.html">Browse all vehicles</a>
+              </div>
+            </div>
+          `;
+          setTimeout(() => {
+            document.getElementById('clearFiltersCta')?.addEventListener('click', clearFilters);
+          }, 0);
+        };
+
         if (allVehicles.length === 0) {
-          if (noVehiclesMsg) noVehiclesMsg.style.display = "block";
-          if (filterVehiclesMsg) filterVehiclesMsg.style.display = "none";
           if (vehicleCount) vehicleCount.textContent = "No vehicles found";
+          if (noVehiclesMsg) {
+            noVehiclesMsg.style.display = "block";
+            showEmptyBlock(noVehiclesMsg);
+          }
         } else {
-          if (noVehiclesMsg) noVehiclesMsg.style.display = "none";
-          if (filterVehiclesMsg) filterVehiclesMsg.style.display = "block";
-          if (vehicleCount) vehicleCount.textContent = "0 vehicles match filters";
+          if (vehicleCount) vehicleCount.textContent = isFiltered ? "0 vehicles match filters" : "No vehicles found";
+          if (filterVehiclesMsg) {
+            filterVehiclesMsg.style.display = "block";
+            showEmptyBlock(filterVehiclesMsg);
+          }
         }
         return;
       }
@@ -458,44 +611,53 @@
       if (vehicleCount) vehicleCount.textContent = `${validList.length} vehicle${validList.length === 1 ? "" : "s"} available`;
 
       vehiclesGrid.innerHTML = validList.map(vehicle => {
-        const country = clean(vehicle.country);
-        const state = clean(vehicle.state);
-        const city = clean(vehicle.city);
-        const frequency = clean(vehicle.frequency || "").toLowerCase();
-        const image = vehicle.image || "assets - Copy/default-car.jpg";
-        const transmission = clean(vehicle.transmission || "");
-        const fuel = clean(vehicle.fuel || vehicle.fuelType || "");
-        const seats = vehicle.seats || "";
+        const placeholderSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23e5e7eb;stop-opacity:1" /><stop offset="100%" style="stop-color:%23d1d5db;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23grad)" width="400" height="300"/><g transform="translate(200, 80)"><circle cx="0" cy="0" r="35" fill="%23999" opacity="0.3"/></g><g transform="translate(200, 160)"><rect x="-60" y="0" width="120" height="70" rx="8" fill="none" stroke="%23999" stroke-width="3" opacity="0.3"/><rect x="-50" y="10" width="30" height="20" rx="4" fill="%23999" opacity="0.3"/><rect x="20" y="10" width="30" height="20" rx="4" fill="%23999" opacity="0.3"/><rect x="-35" y="50" width="70" height="8" rx="4" fill="%23999" opacity="0.3"/></g><text x="200" y="280" text-anchor="middle" font-family="Arial" font-size="16" fill="%23999" opacity="0.5">No photo</text></svg>';
+        const image = vehicle.image || (vehicle.photos && vehicle.photos[0]) || placeholderSvg;
+
+        const insuranceIncluded = vehicle.insuranceIncluded === true || clean(vehicle.insurance || '').toLowerCase() === 'included' || clean(vehicle.insurance || '').toLowerCase() === 'yes';
+        const insuranceLabel = insuranceIncluded ? 'Insurance included' : 'Insurance not included';
+        const insuranceClass = insuranceIncluded ? 'badge badge--success' : 'badge badge--danger';
+        const availability = clean(vehicle.availability || '').toLowerCase() === 'rented' ? 'rented' : 'available';
+
+        const specLine = [vehicle.year, (vehicle.category && vehicle.category !== 'Vehicle') ? vehicle.category : '', vehicle.fuel].filter(Boolean).join(' • ');
+        const locationLine = [vehicle.city, vehicle.state || vehicle.country].filter(Boolean).join(' • ');
+        const title = [vehicle.make, vehicle.model].filter(Boolean).join(' ').trim() || 'Vehicle';
+        const priceLabel = formatPrice(vehicle.price, vehicle.frequency);
+
+        const badges = [];
+        if (availability === 'rented') badges.push('<span class="badge badge--danger">Rented</span>');
+        badges.push(`<span class="${insuranceClass}">${insuranceLabel}</span>`);
+        const isInstant = vehicle.instantBook === true || clean(vehicle.instantBook || '').toLowerCase() === 'yes';
+        const isPopular = vehicle.popular === true || clean(vehicle.popular || '').toLowerCase() === 'yes';
+        if (badges.length < 2 && isInstant) badges.push('<span class="badge">Instant book</span>');
+        else if (badges.length < 2 && isPopular) badges.push('<span class="badge">Popular</span>');
 
         return `
           <article class="card vehicle-card"
             data-vehicle-id="${vehicle.id}"
-            data-type="${vehicle.category}"
-            data-country="${country}"
-            data-state="${state}"
-            data-city="${city}"
-            data-price="${vehicle.price}"
-            data-year="${vehicle.year}"
+            data-type="${clean(vehicle.category)}"
+            data-country="${clean(vehicle.country)}"
+            data-state="${clean(vehicle.state)}"
+            data-city="${clean(vehicle.city)}"
+            data-price="${vehicle.price || ''}"
+            data-year="${clean(vehicle.year)}"
             data-make="${clean(vehicle.make)}"
-            data-transmission="${transmission}"
-            data-fuel="${fuel}"
-            data-seats="${seats}"
-            data-frequency="${vehicle.frequency || ''}">
-            <a href="vehicle.html?id=${vehicle.id}" style="text-decoration:none; color:inherit;">
-              <div class="vehicle-card-image">
-                <img src="${image}" alt="${vehicle.make} ${vehicle.model}" />
-              </div>
-              <div class="vehicle-meta">${vehicle.year} - ${vehicle.category} - ${vehicle.fuel} - ${vehicle.insurance || 'Insurance: N/A'}</div>
-              <strong>${vehicle.make} ${vehicle.model}</strong>
-              <div class="vehicle-meta">${city} - ${state}</div>
-              <div class="vehicle-price">${vehicle.price} / ${frequency || 'n/a'}</div>
-              <div class="vehicle-meta">
-                <span class="badge">${vehicle.category}</span>
-                <span class="badge">${vehicle.fuel}</span>
-                ${vehicle.insurance === 'Included' ? '<span class="badge">Insurance Included</span>' : '<span class="badge">No Insurance</span>'}
+            data-transmission="${clean(vehicle.transmission)}"
+            data-fuel="${clean(vehicle.fuel)}"
+            data-seats="${vehicle.seats || ''}"
+            data-frequency="${clean(vehicle.frequency)}">
+            <a href="vehicle.html?id=${vehicle.id}" class="vehicle-card-link">
+              <div class="vehicle-card-image"><img src="${image}" alt="${title}" /></div>
+              <div class="vehicle-card-body">
+                <div class="vehicle-spec">${specLine || ''}</div>
+                <div class="vehicle-title line-clamp-2">${title}</div>
+                <div class="vehicle-location">${locationLine || ''}</div>
+                <div class="vehicle-bottom">
+                  <div class="vehicle-price">${priceLabel}</div>
+                  <div class="badges">${badges.slice(0,2).join('')}</div>
+                </div>
               </div>
             </a>
-            <a class="button ghost" href="vehicle.html?id=${vehicle.id}">View Details</a>
           </article>
         `;
       }).join("");
@@ -555,7 +717,7 @@
 
     const renderDefaultView = () => {
       renderActiveChips([]);
-      renderVehicles(allVehicles);
+      renderVehicles(allVehicles, { isFiltered: false });
     };
 
     const applyFilters = () => {
@@ -578,7 +740,7 @@
       const fuelNorm = normalizeLocation(fuelValue);
 
       const filtered = allVehicles.filter((vehicle) => {
-        if (!hasRequiredFields(vehicle)) return false;
+        if (!hasMinimumFields(vehicle)) return false;
         const vCountry = normalizeLocation(vehicle.country);
         const vState = normalizeLocation(vehicle.state);
         const vCity = normalizeLocation(vehicle.city);
@@ -628,29 +790,51 @@
       if (frequencyValue) chips.push({ label: frequencyValue, clear: () => { frequencySelect.value=''; applyFilters(); }});
       renderActiveChips(chips);
 
-      renderVehicles(filtered);
+      renderVehicles(filtered, { isFiltered: true });
       if (drawerOpen) closeFilters();
     };
 
     // Load vehicles from VehicleStore (single source of truth)
     const loadVehicles = async () => {
       console.log("Loading vehicles from VehicleStore...");
+
+      renderGridLoading();
       
       // Get only ACTIVE vehicles for public display
       const activeVehicles = await VehicleStore.getActiveVehicles();
-      allVehicles = activeVehicles.map(v => ({
-        ...v,
-        country: clean(v.country),
-        state: clean(v.state),
-        city: clean(v.city)
-      }));
+      allVehicles = (activeVehicles || []).map((v) => normalizeVehicle(v));
 
       populateMakeOptions(allVehicles);
       buildFilterOptions();
-      if (filterCountry) {
-        fetchStates(filterCountry.value);
+
+      const params = new URLSearchParams(window.location.search);
+      const urlCountry = (params.get('country') || '').trim();
+      const urlState = (params.get('state') || '').trim();
+      const urlCity = (params.get('city') || '').trim();
+
+      let used = false;
+      if (urlCountry && filterCountry) {
+        filterCountry.value = urlCountry;
+        await fetchStates(urlCountry);
+        used = true;
+      } else if (filterCountry) {
+        await fetchStates(filterCountry.value);
       }
-      renderDefaultView();
+
+      if (urlState && filterState) {
+        filterState.value = urlState;
+        used = true;
+      }
+      if (urlCity && filterCity) {
+        filterCity.value = urlCity;
+        used = true;
+      }
+
+      if (used) {
+        applyFilters();
+      } else {
+        renderDefaultView();
+      }
     };
 
     // Wait for VehicleStore to be available before loading
@@ -731,9 +915,10 @@
         <a href="privacy.html" style="color: var(--accent); font-size: 14px;">Privacy Policy</a>
         <a href="host-agreement.html" style="color: var(--accent); font-size: 14px;">Host Agreement</a>
         <a href="safety.html" style="color: var(--accent); font-size: 14px;">Safety Guidelines</a>
+        <a href="https://www.tiktok.com/@cjfrentals" target="_blank" rel="noopener" style="color: var(--accent); font-size: 14px;">TikTok</a>
         <a href="contact.html" style="color: var(--accent); font-size: 14px;">Contact Support</a>
       </div>
-      <p style="margin: 16px 0 0 0; font-size: 13px; color: #999;">© 2025 CJF. All rights reserved.</p>
+      <p style="margin: 16px 0 0 0; font-size: 13px; color: #999;">Â© 2025 CJF. All rights reserved.</p>
     </div>
   </footer>
 

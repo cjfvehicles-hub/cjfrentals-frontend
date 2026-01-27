@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Host Profile | CJF Rentals</title>
+  <meta name="cjf-build" content="account-card-2025-12-16" />
+  <title>Account | CJF Rentals</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/style.css" />
-  <script src="assets/countryStateData.js"></script>
     <style>
     :root {
       --page-bg: #f6f7fb;
@@ -84,65 +84,44 @@
       border-radius: 12px;
       border: 1px solid #e2e8f0;
       background: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 0 12px;
-      width: auto;
-    }
-
-    /* Hero */
-    .cover-wrapper { display: none; }
-
-    .cover-wrapper img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .cover-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%);
-      pointer-events: none;
-    }
-
-    .cover-btn {
-      position: absolute;
-      right: 12px;
-      bottom: 12px;
-      background: rgba(255,255,255,0.94);
-      border: 1px solid #e2e8f0;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-      cursor: pointer;
+      font-size: 18px;
     }
 
     /* Profile */
     .profile-card {
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      margin-top: 16px;
+    }
+
+    /* Account header card (match public host profile card) */
+    .account-host-card {
       background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 20px 16px 24px;
-      margin-top: 0;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      padding: 24px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 24px;
+      align-items: center;
       box-shadow: var(--shadow);
-      text-align: center;
+    }
+
+    .host-avatar-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
       align-items: center;
+      gap: 12px;
     }
 
     .avatar-shell {
       position: relative;
       width: 96px;
       height: 96px;
-      border-radius: 50%;
-      margin-top: 0;
-      border: 4px solid #fff;
-      box-shadow: 0 12px 30px rgba(15,23,42,0.16);
+      border-radius: 12px;
+      border: 3px solid var(--accent);
       overflow: hidden;
       cursor: pointer;
     }
@@ -151,7 +130,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 50%;
+      border-radius: 12px;
     }
 
     #avatarUpload {
@@ -165,11 +144,68 @@
       justify-content: center;
       opacity: 0;
       transition: opacity 0.2s;
-      border: 4px solid #fff;
-      border-radius: 50%;
+      border-radius: 12px;
     }
 
     .avatar-shell:hover #avatarUpload { opacity: 1; }
+
+    .host-verified {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .host-info {
+      display: grid;
+      gap: 12px;
+    }
+
+    .host-header-text h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .host-header-text p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .host-rating {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .stars { color: var(--accent); font-size: 14px; }
+    .rating-count { color: var(--muted); }
+
+    .host-location {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .host-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--stroke);
+    }
+
+    .stat-item { display: grid; gap: 4px; text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+
+    .host-actions { display: grid; gap: 12px; }
 
     .host-name {
       font-size: 24px;
@@ -187,7 +223,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      justify-content: center;
+      justify-content: flex-start;
       margin-top: 8px;
     }
 
@@ -214,32 +250,7 @@
       box-shadow: var(--shadow);
     }
 
-    .stats-card {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .stat-tile {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 14px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 22px;
-      font-weight: 800;
-      margin: 0 0 4px;
-      color: var(--text);
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0;
-    }
+    /* old stats-card removed (stats are inside account-host-card now) */
 
     .subscription-card {
       display: flex;
@@ -303,11 +314,21 @@
       background: var(--card-bg);
       overflow: hidden;
       box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .vehicle-card:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.35);
+      outline-offset: 2px;
     }
 
     .vehicle-media { position: relative; width: 100%; padding-top: 56%; background: #e5e7eb; overflow: hidden; }
     .vehicle-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .vehicle-type-badge { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.9); border-radius: 10px; padding: 6px 10px; font-weight: 700; font-size: 12px; }
+    .vehicle-availability-badge { position: absolute; top: 12px; right: 12px; border-radius: 10px; padding: 6px 10px; font-weight: 800; font-size: 12px; border: 1px solid rgba(15,23,42,0.12); }
+    .vehicle-availability-badge.available { background: rgba(34, 197, 94, 0.12); color: #166534; border-color: rgba(34, 197, 94, 0.22); }
+    .vehicle-availability-badge.rented { background: rgba(239, 68, 68, 0.12); color: #991b1b; border-color: rgba(239, 68, 68, 0.22); }
+    .vehicle-availability-badge.paused { background: rgba(100, 116, 139, 0.12); color: #334155; border-color: rgba(100, 116, 139, 0.22); }
 
     .vehicle-content { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
     .vehicle-title { margin: 0; font-size: 18px; font-weight: 800; }
@@ -333,45 +354,57 @@
       gap: 10px;
     }
 
-    .reviews-card { text-align: center; }
+    .reviews-card { display: grid; gap: 14px; }
+    #reviewsEmpty { text-align: center; }
     .empty-icon { font-size: 24px; color: #f59e0b; }
 
-    /* Footer */
-    .global-footer {
-      background: #1e293b;
-      color: #e2e8f0;
-      padding: 48px 16px 28px;
-      margin-top: 32px;
-    }
-    .footer-content {
-      max-width: 1100px;
-      margin: 0 auto;
+    .review-invite {
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 28px;
-      margin-bottom: 28px;
-    }
-    .footer-column h3 { margin: 0 0 10px; font-size: 15px; font-weight: 800; color: #fff; }
-    .footer-column ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-    .footer-column a { color: #cbd5e1; font-size: 14px; text-decoration: none; }
-    .footer-column a:hover { color: #fff; }
-    .footer-bottom {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding-top: 18px;
-      border-top: 1px solid rgba(255,255,255,0.14);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       gap: 12px;
-      flex-wrap: wrap;
-      font-size: 13px;
-      color: #cbd5e1;
     }
-    .footer-legal { display: flex; gap: 16px; flex-wrap: wrap; }
-    .social-icons { display: flex; gap: 12px; }
-    .social-icon { width: 34px; height: 34px; border-radius: 50%; background: #334155; display: inline-flex; align-items: center; justify-content: center; color: #e2e8f0; text-decoration: none; }
-    .social-icon:hover { background: #475569; }
+    .review-invite-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+    }
+    .review-invite input, .review-invite select {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      background: #f8fafc;
+      width: 100%;
+    }
+    .review-invite-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .review-invite-output { display: grid; gap: 8px; }
+    .review-invite-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .reviews-list { display: grid; gap: 12px; }
+    .review-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fff;
+    }
+    .review-item-top { display:flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .review-item-name { font-weight: 800; }
+    .review-item-meta { color: #64748b; font-size: 12px; margin-top: 2px; }
+    .review-item-stars { color: #f59e0b; white-space: nowrap; font-size: 14px; }
+    .review-item-text { margin-top: 10px; font-size: 14px; line-height: 1.45; }
+    .pill-inline { display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius: 999px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 12px; font-weight: 700; color: #0f172a; }
+    @media (max-width: 640px) {
+      .review-invite-grid { grid-template-columns: 1fr; }
+      .review-invite-row { grid-template-columns: 1fr; }
+    }
 
     /* Menu / backdrop */
     .backdrop {
@@ -443,10 +476,14 @@
 
     @media (min-width: 768px) {
       .page-shell { padding: 24px 20px 100px; gap: 28px; }
-      .cover-wrapper { height: 240px; }
-      .profile-card { padding: 24px; }
-      .stats-card { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .profile-card { padding: 0; }
       .vehicles-grid { flex-direction: row; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    }
+
+    @media (max-width: 768px) {
+      .account-host-card { grid-template-columns: 1fr; text-align: center; }
+      .host-badges { justify-content: center; }
+      .host-stats { grid-template-columns: 1fr; }
     }
 
     /* Modal / forms */
@@ -481,14 +518,6 @@
 
     .modal-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end; }
 
-    /* Cover editor */
-    .cover-editor { position: relative; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #0f172a; height: 320px; display:none; }
-    .cover-editor img { width: 100%; height: 100%; object-fit: cover; cursor: grab; }
-    .cover-editor.dragging img { cursor: grabbing; }
-    .cover-header-mask { position: absolute; top: 0; left: 0; right: 0; height: 64px; background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%); pointer-events: none; }
-    .cover-controls { margin-top: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .cover-controls input[type=range] { width: 180px; }
-
     @media (max-width: 640px) {
       .upload-section { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
@@ -502,19 +531,20 @@
 </head>
 <body>
   <!-- Sticky Site Header -->
+  <meta name="cjf-build" content="account-card-2025-12-16" />
   <header class="topbar">
     <a class="brand" href="index.html">
       <span class="brand-mark">CJF</span>
-      <span class="brand-name" style="color:#0f172a;">CJF Rentals</span>
+      <span class="brand-name" id="welcomeGreeting" style="color:#0f172a;">Welcome</span>
     </a>
-    <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+    <button class="menu-button" id="menuToggle" aria-label="Open menu">☰</button>
   </header>
 
   <div class="backdrop" id="backdrop"></div>
   <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
     <div class="menu-header">
       <span class="menu-title">Navigation</span>
-      <button class="menu-close" aria-label="Close menu">Close</button>
+      <button class="menu-close" id="menuClose" aria-label="Close menu"></button>
     </div>
     <ul class="menu-list" id="nav-list">
       <!-- Menu items built dynamically by navBuilder.js -->
@@ -522,37 +552,54 @@
   </nav>
 
     <main class="page-shell">
-    <!-- Cover removed by request -->
-
     <section class="profile-card">
-      <div class="avatar-shell" id="avatarContainer">
-        <img id="avatarImage" src="" alt="Host avatar" />
-        <div id="avatarUpload" style="display:none;">Change</div>
-      </div>
-      <h1 class="host-name" id="hostName">Loading...</h1>
-      <p class="host-subtitle" id="hostSubtitle"></p>
-      <div class="host-badges" id="hostBadges">
-        <span class="badge verified">Verified Host</span>
-        <span class="badge">Worldwide Platform</span>
-      </div>
-    </section>
+      <div class="account-host-card">
+        <div class="host-avatar-container">
+          <div class="avatar-shell" id="avatarContainer">
+            <img id="avatarImage" src="" alt="Host avatar" />
+            <div id="avatarUpload" style="display:none;">Change</div>
+          </div>
+          <div class="host-verified" id="accountVerificationBadge" style="display:none;">Verified</div>
+        </div>
 
-    <section class="card stats-card">
-      <div class="stat-tile">
-        <div class="stat-value" id="statVehicles">0</div>
-        <div class="stat-label">Vehicles</div>
-      </div>
-      <div class="stat-tile">
-        <div class="stat-value" id="statRating">New</div>
-        <div class="stat-label">Rating</div>
-      </div>
-      <div class="stat-tile">
-        <div class="stat-value" id="statYears">0</div>
-        <div class="stat-label">Years Hosting</div>
-      </div>
-      <div class="stat-tile">
-        <div class="stat-value" id="statLocations"></div>
-        <div class="stat-label">Locations</div>
+        <div class="host-info">
+          <div class="host-header-text">
+            <h1 id="hostName">Loading...</h1>
+            <p id="hostOwnerTypeText">Vehicle Owner</p>
+          </div>
+
+          <div class="host-rating">
+            <span class="stars" id="hostStars">★★★★★</span>
+            <span class="rating-count">
+              <span id="hostRatingValue">5.0</span>
+              (<span id="hostReviewCount">0</span> reviews)
+            </span>
+          </div>
+
+          <div class="host-location" id="hostLocationRow" style="display:none;">
+            <span id="hostLocationText"></span>
+          </div>
+
+          <div class="host-badges" id="hostBadges">
+            <span class="badge verified" id="verifiedHostBadge">Verified Host</span>
+            <span class="badge">Worldwide Platform</span>
+          </div>
+
+          <div class="host-stats">
+            <div class="stat-item">
+              <div class="stat-value" id="statVehicles">0</div>
+              <div class="stat-label">Vehicles</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statYears">-</div>
+              <div class="stat-label">Member Since</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="host-actions">
+          <button class="btn btn-primary" id="editProfileBtn" type="button">Edit Profile</button>
+        </div>
       </div>
     </section>
 
@@ -579,93 +626,49 @@
     </section>
 
     <section class="card reviews-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Reviews</h2>
+          <p class="subtext">Generate a verified link customers can use to leave a review.</p>
+        </div>
+      </div>
+
+      <div class="review-invite" id="reviewInvite">
+        <div class="review-invite-grid">
+          <div class="form-field">
+            <label for="reviewVehicleSelect">Vehicle (optional)</label>
+            <select id="reviewVehicleSelect">
+              <option value="">Any vehicle</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="reviewCustomerLabel">Customer label (optional)</label>
+            <input id="reviewCustomerLabel" type="text" placeholder="e.g. John (Dec 10 rental)" />
+          </div>
+        </div>
+
+        <div class="review-invite-actions">
+          <button class="btn btn-primary" id="generateReviewLinkBtn" type="button">Generate review link</button>
+        </div>
+
+        <div class="review-invite-output" id="reviewInviteOutput" style="display:none;">
+          <div class="review-invite-row">
+            <input id="reviewInviteLink" type="text" readonly />
+            <button class="btn btn-secondary" id="copyReviewLinkBtn" type="button">Copy</button>
+          </div>
+          <p class="subtext" id="reviewInviteMeta"></p>
+        </div>
+      </div>
+
+      <div class="reviews-list" id="reviewsList" style="display:none;"></div>
+
       <div id="reviewsEmpty">
         <div class="empty-icon">★</div>
         <div style="font-weight:700; font-size:16px; margin-top:6px;">No reviews yet</div>
         <div style="color:#64748b; font-size:13px; margin-top:4px;">Complete your first rental to start building trust.</div>
       </div>
     </section>
-
-    <section class="card" data-host-only id="accountReviewLinkSection" style="gap:12px;">
-      <div class="section-header">
-        <div>
-          <h2 class="section-title">Generate review link</h2>
-          <p class="subtext">Create a secure one-time review link after a customer interaction.</p>
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="form-field">
-          <label for="accountVehicleId">Vehicle ID (optional)</label>
-          <input class="input" id="accountVehicleId" placeholder="vehicle-abc123" />
-        </div>
-        <div class="form-field">
-          <label for="accountCustomerLabel">Customer label (optional)</label>
-          <input class="input" id="accountCustomerLabel" placeholder="Guest name / booking ref" />
-        </div>
-        <button class="button" id="accountGenerateReviewLinkBtn" type="button">Generate review link</button>
-      </div>
-      <div id="accountReviewLinkResult" class="form-grid" style="display:none;">
-        <div class="form-field" style="flex:1;">
-          <label>Copyable link</label>
-          <input class="input" id="accountReviewLink" readonly />
-        </div>
-        <button class="button ghost" id="accountCopyReviewLinkBtn" type="button">Copy</button>
-      </div>
-      <p class="subtext" id="accountReviewLinkMeta" style="margin:0;">Links expire in 14 days and work once.</p>
-    </section>
-  </main><!-- Global Footer -->
-  <footer class="global-footer">
-    <div class="footer-content">
-      <div class="footer-column">
-        <h3>About CJF</h3>
-        <ul>
-          <li><a href="#">Our Story</a></li>
-          <li><a href="#">How It Works</a></li>
-          <li><a href="#">Advertising Platform</a></li>
-          <li><a href="#">Trust & Safety</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h3>Locations</h3>
-        <ul>
-          <li><a href="#">United States</a></li>
-          <li><a href="#">Jamaica</a></li>
-          <li><a href="#">All Countries</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h3>Hosting</h3>
-        <ul>
-          <li><a href="host-signup.html">Become a Host</a></li>
-          <li><a href="#">Host Resources</a></li>
-          <li><a href="#">Insurance Info</a></li>
-          <li><a href="host-agreement.html">Host Agreement</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h3>Support</h3>
-        <ul>
-          <li><a href="contact.html">Contact Us</a></li>
-          <li><a href="#">Help Center</a></li>
-          <li><a href="safety.html">Safety</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <div class="footer-legal">
-        <a href="terms.html">Terms of Service</a>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="#">Cookie Preferences</a>
-        <span style="color: #64748b;"> 2025 CJF Rentals</span>
-      </div>
-      <div class="social-icons">
-        <a href="#" class="social-icon" aria-label="Facebook">f</a>
-        <a href="#" class="social-icon" aria-label="Instagram">IG</a>
-        <a href="#" class="social-icon" aria-label="TikTok">TT</a>
-        <a href="#" class="social-icon" aria-label="YouTube">YT</a>
-      </div>
-    </div>
-  </footer>
+  </main>
 
   <!-- Edit Profile Modal -->
   <div id="profileModalOverlay" class="modal-overlay"></div>
@@ -711,14 +714,11 @@
           </div>
           <div class="form-field">
             <label>State</label>
-            <select id="state" class="input">
-              <option value="">Select state</option>
-            </select>
+            <input type="text" id="state" />
           </div>
           <div class="form-field">
             <label>Country</label>
-            <input type="text" id="country" list="accountCountryList" />
-            <datalist id="accountCountryList"></datalist>
+            <input type="text" id="country" />
           </div>
           <div class="form-field full">
             <label>About / Bio</label>
@@ -733,41 +733,7 @@
     </div>
   </div>
 
-  <!-- Cover Editor -->
-  <div id="coverEditorOverlay" class="cover-editor-overlay">
-    <div class="cover-editor">
-      <div class="cover-editor-header">
-        <strong>Adjust cover photo</strong>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn btn-secondary" id="coverEditorCancelTop">Cancel</button>
-          <button class="btn btn-primary" id="coverEditorSaveTop">Save</button>
-          <button class="modal-close" id="coverEditorClose" aria-label="Close">×</button>
-        </div>
-      </div>
-      <div class="cover-editor-body">
-        <div class="cover-preview-frame" id="coverEditFrame">
-          <img id="coverEditImage" src="" alt="Cover preview" />
-          <div class="cover-header-mask"></div>
-        </div>
-        <div class="cover-controls">
-          <label>Zoom <span id="zoomValue">100%</span></label>
-          <input type="range" id="coverZoom" min="100" max="200" step="1" value="100" />
-          <div style="display:flex; gap:8px; justify-content:flex-start; flex-wrap:wrap;">
-            <label for="coverFileInput" class="btn btn-secondary" style="cursor:pointer;">Upload new</label>
-            <input type="file" id="coverFileInput" accept="image/*" style="display:none;">
-            <button class="btn btn-secondary" id="resetCoverPosition">Reset</button>
-          </div>
-        </div>
-      </div>
-      <div class="cover-editor-footer">
-        <div></div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-secondary" id="coverEditorCancel">Cancel</button>
-          <button class="btn btn-primary" id="coverEditorSave">Save cover</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <audio id="accountPreviewAudio" src="assets/preview.mp3" preload="auto" hidden></audio>
 
   <!-- Firebase CDN FIRST -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -780,6 +746,36 @@
   <script src="assets/vehicleStore.js?v=3"></script>
   <script src="assets/navBuilder.js?v=3"></script>
   <script>
+    // Play `assets/preview.mp3` once when a host opens the account page (best-effort autoplay).
+    let accountPreviewPlayed = false;
+    function shouldPlayAccountPreview() {
+      try {
+        if (window.AuthManager && typeof AuthManager.isHost === 'function') return AuthManager.isHost();
+      } catch {}
+      return !!window.firebaseAuth?.currentUser;
+    }
+    function playAccountPreviewOnce() {
+      if (accountPreviewPlayed) return;
+      if (!shouldPlayAccountPreview()) return;
+      const audio = document.getElementById('accountPreviewAudio');
+      if (!audio) return;
+
+      accountPreviewPlayed = true;
+      try { audio.currentTime = 0; } catch {}
+
+      try {
+        const p = audio.play();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => {
+            // Autoplay blocked: play on first user interaction instead.
+            const onFirstGesture = () => { try { audio.play(); } catch {} };
+            document.addEventListener('pointerdown', onFirstGesture, { once: true });
+            document.addEventListener('keydown', onFirstGesture, { once: true });
+          });
+        }
+      } catch {}
+    }
+
     // Menu toggle
     const menuPanel = document.getElementById('menuPanel');
     const backdrop = document.getElementById('backdrop');
@@ -822,19 +818,9 @@
     let currentUser = null;
     let profileData = null;
     let authCheckComplete = false;
-    let coverTransform = { x: 0, y: 0, scale: 1 };
-    let pendingCoverFile = null;
+    // Cover photo removed
     const PLAN_LIMITS = { free: 2, starter: 5, pro: Number.MAX_SAFE_INTEGER };
     const PLAN_LABELS = { free: 'Free (2 vehicles)', starter: 'Starter (5 vehicles)', pro: 'Pro (Unlimited)' };
-
-    function applyCoverTransform(targetImg) {
-      const img = targetImg || document.getElementById('coverImage');
-      if (!img) return;
-      if (!img.style) return;
-      img.style.transform = `translate3d(${coverTransform.x}px, ${coverTransform.y}px, 0) scale(${coverTransform.scale})`;
-      img.style.objectFit = 'cover';
-      img.style.objectPosition = 'center';
-    }
 
     async function getUserPlanKey() {
       const db = window.firebaseDb || null;
@@ -859,6 +845,23 @@
       const addBtn = document.getElementById('addVehicleBtn');
       if (!planStatusEl || !addBtn) return;
 
+      const isAdminUser = (() => {
+        try {
+          if (window.AuthManager && typeof AuthManager.isAdmin === 'function') return AuthManager.isAdmin();
+        } catch {}
+        const email = (window.firebaseAuth?.currentUser?.email || '').toLowerCase().trim();
+        return email === 'cjfvehicles@gmail.com';
+      })();
+
+      if (isAdminUser) {
+        planStatusEl.textContent = 'Admin: Unlimited vehicles (free)';
+        addBtn.classList.remove('btn-disabled');
+        addBtn.href = 'add-vehicle.html';
+        addBtn.textContent = '+ Add new vehicle';
+        if (upgradeLink) upgradeLink.style.display = 'none';
+        return;
+      }
+
       const planKey = await getUserPlanKey();
       const limit = PLAN_LIMITS[planKey] ?? 2;
       const vehicles = typeof countFromList === 'number' ? countFromList : (parseInt(document.getElementById('statVehicles')?.textContent || '0', 10) || 0);
@@ -866,9 +869,12 @@
       // Fetch lifetime created to enforce free cap
       let lifetimeCreated = 0;
       try {
-        const snap = await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).get();
-      if (snap.exists) lifetimeCreated = snap.data().vehiclesCreated || 0;
-    } catch {}
+        const uid = firebase.auth().currentUser.uid;
+        const snap = await firebase.firestore().collection('users').doc(uid).get();
+        const remote = snap.exists ? (snap.data().vehiclesCreated || 0) : 0;
+        const local = parseInt(localStorage.getItem(`CJF_VEHICLES_CREATED_${uid}`) || '0', 10) || 0;
+        lifetimeCreated = Math.max(remote, local);
+      } catch {}
 
       const usedText = limit === Number.MAX_SAFE_INTEGER ? `${vehicles} active (Unlimited plan)` : `${vehicles} / ${limit} active`;
       planStatusEl.textContent = `Plan: ${PLAN_LABELS[planKey] || 'Free'} — ${usedText}`;
@@ -919,6 +925,7 @@
             return;
           }
           
+          playAccountPreviewOnce();
           currentUser = user.uid;
           await initializeProfile(user.uid);
         });
@@ -930,12 +937,8 @@
       currentUser = uid;
 
       // Show upload buttons only for own profile
-      const coverBtn = document.getElementById('coverUploadBtn');
-      const avatarUpload = document.getElementById('avatarUpload');
-      const addVehicleBtn = document.getElementById('addVehicleBtn');
-      if (coverBtn) coverBtn.style.display = 'none';
-      if (avatarUpload) avatarUpload.style.display = 'flex';
-      if (addVehicleBtn) addVehicleBtn.style.display = 'block';
+      document.getElementById('avatarUpload').style.display = 'flex';
+      document.getElementById('addVehicleBtn').style.display = 'block';
 
       // Load profile from Firestore
       const db = window.firebaseDb;
@@ -951,6 +954,8 @@
               firstName: 'Host',
               lastName: 'User',
               role: 'Business Owner',
+              displayName: 'Host User',
+              name: 'Host User',
               phone: '',
               email: window.firebaseAuth.currentUser.email || '',
               city: '',
@@ -958,10 +963,6 @@
               country: '',
               about: '',
               avatar: null,
-              cover: null,
-              coverOffsetX: 0,
-              coverOffsetY: 0,
-              coverScale: 1,
               createdAt: new Date().toISOString()
             };
             await db.collection('users').doc(uid).set(profileData);
@@ -974,65 +975,60 @@
 
       // Load vehicles
       await loadVehicles();
+      // Load recent reviews (if any)
+      await loadHostReviews(uid);
     }
 
     function displayProfile(data) {
       console.log(' displayProfile called with:', data);
       const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Host User';
+      const welcomeEl = document.getElementById('welcomeGreeting');
+      if (welcomeEl) welcomeEl.textContent = `Welcome, ${fullName}`;
+
       document.getElementById('hostName').textContent = fullName;
-      
-      const subtitle = [];
-      if (data.role) subtitle.push(data.role);
-      if (data.city && data.country) {
-        subtitle.push(`${data.city}, ${data.country}`);
-      } else if (data.country) {
-        subtitle.push(data.country);
-      }
-      document.getElementById('hostSubtitle').textContent = subtitle.join('  ') || 'CJF Host';
+      const ownerType = (data.role || '').trim() || 'Vehicle Owner';
+      document.getElementById('hostOwnerTypeText').textContent = ownerType;
+
+      const location = [data.city, data.state, data.country].filter(Boolean).join(', ');
+      const locationRow = document.getElementById('hostLocationRow');
+      const locationText = document.getElementById('hostLocationText');
+      if (locationText) locationText.textContent = location || '';
+      if (locationRow) locationRow.style.display = location ? 'flex' : 'none';
 
       // Avatar
       const avatarImg = document.getElementById('avatarImage');
-      if (avatarImg) {
-        if (data.avatar) {
-          console.log(' Setting avatar src to:', data.avatar);
-          avatarImg.src = data.avatar;
-          avatarImg.onerror = () => console.error(' Avatar failed to load. URL:', data.avatar);
-          avatarImg.onload = () => console.log(' Avatar loaded successfully');
-        } else {
-          const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&size=200&background=3b82f6&color=fff`;
-          console.log(' No avatar in data, using fallback:', fallbackUrl);
-          avatarImg.src = fallbackUrl;
-        }
+      if (data.avatar) {
+        console.log(' Setting avatar src to:', data.avatar);
+        console.log(' Avatar img element:', avatarImg);
+        avatarImg.src = data.avatar;
+        avatarImg.onerror = () => console.error(' Avatar failed to load. URL:', data.avatar);
+        avatarImg.onload = () => console.log(' Avatar loaded successfully');
       } else {
-        console.warn('avatarImage element not found in DOM');
+        const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&size=200&background=3b82f6&color=fff`;
+        console.log(' No avatar in data, using fallback:', fallbackUrl);
+        avatarImg.src = fallbackUrl;
       }
 
-      // Cover
-      const coverImg = document.getElementById('coverImage');
-      if (coverImg) {
-        if (data.cover) {
-          coverImg.src = data.cover;
-          coverImg.style.display = 'block';
-          coverTransform = {
-            x: Number(data.coverOffsetX || 0),
-            y: Number(data.coverOffsetY || 0),
-            scale: Number(data.coverScale || 1)
-          };
-          coverImg.onload = applyCoverTransform;
-        } else {
-          // Default cover image
-          coverImg.src = 'assets - Copy/hero.png';
-          coverImg.style.display = 'block';
-          coverTransform = { x: 0, y: 0, scale: 1 };
-        }
-      } else {
-        console.warn('coverImage element not found in DOM');
-      }
+      // Verification badge (match public host profile logic)
+      const verified = !!(data.email && data.phone);
+      document.getElementById('accountVerificationBadge').style.display = verified ? 'flex' : 'none';
+      const verifiedBadge = document.getElementById('verifiedHostBadge');
+      if (verifiedBadge) verifiedBadge.style.display = verified ? 'inline-flex' : 'none';
 
-      // Calculate years hosting
-      const createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
-      const years = Math.max(1, new Date().getFullYear() - createdAt.getFullYear());
-      document.getElementById('statYears').textContent = years + '+';
+      // Rating (match public host profile fields)
+      const ratingAvg = Number(data.ratingAvg || data.avgRating || data.rating || 0);
+      const ratingCount = Number(data.ratingCount || data.reviewCount || data.reviewsCount || 0);
+      document.getElementById('hostRatingValue').textContent = (ratingAvg > 0 ? ratingAvg : 5).toFixed(1);
+      document.getElementById('hostReviewCount').textContent = String(ratingCount || 0);
+
+      // Member since
+      let createdYear = '—';
+      if (data.createdAt) {
+        const ts = data.createdAt.seconds ? data.createdAt.seconds * 1000 : data.createdAt;
+        const dt = new Date(ts);
+        if (!Number.isNaN(dt.getTime())) createdYear = String(dt.getFullYear());
+      }
+      document.getElementById('statYears').textContent = createdYear;
     }
 
   async function loadVehicles() {
@@ -1042,6 +1038,7 @@
     try {
       const vehicles = await window.VehicleStore.getUserVehicles();
       document.getElementById('statVehicles').textContent = vehicles.length;
+      populateReviewInviteVehicles(vehicles);
 
         // Display vehicles
       const grid = document.getElementById('vehiclesGrid');
@@ -1051,10 +1048,6 @@
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color: #64748b; padding: 40px;">No vehicles yet. <a href="add-vehicle.html" style="color: #3b82f6;">Add your first vehicle</a></p>';
         return;
       }
-
-        // Get unique locations
-        const locations = [...new Set(vehicles.map(v => v.city).filter(Boolean))].slice(0, 3).join(', ');
-        document.getElementById('statLocations').textContent = locations || '';
 
         // Render vehicle cards
       vehicles.forEach(vehicle => {
@@ -1067,6 +1060,219 @@
       console.error('Failed to load vehicles:', e);
     }
   }
+
+    function populateReviewInviteVehicles(vehicles) {
+      const select = document.getElementById('reviewVehicleSelect');
+      if (!select) return;
+      const safe = Array.isArray(vehicles) ? vehicles : [];
+      const current = select.value || '';
+
+      const labelFor = (v) => {
+        const title = `${v.year || ''} ${v.make || ''} ${v.model || ''}`.trim();
+        return title || v.title || v.name || v.id || 'Vehicle';
+      };
+
+      // Cache labels for review rendering (vehicleId -> name)
+      window.__reviewVehicleLabelById = Object.fromEntries(
+        safe
+          .filter(v => v && v.id)
+          .map(v => [String(v.id), labelFor(v)])
+      );
+
+      select.innerHTML = '<option value="">Any vehicle</option>' + safe
+        .map(v => `<option value="${String(v.id || '')}">${labelFor(v)}</option>`)
+        .join('');
+
+      if ([...select.options].some(o => o.value === current)) select.value = current;
+    }
+
+    const REVIEW_INVITE_API_BASES = window.location.hostname === 'localhost'
+      ? ['/api']
+      : ['/api', 'https://cjf-api-864727255016.us-east1.run.app/api'];
+
+    const reviewInviteFetch = async (path, options = {}) => {
+      let lastErr = null;
+      for (const base of REVIEW_INVITE_API_BASES) {
+        const url = `${base}${path}`;
+        try {
+          const resp = await fetch(url, options);
+          if (resp.ok) return resp;
+          const body = await resp.text().catch(() => '');
+          lastErr = new Error(`HTTP ${resp.status}: ${body || resp.statusText}`);
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error('Request failed');
+    };
+
+    const escapeHtml = (value) => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+    };
+
+    async function generateReviewInvite() {
+      const btn = document.getElementById('generateReviewLinkBtn');
+      const out = document.getElementById('reviewInviteOutput');
+      const linkEl = document.getElementById('reviewInviteLink');
+      const metaEl = document.getElementById('reviewInviteMeta');
+      const vehicleSel = document.getElementById('reviewVehicleSelect');
+      const labelEl = document.getElementById('reviewCustomerLabel');
+
+      if (!btn || !out || !linkEl || !metaEl) return;
+
+      const user = window.firebaseAuth?.currentUser;
+      if (!user) {
+        alert('Please sign in again.');
+        window.location.href = 'signin.html';
+        return;
+      }
+
+      btn.disabled = true;
+      const prevText = btn.textContent;
+      btn.textContent = 'Generating...';
+
+      try {
+        const idToken = await user.getIdToken();
+        const vehicleId = vehicleSel?.value ? String(vehicleSel.value) : null;
+        const customerLabel = (labelEl?.value || '').trim() || null;
+
+        const resp = await reviewInviteFetch('/review-tokens', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ vehicleId, customerLabel })
+        });
+
+        const data = await resp.json().catch(() => null);
+        if (!data?.success || !data?.token) {
+          throw new Error(data?.error || 'Failed to generate a review link.');
+        }
+
+        const token = String(data.token);
+        const link = `${window.location.origin}/review.html?token=${encodeURIComponent(token)}`;
+        linkEl.value = link;
+        out.style.display = 'grid';
+
+        let expiresText = '';
+        try { expiresText = data.expiresAt ? new Date(data.expiresAt).toLocaleString() : ''; } catch {}
+        metaEl.textContent = expiresText ? `Expires: ${expiresText}` : 'Link generated.';
+      } catch (e) {
+        console.error('Review link generation failed:', e);
+        alert(e?.message || 'Failed to generate review link.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prevText;
+      }
+    }
+
+    document.getElementById('generateReviewLinkBtn')?.addEventListener('click', generateReviewInvite);
+    document.getElementById('copyReviewLinkBtn')?.addEventListener('click', async () => {
+      const link = document.getElementById('reviewInviteLink')?.value || '';
+      if (!link) return;
+      const ok = await copyToClipboard(link);
+      if (!ok) alert('Copy failed. Please select the link and copy manually.');
+    });
+
+    function renderStars(rating) {
+      const r = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+      return '★'.repeat(r) + '☆'.repeat(5 - r);
+    }
+
+    function safeDate(iso) {
+      try { return iso ? new Date(iso).toLocaleDateString() : ''; } catch { return ''; }
+    }
+
+    async function loadHostReviews(hostId) {
+      const listEl = document.getElementById('reviewsList');
+      const emptyEl = document.getElementById('reviewsEmpty');
+      if (!listEl) return;
+
+      listEl.style.display = 'none';
+      listEl.innerHTML = '';
+
+      if (!hostId) return;
+
+      try {
+        const resp = await reviewInviteFetch(`/hosts/${encodeURIComponent(String(hostId))}/reviews?limit=50`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await resp.json().catch(() => null);
+        const reviews = data?.success ? (data.data || []) : [];
+        const list = Array.isArray(reviews) ? reviews : [];
+
+        if (!resp.ok || list.length === 0) {
+          if (emptyEl) emptyEl.style.display = 'block';
+          return;
+        }
+
+        if (emptyEl) emptyEl.style.display = 'none';
+        listEl.style.display = 'grid';
+
+        const vehicleLabels = window.__reviewVehicleLabelById || {};
+
+        list.forEach((rev) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'review-item';
+
+          const name = (rev?.displayName || 'Anonymous').toString();
+          const when = safeDate(rev?.createdAt);
+          const verified = rev?.verified === true;
+          const stars = renderStars(rev?.rating);
+          const comment = (rev?.comment || '').toString().trim();
+          const vehicleId = rev?.vehicleId ? String(rev.vehicleId) : '';
+          const vehicleLabel = vehicleId && vehicleLabels[vehicleId] ? vehicleLabels[vehicleId] : '';
+
+          wrap.innerHTML = `
+            <div class="review-item-top">
+              <div>
+                <div class="review-item-name">${name}</div>
+                <div class="review-item-meta">
+                  ${when ? when : ''}
+                  ${vehicleLabel ? ` • ${vehicleLabel}` : ''}
+                </div>
+              </div>
+              <div class="review-item-stars" aria-label="Rating">${stars}</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+              ${verified ? '<span class="pill-inline">Verified</span>' : ''}
+            </div>
+            <div class="review-item-text">${comment ? escapeHtml(comment) : '<span class="muted">No written feedback provided.</span>'}</div>
+          `;
+
+          listEl.appendChild(wrap);
+        });
+      } catch (e) {
+        console.warn('Failed to load host reviews:', e?.message || e);
+        if (emptyEl) emptyEl.style.display = 'block';
+      }
+    }
 
     function createVehicleCard(vehicle) {
       const card = document.createElement('div');
@@ -1085,6 +1291,8 @@
       const frequency = (vehicle.frequency || 'day').toLowerCase();
 
       const location = [city, state, country].filter(Boolean).join(', ');
+      const availability = String(vehicle.availability || '').toLowerCase() === 'rented' ? 'rented' : 'available';
+      const isPaused = String(vehicle.status || 'active') !== 'active';
 
       // Determine ownership for host-only controls
       const currentUid = window.firebaseAuth?.currentUser?.uid;
@@ -1092,9 +1300,9 @@
 
       const hostActionsHtml = `
           <div class="vehicle-actions">
-            <button class="btn btn-secondary btn-full" data-action="cover" data-id="${vehicle.id}">Change cover photo</button>
             <button class="btn btn-secondary btn-full" data-action="edit" data-id="${vehicle.id}">Edit vehicle</button>
-            <button class="btn btn-secondary btn-full" data-action="pause" data-id="${vehicle.id}">${vehicle.status === 'active' ? 'Pause listing' : 'Unpause listing'}</button>
+            <button class="btn btn-secondary btn-full" data-action="pause" data-id="${vehicle.id}">${String(vehicle.status || 'active') === 'active' ? 'Pause listing' : 'Unpause listing'}</button>
+            <button class="btn btn-secondary btn-full" data-action="availability" data-id="${vehicle.id}">${availability === 'rented' ? 'Mark available' : 'Mark rented'}</button>
             <button class="btn btn-danger btn-full" data-action="delete" data-id="${vehicle.id}">Delete listing</button>
           </div>`;
 
@@ -1108,6 +1316,7 @@
         <div class="vehicle-media">
           <img src="${image}" alt="${year} ${make} ${model}" />
           <div class="vehicle-type-badge">${category}</div>
+          <div class="vehicle-availability-badge ${isPaused ? 'paused' : availability}">${isPaused ? 'Paused' : (availability === 'rented' ? 'Rented' : 'Available')}</div>
         </div>
         <div class="vehicle-content">
           <h3 class="vehicle-title">${year} ${make} ${model}</h3>
@@ -1123,55 +1332,28 @@
         </div>
       `;
 
+      // Make the whole card open the vehicle details page (while allowing buttons/links to work).
+      const detailsHref = `vehicle.html?id=${encodeURIComponent(String(vehicle.id))}`;
+      card.setAttribute('role', 'link');
+      card.tabIndex = 0;
+      card.setAttribute('aria-label', `View ${`${year} ${make} ${model}`.trim() || 'vehicle'} details`);
+      const shouldIgnore = (target) => !!target?.closest?.('button, a, input, textarea, select, label');
+      const openDetails = () => { window.location.href = detailsHref; };
+      card.addEventListener('click', (e) => { if (!shouldIgnore(e.target)) openDetails(); });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (shouldIgnore(e.target)) return;
+          e.preventDefault();
+          openDetails();
+        }
+      });
+
       // Wire up host-only controls (UI hooks only; backend wiring can be added later)
       if (isOwner) {
-        const coverBtn = card.querySelector('[data-action="cover"]');
         const editBtn = card.querySelector('[data-action="edit"]');
         const pauseBtn = card.querySelector('[data-action="pause"]');
+        const availabilityBtn = card.querySelector('[data-action="availability"]');
         const deleteBtn = card.querySelector('[data-action="delete"]');
-
-        coverBtn?.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = 'image/*';
-          input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            coverBtn.disabled = true;
-            coverBtn.textContent = 'Uploading...';
-            
-            try {
-              const storage = window.firebaseStorage;
-              if (!storage) throw new Error('Storage not available');
-              
-              const uid = window.firebaseAuth.currentUser.uid;
-              const ref = storage.ref().child(`users/${uid}/vehicles/${vehicle.id}/cover-${Date.now()}`);
-              const snap = await ref.put(file);
-              const url = await snap.ref.getDownloadURL();
-              
-              // Update vehicle with new image
-              const db = window.firebaseDb;
-              await db.collection('vehicles').doc(vehicle.id).update({ image: url, photos: [url] });
-              
-              // Update UI
-              const img = card.querySelector('.vehicle-image');
-              img.src = url;
-              vehicle.image = url;
-              vehicle.photos = [url];
-              
-              coverBtn.textContent = 'Change cover photo';
-            } catch (err) {
-              console.error('Upload failed:', err);
-              alert('Upload failed: ' + (err.message || 'Unknown error'));
-              coverBtn.textContent = 'Change cover photo';
-            } finally {
-              coverBtn.disabled = false;
-            }
-          };
-          input.click();
-        });
 
         editBtn?.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1180,11 +1362,59 @@
 
         pauseBtn?.addEventListener('click', (e) => {
           e.preventDefault();
-          // Placeholder: Toggle UI text; integrate backend/Firestore update as needed
-          const currentlyActive = vehicle.status === 'active';
-          vehicle.status = currentlyActive ? 'paused' : 'active';
-          pauseBtn.textContent = currentlyActive ? 'Unpause listing' : 'Pause listing';
-          pauseBtn.classList.toggle('secondary');
+          const currentlyActive = String(vehicle.status || 'active') === 'active';
+          const nextStatus = currentlyActive ? 'hidden' : 'active';
+          pauseBtn.disabled = true;
+          pauseBtn.textContent = 'Saving...';
+          VehicleStore.setVehicleStatus(vehicle.id, nextStatus)
+            .then((ok) => {
+              if (!ok) throw new Error('Status update failed');
+              vehicle.status = nextStatus;
+              pauseBtn.textContent = nextStatus === 'active' ? 'Pause listing' : 'Unpause listing';
+              const badge = card.querySelector('.vehicle-availability-badge');
+              if (badge) {
+                const currentAvailability = String(vehicle.availability || '').toLowerCase() === 'rented' ? 'rented' : 'available';
+                badge.classList.remove('available', 'rented', 'paused');
+                badge.classList.add(nextStatus === 'active' ? currentAvailability : 'paused');
+                badge.textContent = nextStatus === 'active' ? (currentAvailability === 'rented' ? 'Rented' : 'Available') : 'Paused';
+              }
+            })
+            .catch((err) => {
+              console.error('Status toggle failed:', err);
+              alert('Could not update listing status. Please try again.');
+              pauseBtn.textContent = String(vehicle.status || 'active') === 'active' ? 'Pause listing' : 'Unpause listing';
+            })
+            .finally(() => {
+              pauseBtn.disabled = false;
+            });
+        });
+
+        availabilityBtn?.addEventListener('click', (e) => {
+          e.preventDefault();
+          const current = String(vehicle.availability || '').toLowerCase() === 'rented' ? 'rented' : 'available';
+          const next = current === 'rented' ? 'available' : 'rented';
+          availabilityBtn.disabled = true;
+          availabilityBtn.textContent = 'Saving...';
+          VehicleStore.setVehicleAvailability(vehicle.id, next)
+            .then((ok) => {
+              if (!ok) throw new Error('Availability update failed');
+              vehicle.availability = next;
+              availabilityBtn.textContent = next === 'rented' ? 'Mark available' : 'Mark rented';
+              const badge = card.querySelector('.vehicle-availability-badge');
+              if (badge && String(vehicle.status || 'active') === 'active') {
+                badge.classList.remove('available', 'rented', 'paused');
+                badge.classList.add(next);
+                badge.textContent = next === 'rented' ? 'Rented' : 'Available';
+              }
+            })
+            .catch((err) => {
+              console.error('Availability toggle failed:', err);
+              alert('Could not update availability. Please try again.');
+              availabilityBtn.textContent = current === 'rented' ? 'Mark available' : 'Mark rented';
+            })
+            .finally(() => {
+              availabilityBtn.disabled = false;
+            });
         });
 
         deleteBtn?.addEventListener('click', (e) => {
@@ -1241,10 +1471,6 @@
           document.getElementById('avatarPreview').src = profileData.avatar;
           document.getElementById('avatarPreview').style.display = 'block';
         }
-        if (profileData.cover) {
-          document.getElementById('coverPreview').src = profileData.cover;
-          document.getElementById('coverPreview').style.display = 'block';
-        }
       }
     }
 
@@ -1254,219 +1480,12 @@
       document.body.classList.remove('no-scroll');
     }
 
-    // Cover editor logic
-    const coverEditorOverlay = document.getElementById('coverEditorOverlay');
-    const coverEditFrame = document.getElementById('coverEditFrame');
-    const coverEditImage = document.getElementById('coverEditImage');
-    const coverZoomInput = document.getElementById('coverZoom');
-    const zoomValue = document.getElementById('zoomValue');
-    const coverFileInput = document.getElementById('coverFileInput');
-    const coverSaveTop = document.getElementById('coverEditorSaveTop');
-    const coverCancelTop = document.getElementById('coverEditorCancelTop');
-    let coverNaturalSize = { w: 0, h: 0 };
-    let frameRectCache = null;
-    let rafPending = false;
-    let isDragging = false;
-    let dragStart = { x: 0, y: 0 };
-    let startOffset = { x: 0, y: 0 };
-
-    function clampCoverTransform() {
-      if (!coverEditFrame || !coverNaturalSize.w || !coverNaturalSize.h) return;
-      const frameRect = frameRectCache || coverEditFrame.getBoundingClientRect();
-      const imgW = coverNaturalSize.w * coverTransform.scale;
-      const imgH = coverNaturalSize.h * coverTransform.scale;
-      // Allow a little slack so users can reveal preferred focal areas even when image ~frame size
-      const slackX = frameRect.width * 0.1;
-      const slackY = frameRect.height * 0.1;
-      const minX = (frameRect.width - imgW) - slackX;
-      const maxX = slackX;
-      const minY = (frameRect.height - imgH) - slackY;
-      const maxY = slackY;
-      coverTransform.x = Math.min(maxX, Math.max(minX, coverTransform.x));
-      coverTransform.y = Math.min(maxY, Math.max(minY, coverTransform.y));
-    }
-
-    function applyCoverPreviewTransform() {
-      if (!coverEditImage) return;
-      clampCoverTransform();
-      coverEditImage.style.transform = `translate3d(${coverTransform.x}px, ${coverTransform.y}px, 0) scale(${coverTransform.scale})`;
-      zoomValue.textContent = `${Math.round(coverTransform.scale * 100)}%`;
-    }
-
-    function schedulePreview() {
-      if (rafPending) return;
-      rafPending = true;
-      requestAnimationFrame(() => {
-        rafPending = false;
-        applyCoverPreviewTransform();
-      });
-    }
-
-    function openCoverEditor(src) {
-      const source = src || profileData?.cover || document.getElementById('coverImage')?.src || '';
-      if (!coverEditorOverlay) return;
-      coverEditorOverlay.style.display = 'flex';
-      document.body.classList.add('no-scroll');
-      if (source) coverEditImage.src = source;
-            coverEditImage.onload = () => {
-        coverNaturalSize = { w: coverEditImage.naturalWidth, h: coverEditImage.naturalHeight };
-        const frame = coverEditFrame.getBoundingClientRect();
-        const scaleFit = Math.max(frame.width / coverNaturalSize.w, frame.height / coverNaturalSize.h);
-        const zoomFit = Math.max(frame.width / coverNaturalSize.w, frame.height / coverNaturalSize.h);
-        if (!profileData?.coverOffsetX && !profileData?.coverOffsetY && !profileData?.coverScale) {
-          coverTransform = {
-            x: (frame.width - coverNaturalSize.w * zoomFit) / 2,
-            y: (frame.height - coverNaturalSize.h * zoomFit) / 2,
-            scale: zoomFit
-          };
-        } else {
-          coverTransform = {
-            x: Number(profileData?.coverOffsetX || 0),
-            y: Number(profileData?.coverOffsetY || 0),
-            scale: Number(profileData?.coverScale || zoomFit)
-          };
-        }
-        const minZoom = Math.round(zoomFit * 100);
-        coverZoomInput.min = minZoom;
-        coverZoomInput.value = Math.max(minZoom, Math.round(coverTransform.scale * 100));
-        applyCoverPreviewTransform();
-      };
-    }
-
-    function closeCoverEditor() {
-      if (!coverEditorOverlay) return;
-      coverEditorOverlay.style.display = 'none';
-      document.body.classList.remove('no-scroll');
-      pendingCoverFile = null;
-    }
-
-    coverEditorOverlay?.addEventListener('click', (e) => {
-      if (e.target === coverEditorOverlay) closeCoverEditor();
-    });
-    document.getElementById('coverEditorClose')?.addEventListener('click', closeCoverEditor);
-    document.getElementById('coverEditorCancel')?.addEventListener('click', closeCoverEditor);
-    coverCancelTop?.addEventListener('click', closeCoverEditor);
-    document.getElementById('resetCoverPosition')?.addEventListener('click', () => {
-      coverTransform = { x: 0, y: 0, scale: 1 };
-      coverZoomInput.value = 100;
-      applyCoverPreviewTransform();
-    });
-
-    coverZoomInput?.addEventListener('input', (e) => {
-      const frameRect = frameRectCache || coverEditFrame.getBoundingClientRect();
-      const prevScale = coverTransform.scale;
-      const newScale = Math.max(Number(coverZoomInput.min) / 100, Number(e.target.value) / 100);
-      if (!coverNaturalSize.w || !frameRect.width) return;
-      const centerX = frameRect.width / 2 - coverTransform.x;
-      const centerY = frameRect.height / 2 - coverTransform.y;
-      coverTransform.scale = newScale;
-      coverTransform.x -= (centerX * (newScale / prevScale - 1));
-      coverTransform.y -= (centerY * (newScale / prevScale - 1));
-      applyCoverPreviewTransform();
-    });
-
-    const dragTarget = coverEditImage || coverEditFrame;
-
-    dragTarget?.addEventListener('pointerdown', (e) => {
-      if (!coverEditImage.src) return;
-      e.preventDefault();
-      isDragging = true;
-      frameRectCache = coverEditFrame.getBoundingClientRect();
-      coverEditFrame.classList.add('dragging');
-      dragStart = { x: e.clientX, y: e.clientY };
-      startOffset = { ...coverTransform };
-      dragTarget.setPointerCapture(e.pointerId);
-    });
-
-    dragTarget?.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
-      coverTransform.x = startOffset.x + dx;
-      coverTransform.y = startOffset.y + dy;
-      schedulePreview();
-    });
-
-    const endDrag = (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      coverEditFrame.classList.remove('dragging');
-      frameRectCache = null;
-      if (e?.pointerId) dragTarget.releasePointerCapture(e.pointerId);
-    };
-    dragTarget?.addEventListener('pointerup', endDrag);
-    dragTarget?.addEventListener('pointerleave', endDrag);
-    dragTarget?.addEventListener('pointercancel', endDrag);
-
-    coverFileInput?.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      pendingCoverFile = file;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        coverEditImage.src = ev.target.result;
-        coverTransform = { x: 0, y: 0, scale: 1 };
-        coverZoomInput.value = 100;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    async function saveCoverFromEditor() {
-      if (!currentUser) return;
-      const db = window.firebaseDb;
-      const storage = window.firebaseStorage;
-      let coverURL = profileData?.cover || null;
-
-      if (pendingCoverFile && storage) {
-        const ref = storage.ref().child(`users/${currentUser}/cover-${Date.now()}.jpg`);
-        const snap = await ref.put(pendingCoverFile);
-        coverURL = await snap.ref.getDownloadURL();
-      }
-
-      const updatePayload = {
-        cover: coverURL,
-        coverOffsetX: coverTransform.x,
-        coverOffsetY: coverTransform.y,
-        coverScale: coverTransform.scale,
-        updatedAt: new Date().toISOString()
-      };
-
-      if (db) {
-        await db.collection('users').doc(currentUser).set(updatePayload, { merge: true });
-      }
-
-      profileData = { ...(profileData || {}), ...updatePayload };
-      const mainCover = document.getElementById('coverImage');
-      if (coverURL && mainCover) {
-        mainCover.src = coverURL;
-        mainCover.style.display = 'block';
-        mainCover.onload = applyCoverTransform;
-      }
-      applyCoverTransform();
-      closeCoverEditor();
-      alert('Cover saved.');
-    }
-
-    const saveCoverHandler = async () => {
-      try {
-        document.getElementById('coverEditorSave').disabled = true;
-        if (coverSaveTop) coverSaveTop.disabled = true;
-        await saveCoverFromEditor();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to save cover: ' + (err.message || 'Unknown error'));
-      } finally {
-        document.getElementById('coverEditorSave').disabled = false;
-        if (coverSaveTop) coverSaveTop.disabled = false;
-      }
-    };
-    document.getElementById('coverEditorSave')?.addEventListener('click', saveCoverHandler);
-    coverSaveTop?.addEventListener('click', saveCoverHandler);
-
-    // Open modal on cover/avatar click
-    document.getElementById('coverUploadBtn')?.addEventListener('click', () => openCoverEditor(profileData?.cover || document.getElementById('coverImage')?.src || ''));
+    // Open modal on avatar click
     document.getElementById('avatarContainer')?.addEventListener('click', showModal);
+    document.getElementById('editProfileBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showModal();
+    });
     modalClose?.addEventListener('click', hideModal);
     modalCancel?.addEventListener('click', hideModal);
     overlay?.addEventListener('click', hideModal);
@@ -1479,18 +1498,6 @@
         reader.onload = (e) => {
           document.getElementById('avatarPreview').src = e.target.result;
           document.getElementById('avatarPreview').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    document.getElementById('coverInput')?.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById('coverPreview').src = e.target.result;
-          document.getElementById('coverPreview').style.display = 'block';
         };
         reader.readAsDataURL(file);
       }
@@ -1521,7 +1528,6 @@
         console.log(' Uploading as uid:', uid, 'storage available?', !!storage, 'db?', !!db);
 
         let avatarURL = profileData?.avatar || null;
-        let coverURL = profileData?.cover || null;
 
         // Upload avatar if changed
         const avatarFile = document.getElementById('avatarInput').files[0];
@@ -1541,13 +1547,13 @@
           console.log(' No avatar file or storage not available');
         }
 
-        // Cover upload disabled (avatar only requested)
-
         // Save to Firestore
         const updatedData = {
           firstName: document.getElementById('firstName').value.trim(),
           lastName: document.getElementById('lastName').value.trim(),
           role: document.getElementById('role').value.trim(),
+          displayName: `${document.getElementById('firstName').value.trim()} ${document.getElementById('lastName').value.trim()}`.trim(),
+          name: `${document.getElementById('firstName').value.trim()} ${document.getElementById('lastName').value.trim()}`.trim(),
           phone: document.getElementById('phone').value.trim(),
           email: document.getElementById('email').value.trim(),
           city: document.getElementById('city').value.trim(),
@@ -1555,13 +1561,9 @@
           country: document.getElementById('country').value.trim(),
           about: document.getElementById('about').value.trim(),
           avatar: avatarURL,
-          cover: coverURL,
-          coverOffsetX: coverTransform.x,
-          coverOffsetY: coverTransform.y,
-          coverScale: coverTransform.scale,
           updatedAt: new Date().toISOString()
         };
-        console.log(' Saving updated data with avatar/cover:', updatedData);
+        console.log(' Saving updated data with avatar:', updatedData);
 
         await db.collection('users').doc(uid).set(updatedData, { merge: true });
         console.log(' Profile saved to Firestore:', updatedData);
@@ -1581,137 +1583,9 @@
       }
     });
 
-    // Country/state wiring for profile modal
-    const countryInput = document.getElementById('country');
-    const countryList = document.getElementById('accountCountryList');
-    const stateSelect = document.getElementById('state');
-    const stateCache = new Map();
-
-    if (countryList && window.populateCountryElement) {
-      populateCountryElement(countryList);
-    }
-
-    const setStates = (states = []) => {
-      if (!stateSelect) return;
-      stateSelect.innerHTML = '';
-      const any = document.createElement('option');
-      any.value = '';
-      any.textContent = states.length ? 'Select state' : 'No states';
-      stateSelect.appendChild(any);
-      states.forEach((s) => {
-        const opt = document.createElement('option');
-        opt.value = s;
-        opt.textContent = s;
-        stateSelect.appendChild(opt);
-      });
-    };
-
-    const fetchStates = async (country) => {
-      if (!country || country === 'Any') { setStates([]); return; }
-      if (stateCache.has(country)) { setStates(stateCache.get(country)); return; }
-      try {
-        const resp = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ country })
-        });
-        if (!resp.ok) throw new Error('Request failed');
-        const data = await resp.json();
-        const list = (data?.data?.states || []).map((s) => s?.name).filter(Boolean);
-        stateCache.set(country, list);
-        setStates(list);
-      } catch (e) {
-        console.warn('State lookup failed', e.message);
-        setStates([]);
-      }
-    };
-
-    countryInput?.addEventListener('change', (e) => {
-      fetchStates(e.target.value.trim());
-    });
-
-    // Review link helper (host-only)
-    (() => {
-      const btn = document.getElementById('accountGenerateReviewLinkBtn');
-      const copyBtn = document.getElementById('accountCopyReviewLinkBtn');
-      const vehicleInput = document.getElementById('accountVehicleId');
-      const labelInput = document.getElementById('accountCustomerLabel');
-      const linkInput = document.getElementById('accountReviewLink');
-      const resultPanel = document.getElementById('accountReviewLinkResult');
-      const meta = document.getElementById('accountReviewLinkMeta');
-
-      const setMeta = (message, isError = false) => {
-        if (!meta) return;
-        meta.textContent = message;
-        meta.style.color = isError ? '#b91c1c' : '#0f172a';
-      };
-
-      btn?.addEventListener('click', async () => {
-        const user = AuthManager.getCurrentUser?.() ?? null;
-        if (!user) {
-          setMeta('Sign in as a host to create review links.', true);
-          return;
-        }
-
-        const payload = {};
-        const vehicleId = vehicleInput?.value.trim();
-        const customerLabel = labelInput?.value.trim();
-        if (vehicleId) payload.vehicleId = vehicleId;
-        if (customerLabel) payload.customerLabel = customerLabel;
-
-        btn.disabled = true;
-        btn.textContent = 'Generating...';
-        try {
-          const resp = await fetch('/api/review-tokens', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${user.id}`
-            },
-            body: JSON.stringify(payload)
-          });
-          const data = await resp.json();
-          if (!resp.ok || !data?.success) {
-            const msg = data?.error || 'Unable to create review link';
-            setMeta(`${msg} (${resp.status})`, true);
-            return;
-          }
-          const url = `${window.location.origin}/review.html?token=${encodeURIComponent(data.token)}`;
-          if (linkInput) {
-            linkInput.value = url;
-          }
-          if (resultPanel) {
-            resultPanel.style.display = 'flex';
-          }
-          setMeta(`Review token expires ${data.expiresAt ? new Date(data.expiresAt).toLocaleString() : 'in 14 days'}`);
-        } catch (error) {
-          console.error('Review link creation failed', error);
-          setMeta(`Failed to generate review link. ${error.message || 'Try again later.'}`, true);
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Generate review link';
-        }
-      });
-
-      copyBtn?.addEventListener('click', () => {
-        if (!linkInput || !linkInput.value) return;
-        linkInput.select();
-        document.execCommand('copy');
-        setMeta('Review link copied to clipboard.');
-      });
-    })();
-
     // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      loadProfile();
-      if (countryInput?.value) {
-        fetchStates(countryInput.value);
-      }
-    });
-    if (document.readyState !== 'loading') {
-      loadProfile();
-      if (countryInput?.value) fetchStates(countryInput.value);
-    }
+    document.addEventListener('DOMContentLoaded', loadProfile);
+    if (document.readyState !== 'loading') loadProfile();
   </script>
 
 </body>

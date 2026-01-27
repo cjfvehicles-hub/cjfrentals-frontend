@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   CCR Backend Server Setup
+echo   CJF Backend Server Setup
 echo ========================================
 echo.
 

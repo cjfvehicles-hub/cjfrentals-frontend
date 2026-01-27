@@ -1,4 +1,4 @@
-# CCR - Global Peer-to-Peer Vehicle Rental Platform
+# CJF - Global Peer-to-Peer Vehicle Rental Platform
 
 A modern web platform for peer-to-peer vehicle rentals with host management, vehicle fleet operations, and subscription-based plan system.
 

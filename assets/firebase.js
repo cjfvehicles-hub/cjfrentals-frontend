@@ -2,10 +2,15 @@
 // Clean rebuild: session persistence, no forced sign-out logic.
 
 // eslint-disable-next-line no-unused-vars
+const _defaultAuthDomain = "cjf-rentals.firebaseapp.com";
+const _host = (typeof window !== "undefined" && window.location && window.location.hostname) ? window.location.hostname : "";
+const _useCustomAuthDomain = _host === "cjfrentals.com" || _host === "www.cjfrentals.com";
+
 const firebaseConfig = {
   apiKey: "AIzaSyBIneZxhMpn5BneMyZgRpdkMDW9dSIPplk",
-  // Use firebaseapp.com for auth to work across all domains
-  authDomain: "cjf-rentals.firebaseapp.com",
+  // On cjfrentals.com we proxy /__/auth/* + /__/firebase/* so the auth handler becomes first-party.
+  // This avoids storage/cookie issues some browsers hit when using the firebaseapp.com handler cross-site.
+  authDomain: _useCustomAuthDomain ? _host : _defaultAuthDomain,
   projectId: "cjf-rentals",
   storageBucket: "cjf-rentals.firebasestorage.app",
   messagingSenderId: "864727255016",
@@ -33,7 +38,8 @@ window.firebaseConfig = firebaseConfig;
     let storage = null;
     let analytics = null;
     try { if (firebase.storage) storage = firebase.storage(); } catch(e){ console.warn("Storage not available:", e.message); }
-    try { if (firebase.analytics) analytics = firebase.analytics(); } catch(e){ console.warn("Analytics not available:", e.message); }
+    // Analytics is optional and can trigger IndexedDB warnings under strict privacy modes; skip by default.
+    // try { if (firebase.analytics) analytics = firebase.analytics(); } catch(e){ console.warn("Analytics not available:", e.message); }
 
     // Clear any stale force sign-out flag
     localStorage.removeItem('_forceSignOut');

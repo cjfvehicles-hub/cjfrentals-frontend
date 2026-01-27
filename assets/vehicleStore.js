@@ -23,6 +23,7 @@ const VehicleStore = (function() {
 		: '/api';
 	const STORAGE_KEY = 'CJF_VEHICLES_CACHE';
 	const PENDING_DELETES_KEY = 'CJF_PENDING_DELETES';
+	const LIFETIME_CREATED_KEY_PREFIX = 'CJF_VEHICLES_CREATED_';
 	const FIREBASE_BACKOFF_MS = 60000; // Avoid spamming Firebase when offline
 	
 	// Cache for offline support
@@ -47,6 +48,40 @@ const VehicleStore = (function() {
 			localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(list));
 		} catch (e) {
 			console.warn(' Failed to save pending deletes:', e.message);
+		}
+	}
+
+	function getLocalLifetimeCreated(uid) {
+		if (!uid) return 0;
+		try {
+			const raw = localStorage.getItem(`${LIFETIME_CREATED_KEY_PREFIX}${String(uid)}`);
+			const n = parseInt(raw || '0', 10);
+			return Number.isFinite(n) && n > 0 ? n : 0;
+		} catch (e) {
+			return 0;
+		}
+	}
+
+	function incrementLocalLifetimeCreated(uid) {
+		if (!uid) return null;
+		try {
+			const key = `${LIFETIME_CREATED_KEY_PREFIX}${String(uid)}`;
+			const next = getLocalLifetimeCreated(uid) + 1;
+			localStorage.setItem(key, String(next));
+			return next;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function setLocalLifetimeCreated(uid, value) {
+		if (!uid) return;
+		try {
+			const key = `${LIFETIME_CREATED_KEY_PREFIX}${String(uid)}`;
+			const normalized = Math.max(0, parseInt(String(value || '0'), 10) || 0);
+			localStorage.setItem(key, String(normalized));
+		} catch (e) {
+			// ignore
 		}
 	}
 	
@@ -406,13 +441,39 @@ const VehicleStore = (function() {
 	}
 
 	async function canAddVehicle() {
+		// Admin is exempt from plan limits (unlimited vehicles)
+		try {
+			if (window.AuthManager && typeof AuthManager.isAdmin === 'function' && AuthManager.isAdmin()) {
+				return {
+					allowed: true,
+					activeCount: 0,
+					planLimit: Number.MAX_SAFE_INTEGER,
+					planKey: 'pro',
+					message: null
+				};
+			}
+		} catch {}
+
 		const db = window.firebaseDb || null;
 		const uid = window.firebaseAuth?.currentUser?.uid || (window.AuthManager && AuthManager.getCurrentUser && AuthManager.getCurrentUser()?.id) || null;
 		const planKey = await getUserPlan();
 		const planLimit = PLAN_LIMITS[planKey] ?? 2;
 		const profile = await getUserProfile();
-		const lifetimeCreated = profile?.vehiclesCreated || 0;
+		const localLifetimeCreated = getLocalLifetimeCreated(uid);
+		const storedLifetimeCreated = profile?.vehiclesCreated || 0;
+		if (storedLifetimeCreated > localLifetimeCreated) setLocalLifetimeCreated(uid, storedLifetimeCreated);
+		const lifetimeCreated = Math.max(storedLifetimeCreated, localLifetimeCreated);
 		const counts = await getUserCounts();
+
+		// Best-effort: if local counter is higher (e.g., Firestore increment failed), sync it up.
+		if (db && uid && canUseFirebase() && localLifetimeCreated > storedLifetimeCreated) {
+			try {
+				await db.collection('users').doc(String(uid)).set({ vehiclesCreated: localLifetimeCreated }, { merge: true });
+				cachedProfile = null;
+			} catch (e) {
+				// ignore
+			}
+		}
 
 		const buildResult = (count) => ({
 			allowed: planKey === 'free'
@@ -452,6 +513,26 @@ const VehicleStore = (function() {
 		}
 	}
 
+	async function incrementVehiclesCreated(ownerId) {
+		if (!ownerId) return;
+		// Always increment local first so plan enforcement works even when Firebase is temporarily unavailable.
+		incrementLocalLifetimeCreated(ownerId);
+		cachedVehicleCounts = null;
+
+		const db = window.firebaseDb || null;
+		if (!db || !canUseFirebase()) return;
+		try {
+			await db.collection('users').doc(String(ownerId)).set(
+				{ vehiclesCreated: firebase.firestore.FieldValue.increment(1) },
+				{ merge: true }
+			);
+			cachedProfile = null;
+			cachedVehicleCounts = null;
+		} catch (e) {
+			// ignore; local counter already incremented
+		}
+	}
+
 	async function addVehicle(vehicleData) {
 			// Check plan limit before adding
 			const planCheck = await canAddVehicle();
@@ -478,6 +559,7 @@ const VehicleStore = (function() {
 					});
 					const saved = response?.data || response;
 					if (saved) {
+						await incrementVehiclesCreated(ownerId);
 						const existing = loadFromCache().filter(v => String(v.id) !== String(saved.id));
 						saveToCache([saved, ...existing]);
 					console.log(`VehicleStore: Added vehicle ID ${saved.id} via backend`);
@@ -492,13 +574,7 @@ const VehicleStore = (function() {
 			if (!db) throw new Error('Firebase not initialized');
 			await db.collection('vehicles').doc(id).set(docData);
 			console.log(`VehicleStore: Added vehicle ID ${id} via Firebase`);
-			// Increment lifetime created count for this user
-			try {
-				await db.collection('users').doc(ownerId).set({ vehiclesCreated: firebase.firestore.FieldValue.increment(1) }, { merge: true });
-				cachedProfile = null; // refresh next fetch
-			} catch (e) {
-				console.warn('Failed to increment vehiclesCreated:', e.message);
-			}
+			await incrementVehiclesCreated(ownerId);
 			// Use getUserVehicles to refresh (respects Firestore rules)
 			const refreshed = await getUserVehicles();
 			const created = refreshed.find(v => String(v.id) === String(id));
@@ -634,6 +710,43 @@ const VehicleStore = (function() {
 		}
 		return false;
 	}
+
+	/**
+	 * Set public availability ("available" | "rented")
+	 * Separate from updateVehicle() so free-plan edit limits don't block availability toggles.
+	 */
+	async function setVehicleAvailability(vehicleId, availability) {
+		const normalized = String(availability || '').toLowerCase() === 'rented' ? 'rented' : 'available';
+		console.log(` VehicleStore: Setting availability for ${vehicleId} -> ${normalized}`);
+		const db = window.firebaseDb || null;
+		if (db) {
+			try {
+				await db.collection('vehicles').doc(String(vehicleId)).set({
+					availability: normalized,
+					updatedAt: Date.now()
+				}, { merge: true });
+				console.log(' Firebase availability update success');
+				await getAllVehicles();
+				return true;
+			} catch (e) {
+				console.error(' Firebase availability update failed, will update cache:', e);
+			}
+		}
+
+		let changed = false;
+		vehicleCache = vehicleCache.map(v => {
+			if (String(v.id) === String(vehicleId)) {
+				changed = true;
+				return { ...v, availability: normalized, updatedAt: Date.now() };
+			}
+			return v;
+		});
+		if (changed) {
+			saveToCache(vehicleCache);
+			return true;
+		}
+		return false;
+	}
 	
 	/**
 	 * Get statistics
@@ -705,6 +818,7 @@ const VehicleStore = (function() {
 		updateVehicle,
 		deleteVehicle,
 		setVehicleStatus,
+		setVehicleAvailability,
 		getStats,
 		checkBackendHealth
 	};
@@ -766,6 +880,3 @@ setTimeout(() => {
 		retryPendingDeletes();
 	}
 }, 500);
-
-
-

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/style.css" />
   <style>
-    .signin-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .signin-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #000; }
     .signin-card { background: #fff; border-radius: 12px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
     .signin-header { text-align: center; margin-bottom: 30px; }
     .signin-header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; color: #1a1a1a; }
@@ -36,13 +36,10 @@
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
   <script src="assets/firebase.js"></script>
   <script src="assets/auth.js"></script>
 </head>
-<body style="margin: 0; background: #f5f5f5;">
+<body style="margin: 0; background: #000;">
   <div class="signin-container">
     <div class="signin-card">
       <div class="signin-header">
@@ -70,10 +67,6 @@
       <div class="loading" id="loading">
         <div class="spinner"></div>
         <p style="margin-top: 12px; color: #666;">Signing in...</p>
-        <div id="slowNotice" style="display:none; margin-top:10px; font-size:13px; color:#555;">
-          This is taking longer than usual.
-          <button id="continueRedirect" class="button google" style="margin-top:8px; width:auto; padding:8px 12px;">Continue with Google</button>
-        </div>
       </div>
 
       <div class="signin-footer">
@@ -100,13 +93,8 @@
     const errorDiv = document.getElementById('errorMessage');
     const loading = document.getElementById('loading');
     const statusText = loading?.querySelector('p');
-    const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-    const USE_REDIRECT_ONLY = false; // Desktop: popup first, redirect fallback; iOS stays redirect
     let pendingGoogleFlow = false;
-    let googleSafetyTimer = null;
-    let leaveTimer = null;
-    let stallTimer = null;
-    let watchdogTimer = null;
+    const GOOGLE_REDIRECT_FLAG = 'ccrGoogleRedirectInProgress';
     // Basic environment guard: Google sign-in needs HTTPS or localhost
     (function envGuard(){
       const proto = window.location.protocol;
@@ -129,29 +117,11 @@
       return !!(window.firebaseAuth && window._firebaseInitialized);
     }
 
-    function armWatchdog() {
-      if (watchdogTimer) clearTimeout(watchdogTimer);
-      watchdogTimer = setTimeout(() => {
-        if (pendingGoogleFlow) {
-          console.warn('Watchdog: sign-in taking too long; showing retry');
-          pendingGoogleFlow = false;
-          loading.style.display = 'none';
-          form.style.display = 'block';
-          showError('Sign-in is taking too long. Please try again. If popups are blocked, allow them or click Continue with Google.');
-        }
-      }, 8000);
-    }
-
-    function clearWatchdog() {
-      if (watchdogTimer) clearTimeout(watchdogTimer);
-    }
-
     function showError(message) {
       errorDiv.textContent = message;
       errorDiv.classList.add('show');
       loading.style.display = 'none';
       form.style.display = 'block';
-      if (statusText) statusText.textContent = 'Signing in...';
     }
 
     function setStatus(message) {
@@ -191,115 +161,137 @@
       await signIn(email, password);
     });
 
-    // Handle redirect result (iOS or popup-block fallback)
+    // Handle Google redirect result (after returning from Google)
     (async () => {
       console.log('signin: waiting for auth ready...');
       await ensureAuthReady();
-      if (!window.firebaseAuth) { console.warn('signin: firebaseAuth not available'); return; }
+      const redirectInProgress = sessionStorage.getItem(GOOGLE_REDIRECT_FLAG) === '1';
+      if (redirectInProgress) {
+        form.style.display = 'none';
+        loading.style.display = 'block';
+        setStatus('Completing sign-in...');
+      } else {
+        // Default (e.g. after sign-out): keep the form visible.
+        loading.style.display = 'none';
+        form.style.display = 'block';
+      }
+
+      if (!window.firebaseAuth) {
+        console.warn('signin: firebaseAuth not available');
+        if (redirectInProgress) showError('Sign-in is taking too long. Please refresh and try again.');
+        return;
+      }
+
       console.log('signin: running getRedirectResult');
+      let redirectHandled = false;
+      const timeout = setTimeout(() => {
+        // IMPORTANT: do NOT block a late getRedirectResult success.
+        if (redirectHandled) return;
+        console.warn('signin: getRedirectResult taking longer than expected; showing form');
+        googleBtn.disabled = false;
+        loading.style.display = 'none';
+        form.style.display = 'block';
+      }, 15000);
+
       window.firebaseAuth.getRedirectResult()
         .then((result) => {
+          redirectHandled = true;
+          clearTimeout(timeout);
+          sessionStorage.removeItem(GOOGLE_REDIRECT_FLAG);
           if (result && result.user) {
             console.log('signin: redirect result user found');
             localStorage.removeItem('_forceSignOut');
-            window.location.href = 'account.html';
+            pendingGoogleFlow = false;
+            window.location.replace('account.html');
+            return;
           }
           console.log('signin: redirect result done, no user');
+          loading.style.display = 'none';
+          form.style.display = 'block';
         })
         .catch((err) => {
+          redirectHandled = true;
+          clearTimeout(timeout);
+          sessionStorage.removeItem(GOOGLE_REDIRECT_FLAG);
           console.warn('Google redirect error:', err);
           let message = 'Google sign-in failed';
           if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
           else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your internet connection.';
           else if (err.message) message = err.message;
-          // Show form again on redirect failure
           form.style.display = 'block';
           loading.style.display = 'none';
           showError(message);
         });
     })();
 
-    // Slow-flow helper: show a visible redirect option if things hang
-    function showSlowNotice(auth, provider) {
-      const slow = document.getElementById('slowNotice');
-      if (!slow) return;
-      slow.style.display = 'block';
-      const btn = document.getElementById('continueRedirect');
-      if (btn) {
-        btn.onclick = async () => {
-          try {
-            setStatus('Redirecting to Google...');
-            await auth.signInWithRedirect(provider);
-          } catch (e) {
-            console.warn('Redirect start failed:', e);
-            showError('Google sign-in failed. Please try again.');
-          }
-        };
-      }
-    }
-
-    googleBtn.addEventListener('click', async (e) => {
+    googleBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log('signin: Google sign-in (popup)');
+      console.log('signin: Google sign-in (redirect)');
       errorDiv.classList.remove('show');
       form.style.display = 'none';
       loading.style.display = 'block';
-      setStatus('Opening Google…');
-      
+      setStatus('Redirecting to Google...');
+
       const auth = window.firebaseAuth;
-      if (!auth) {
-        showError('Firebase not initialized. Refresh and try again.');
+      if (!auth || !window._firebaseInitialized) {
+        pendingGoogleFlow = false;
+        showError('Firebase is still loading. Please wait a moment and try again.');
         form.style.display = 'block';
         loading.style.display = 'none';
         return;
       }
 
-      try {
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
-        const provider = new firebase.auth.GoogleAuthProvider();
-        
-        try {
-          const result = await auth.signInWithPopup(provider);
-          if (result && result.user) {
-            console.log('signin: popup success, user:', result.user.email);
-            localStorage.removeItem('_forceSignOut');
-            window.location.href = 'account.html';
-            return;
-          }
-        } catch (popupErr) {
-          console.warn('Popup blocked or failed:', popupErr.code, popupErr.message);
-          // Fallback to redirect if popup fails
-          setStatus('Redirecting to Google…');
-          try {
-            await auth.signInWithRedirect(provider);
-            return;
-          } catch (redirectErr) {
-            console.warn('Redirect also failed:', redirectErr);
-            throw redirectErr;
-          }
-        }
-      } catch (err) {
-        console.warn('Google sign-in error:', err);
-        let message = 'Google sign-in failed';
-        if (err.code === 'auth/popup-blocked') message = 'Popup was blocked. Allow popups and try again.';
-        else if (err.code === 'auth/popup-closed-by-user') message = 'Sign-in was cancelled.';
-        else if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
-        else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your connection.';
-        else if (err.message) message = err.message;
-        console.error('Full error:', err);
-        showError(message);
-        form.style.display = 'block';
-        loading.style.display = 'none';
-      }
+      pendingGoogleFlow = true;
+      googleBtn.disabled = true;
+      sessionStorage.setItem(GOOGLE_REDIRECT_FLAG, '1');
+
+      // Start redirect immediately (don't await) so browsers treat this as a user gesture.
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+      const provider = new firebase.auth.GoogleAuthProvider();
+      // Always show the account chooser (prevents silently reusing the last Google session).
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      let redirectKickedOff = false;
+      // Do not auto-navigate to a fallback page here: on some browsers the redirect
+      // can take >1s to kick off, and navigating away can cause redirect loops.
+      const fallbackTimer = setTimeout(() => {
+        if (redirectKickedOff) return;
+        console.warn('signin: redirect has not started yet (still waiting)');
+        setStatus('Still redirecting... (if nothing happens, click again)');
+      }, 2500);
+
+      auth.signInWithRedirect(provider)
+        .then(() => {
+          redirectKickedOff = true;
+          clearTimeout(fallbackTimer);
+        })
+        .catch((err) => {
+          redirectKickedOff = true;
+          clearTimeout(fallbackTimer);
+          console.warn('Google sign-in error:', err);
+          sessionStorage.removeItem(GOOGLE_REDIRECT_FLAG);
+          let message = 'Google sign-in failed';
+          if (err.code === 'auth/unauthorized-domain') message = 'This domain is not authorized for Google sign-in.';
+          else if (err.code === 'auth/network-request-failed') message = 'Network error. Check your connection.';
+          else if (err.message) message = err.message;
+          console.error('Full error:', err);
+          showError(message);
+          form.style.display = 'block';
+          loading.style.display = 'none';
+          pendingGoogleFlow = false;
+          googleBtn.disabled = false;
+        });
     });
 
     // Redirect if already signed in
-    if (window.firebaseAuth) {
+    (async () => {
+      await ensureAuthReady();
+      if (!window.firebaseAuth) return;
       window.firebaseAuth.onAuthStateChanged((user) => {
         if (localStorage.getItem('_forceSignOut') === 'true') return;
         if (user) window.location.href = 'account.html';
       });
-    }
+    })();
   </script>
 </body>
 </html>

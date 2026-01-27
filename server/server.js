@@ -6,8 +6,10 @@ const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const admin = require('firebase-admin');
+const sgMail = require('@sendgrid/mail');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +19,113 @@ const ALLOW_UID_BEARER = String(process.env.ALLOW_UID_BEARER || 'true').toLowerC
 
 // Cloud Run / proxies
 app.set('trust proxy', 1);
+
+// Inbound email (SendGrid Inbound Parse)
+const inboundUpload = multer();
+
+const parseBasicAuth = (req) => {
+  const header = req.headers && req.headers.authorization ? String(req.headers.authorization) : '';
+  if (!header.toLowerCase().startsWith('basic ')) return null;
+  const b64 = header.slice(6).trim();
+  if (!b64) return null;
+  try {
+    const decoded = Buffer.from(b64, 'base64').toString('utf8');
+    const idx = decoded.indexOf(':');
+    if (idx === -1) return null;
+    return { username: decoded.slice(0, idx), password: decoded.slice(idx + 1) };
+  } catch {
+    return null;
+  }
+};
+
+const requireInboundAuth = (req, res, next) => {
+  const expectedUser = (process.env.INBOUND_PARSE_USERNAME || '').toString();
+  const expectedPass = (process.env.INBOUND_PARSE_PASSWORD || '').toString();
+  if (!expectedUser || !expectedPass) {
+    return res.status(500).json({ success: false, error: 'Inbound parse auth not configured' });
+  }
+
+  const creds = parseBasicAuth(req);
+  if (!creds || creds.username !== expectedUser || creds.password !== expectedPass) {
+    res.set('WWW-Authenticate', 'Basic realm="inbound"');
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  return next();
+};
+
+const extractTicketId = ({ to, subject } = {}) => {
+  const subj = (subject || '').toString();
+  const m = subj.match(/\[ticket:([^\]]+)\]/i);
+  if (m && m[1]) return m[1].trim();
+
+  const toStr = (to || '').toString();
+  // Common inbound address format: reply+<messageId>@inbound.domain
+  // `to` can be a list; grab first address-like token.
+  const addrMatch = toStr.match(/<?([^\s,;<>]+@[^\s,;<>]+)>?/);
+  const addr = addrMatch && addrMatch[1] ? addrMatch[1] : '';
+  const local = addr.split('@')[0] || '';
+  const plusIdx = local.indexOf('+');
+  if (plusIdx !== -1 && local.slice(plusIdx + 1)) return local.slice(plusIdx + 1).trim();
+  return null;
+};
+
+const extractEmailAddress = (value) => {
+  const s = (value || '').toString();
+  const m = s.match(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
+  return m ? m[1] : '';
+};
+
+const normalizeReplyRecord = (record) => {
+  const createdAtMs = typeof record.createdAtMs === 'number' ? record.createdAtMs : Date.now();
+  return {
+    id: record.id || uuidv4(),
+    direction: record.direction || 'incoming',
+    from: record.from || '',
+    to: record.to || '',
+    subject: record.subject || '',
+    text: record.text || '',
+    html: record.html || '',
+    createdAtMs,
+    createdAt: record.createdAt || new Date(createdAtMs).toISOString(),
+  };
+};
+
+const appendReplyToStores = async (messageId, replyRecord) => {
+  const reply = normalizeReplyRecord(replyRecord);
+
+  if (firestoreReady && db) {
+    await db
+      .collection('support_messages')
+      .doc(String(messageId))
+      .collection('replies')
+      .doc(reply.id)
+      .set(reply, { merge: true });
+
+    await db.collection('support_messages').doc(String(messageId)).set({
+      lastActivityAtMs: reply.createdAtMs,
+      lastActivityAt: reply.createdAt,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  }
+
+  // Local mirror
+  const local = readData(SUPPORT_MESSAGES_DB);
+  const idx = local.findIndex(m => String(m.id) === String(messageId));
+  if (idx !== -1) {
+    const existingReplies = Array.isArray(local[idx].replies) ? local[idx].replies : [];
+    existingReplies.push(reply);
+    local[idx] = {
+      ...local[idx],
+      replies: existingReplies,
+      lastActivityAtMs: reply.createdAtMs,
+      lastActivityAt: reply.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    writeData(SUPPORT_MESSAGES_DB, local);
+  }
+
+  return reply;
+};
 
 // Initialize Firebase Admin
 let db = null;
@@ -34,6 +143,21 @@ const initFirestore = () => {
     } else {
       const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
       if (!fs.existsSync(serviceAccountPath)) {
+        // Cloud Run / GCP can use Application Default Credentials; use that so ID tokens can be verified.
+        const runningOnGcp = !!(process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT);
+        if (runningOnGcp) {
+          const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
+          if (!admin.apps.length) {
+            admin.initializeApp({
+              credential: admin.credential.applicationDefault(),
+              ...(projectId ? { projectId } : {}),
+            });
+          }
+          db = admin.firestore();
+          firestoreReady = true;
+          console.log('Firebase Admin initialized (applicationDefault)');
+          return;
+        }
         console.warn('⚠️  serviceAccountKey.json not found. Using local JSON files only.');
         console.warn('    To enable Firestore: See server/FIRESTORE_SETUP.md or set FIREBASE_SERVICE_ACCOUNT env.');
         firestoreReady = false;
@@ -42,10 +166,12 @@ const initFirestore = () => {
       serviceAccount = require(serviceAccountPath);
     }
 
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: serviceAccount.project_id
-    });
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.project_id
+      });
+    }
 
     db = admin.firestore();
     firestoreReady = true;
@@ -58,6 +184,30 @@ const initFirestore = () => {
 };
 
 initFirestore();
+
+// Email (SendGrid) - used for admin inbox replies
+let emailReady = false;
+let emailInitError = null;
+
+const initEmail = () => {
+  if (emailReady) return true;
+
+  const apiKey = (process.env.SENDGRID_API_KEY || '').trim();
+  if (!apiKey) {
+    emailInitError = 'Missing SENDGRID_API_KEY';
+    return false;
+  }
+
+  try {
+    sgMail.setApiKey(apiKey);
+    emailReady = true;
+    emailInitError = null;
+    return true;
+  } catch (e) {
+    emailInitError = e && e.message ? e.message : String(e);
+    return false;
+  }
+};
 
 // Security & middleware
 app.disable('x-powered-by');
@@ -126,23 +276,30 @@ function isAllowedHost(host) {
   const h = host.toLowerCase();
   return ALLOWED_HOSTS.length === 0 || ALLOWED_HOSTS.map(x => x.toLowerCase()).includes(h);
 }
-app.use('/api', (req, res, next) => {
-  const fwdHost = req.headers['x-forwarded-host'];
-  const origin = req.headers.origin;
-  const hostHeader = req.headers.host;
-
-  const allowedByForwarded = fwdHost && isAllowedHost(fwdHost);
-  const allowedByOrigin = origin && isAllowedHost(new URL(origin).host);
-
-  if (REQUIRE_FORWARDED_HOST && !allowedByForwarded) {
-    console.warn('Blocked non-proxied request', { ip: req.ip, fwdHost, origin, hostHeader });
-    return res.status(403).json({ success: false, error: 'Forbidden' });
-  }
-
-  if (!allowedByForwarded && !allowedByOrigin && ALLOWED_HOSTS.length > 0) {
-    console.warn('Blocked disallowed origin/host', { ip: req.ip, fwdHost, origin, hostHeader });
-    return res.status(403).json({ success: false, error: 'Forbidden' });
-  }
+  app.use('/api', (req, res, next) => {
+    const fwdHost = req.headers['x-forwarded-host'];
+    const origin = req.headers.origin;
+    const hostHeader = req.headers.host;
+  
+    const allowedByForwarded = fwdHost && isAllowedHost(fwdHost);
+    let allowedByOrigin = false;
+    try {
+      allowedByOrigin = !!(origin && isAllowedHost(new URL(origin).host));
+    } catch {
+      allowedByOrigin = false;
+    }
+    const allowedByHostHeader = hostHeader && isAllowedHost(hostHeader);
+  
+    // If your proxy doesn't forward X-Forwarded-Host (some setups don't), allow a same-origin Host/Origin match.
+    if (REQUIRE_FORWARDED_HOST && !allowedByForwarded && !allowedByOrigin && !allowedByHostHeader) {
+      console.warn('Blocked non-proxied request', { ip: req.ip, fwdHost, origin, hostHeader });
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
+  
+    if (!allowedByForwarded && !allowedByOrigin && !allowedByHostHeader && ALLOWED_HOSTS.length > 0) {
+      console.warn('Blocked disallowed origin/host', { ip: req.ip, fwdHost, origin, hostHeader });
+      return res.status(403).json({ success: false, error: 'Forbidden' });
+    }
 
   next();
 });
@@ -219,7 +376,8 @@ const extractUser = async (req) => {
     if (token.split('.').length === 3 && admin.apps.length) {
       try {
         const decoded = await admin.auth().verifyIdToken(token);
-        const role = (decoded.email && decoded.email.toLowerCase() === SPECIAL_ADMIN_EMAIL.toLowerCase()) ? 'admin' : 'host';
+        const email = (decoded.email || '').toLowerCase();
+        const role = email && ADMIN_EMAILS.includes(email) ? 'admin' : 'host';
         return { id: decoded.uid, email: decoded.email || null, role };
       } catch (e) {
         // fall through to dev mode if enabled
@@ -306,6 +464,15 @@ const writeData = (filePath, data) => {
   }
 };
 
+const escapeHtml = (input) => {
+  return String(input)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
 const appendContactReport = (report) => {
   const existing = readData(CONTACT_REPORTS_DB);
   existing.push(report);
@@ -325,7 +492,7 @@ app.get('/api/health', (req, res) => {
   res.set('Content-Type', 'application/json');
   res.json({
     status: 'ok',
-    message: 'CCR Backend API is running',
+    message: 'CJF Backend API is running',
     timestamp: new Date().toISOString()
   });
 });
@@ -897,6 +1064,112 @@ app.get('/api/contact-reports', (req, res) => {
 
 // ==================== REVIEW ROUTES ====================
 
+// Public: list host reviews
+app.get('/api/hosts/:hostId/reviews', async (req, res) => {
+  if (!ensureFirestoreAvailable(res)) return;
+
+  const hostId = String(req.params.hostId || '').trim();
+  if (!hostId) {
+    return res.status(400).json({ success: false, error: 'Missing hostId' });
+  }
+
+  const limitRaw = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 20;
+
+  try {
+    const snap = await db
+      .collection('hosts')
+      .doc(hostId)
+      .collection('reviews')
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
+
+    const reviews = snap.docs.map((d) => {
+      const data = d.data() || {};
+      const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null);
+      return {
+        id: d.id,
+        rating: data.rating || null,
+        comment: data.comment || null,
+        displayName: data.displayName || 'Anonymous',
+        verified: data.verified === true,
+        vehicleId: data.vehicleId || null,
+        createdAt,
+      };
+    });
+
+    return res.json({ success: true, count: reviews.length, data: reviews });
+  } catch (error) {
+    console.error('Error listing host reviews:', error);
+    return res.status(500).json({ success: false, error: 'Failed to load reviews' });
+  }
+});
+
+// Admin: delete a host review
+// Requires Firebase ID token for an admin email (see ADMIN_EMAILS)
+app.delete('/api/hosts/:hostId/reviews/:reviewId', requireAuth, async (req, res) => {
+  if (!ensureFirestoreAvailable(res)) return;
+  if (!isAdmin(req)) {
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+
+  const hostId = String(req.params.hostId || '').trim();
+  const reviewId = String(req.params.reviewId || '').trim();
+  if (!hostId || !reviewId) {
+    return res.status(400).json({ success: false, error: 'Missing hostId or reviewId' });
+  }
+
+  try {
+    await db.runTransaction(async (tx) => {
+      // ===== ALL READS FIRST =====
+      const hostRef = db.collection('hosts').doc(hostId);
+      const userRef = db.collection('users').doc(hostId);
+      const reviewRef = hostRef.collection('reviews').doc(reviewId);
+
+      const [hostSnap, userSnap, reviewSnap] = await Promise.all([
+        tx.get(hostRef),
+        tx.get(userRef),
+        tx.get(reviewRef),
+      ]);
+
+      if (!reviewSnap.exists) {
+        const err = new Error('Review not found');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      const reviewData = reviewSnap.data() || {};
+      const ratingValue = Number.parseInt(reviewData.rating, 10);
+
+      const hostCount = hostSnap.exists ? Number(hostSnap.data().ratingCount || 0) : 0;
+      const hostAvg = hostSnap.exists ? Number(hostSnap.data().ratingAvg || 0) : 0;
+      const newCount = Math.max(hostCount - 1, 0);
+
+      let newAvg = 0;
+      if (newCount > 0 && Number.isFinite(hostAvg) && Number.isFinite(hostCount) && Number.isFinite(ratingValue)) {
+        newAvg = Number((((hostAvg * hostCount) - ratingValue) / newCount).toFixed(2));
+      }
+
+      // ===== ALL WRITES AFTER =====
+      tx.delete(reviewRef);
+      tx.set(hostRef, { ratingAvg: newAvg, ratingCount: newCount }, { merge: true });
+      if (userSnap.exists) {
+        tx.set(userRef, { ratingAvg: newAvg, ratingCount: newCount }, { merge: true });
+      }
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    const status = error?.statusCode || 500;
+    if (status === 404) {
+      return res.status(404).json({ success: false, error: 'Review not found' });
+    }
+    console.error('Error deleting host review:', error);
+    return res.status(500).json({ success: false, error: 'Failed to delete review' });
+  }
+});
+
 app.post('/api/review-tokens', requireAuth, async (req, res) => {
   if (!ensureFirestoreAvailable(res)) return;
   const { vehicleId, customerLabel } = req.body || {};
@@ -1087,7 +1360,7 @@ app.post('/api/reviews/submit', async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'CCR Backend API is running',
+    message: 'CJF Backend API is running',
     timestamp: new Date().toISOString()
   });
 });
@@ -1248,10 +1521,192 @@ app.delete('/api/admin/messages/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// GET message thread (message + replies)
+app.get('/api/admin/messages/:id/thread', requireAdmin, async (req, res) => {
+  try {
+    const messageId = String(req.params.id);
+
+    let message = null;
+    let replies = [];
+
+    if (firestoreReady && db) {
+      const doc = await db.collection('support_messages').doc(messageId).get();
+      if (!doc.exists) return res.status(404).json({ success: false, error: 'Message not found' });
+      message = mapSupportDoc(doc);
+
+      const snap = await db
+        .collection('support_messages')
+        .doc(messageId)
+        .collection('replies')
+        .orderBy('createdAtMs', 'asc')
+        .get();
+      replies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } else {
+      const local = readData(SUPPORT_MESSAGES_DB).find(m => String(m.id) === messageId) || null;
+      if (!local) return res.status(404).json({ success: false, error: 'Message not found' });
+      message = local;
+      replies = Array.isArray(local.replies) ? local.replies : [];
+      replies = replies.slice().sort((a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
+    }
+
+    return res.json({ success: true, data: { message, replies } });
+  } catch (error) {
+    console.error('Error fetching message thread:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch message thread' });
+  }
+});
+
+// SendGrid Inbound Parse webhook (captures customer replies)
+// Configure in SendGrid: Settings -> Inbound Parse -> URL: https://<cloudrun>/api/inbound/sendgrid
+// Also set username/password there to match INBOUND_PARSE_USERNAME/INBOUND_PARSE_PASSWORD.
+app.post('/api/inbound/sendgrid', inboundUpload.none(), requireInboundAuth, async (req, res) => {
+  try {
+    const from = (req.body && req.body.from ? String(req.body.from) : '').trim();
+    const to = (req.body && req.body.to ? String(req.body.to) : '').trim();
+    const subject = (req.body && req.body.subject ? String(req.body.subject) : '').trim();
+    const text = (req.body && req.body.text ? String(req.body.text) : '').trim();
+    const html = (req.body && req.body.html ? String(req.body.html) : '').trim();
+
+    const messageId = extractTicketId({ to, subject });
+
+    if (messageId) {
+      await appendReplyToStores(messageId, {
+        direction: 'incoming',
+        from,
+        to,
+        subject,
+        text,
+        html,
+      });
+    } else {
+      // If we can't correlate to a ticket, create a new unread support message
+      const id = uuidv4();
+      const createdAt = new Date().toISOString();
+      const email = extractEmailAddress(from);
+      const messageText = text || (html ? html.replace(/<[^>]*>/g, '').trim() : '');
+
+      if (firestoreReady && db) {
+        await db.collection('support_messages').doc(id).set({
+          id,
+          name: '',
+          email,
+          phone: '',
+          subject: subject || '(no subject)',
+          message: messageText || '(no content)',
+          status: 'unread',
+          starred: false,
+          createdAt,
+          updatedAt: createdAt,
+          source: 'email',
+          inboundTo: to,
+          inboundFrom: from,
+        }, { merge: true });
+      }
+
+      const local = readData(SUPPORT_MESSAGES_DB);
+      local.push({
+        id,
+        name: '',
+        email,
+        phone: '',
+        subject: subject || '(no subject)',
+        message: messageText || '(no content)',
+        status: 'unread',
+        starred: false,
+        createdAt,
+        updatedAt: createdAt,
+        source: 'email',
+        inboundTo: to,
+        inboundFrom: from,
+      });
+      writeData(SUPPORT_MESSAGES_DB, local);
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Inbound parse failed:', error);
+    // Return 200 to prevent SendGrid retries looping on transient issues
+    return res.json({ success: false, error: 'Inbound parse failed' });
+  }
+});
+
+// POST reply to a message (sends an email)
+app.post('/api/admin/messages/:id/reply', requireAdmin, async (req, res) => {
+  try {
+    const messageId = req.params.id;
+    const subject = (req.body && req.body.subject ? String(req.body.subject) : '').trim();
+    const body = (req.body && req.body.body ? String(req.body.body) : '').trim();
+
+    if (!subject || !body) {
+      return res.status(400).json({ success: false, error: 'subject and body are required' });
+    }
+
+    let original = null;
+    if (firestoreReady && db) {
+      const doc = await db.collection('support_messages').doc(messageId).get();
+      if (doc.exists) original = { id: doc.id, ...doc.data() };
+    } else {
+      original = readData(SUPPORT_MESSAGES_DB).find(m => String(m.id) === String(messageId)) || null;
+    }
+
+    if (!original) {
+      return res.status(404).json({ success: false, error: 'Message not found' });
+    }
+
+    const toEmail = (original.email || '').toString().trim();
+    if (!toEmail) {
+      return res.status(400).json({ success: false, error: 'Recipient email missing on message' });
+    }
+
+    const fromEmail = (process.env.SUPPORT_FROM_EMAIL || 'support@cjfrentals.com').toString().trim();
+    if (!fromEmail) {
+      return res.status(500).json({ success: false, error: 'SUPPORT_FROM_EMAIL not configured' });
+    }
+
+    if (!initEmail()) {
+      return res.status(500).json({ success: false, error: 'Email provider not configured', detail: emailInitError });
+    }
+
+    const inboundDomain = (process.env.SUPPORT_INBOUND_DOMAIN || '').toString().trim();
+    const fallbackReplyTo = (process.env.SUPPORT_REPLY_TO_EMAIL || fromEmail).toString().trim();
+    const replyToEmail = inboundDomain ? `reply+${messageId}@${inboundDomain}` : fallbackReplyTo;
+
+    const ticketTag = `[ticket:${messageId}]`;
+    const sendSubject = subject.includes(ticketTag) ? subject : `${ticketTag} ${subject}`;
+
+    const text = body;
+    const html = `<pre style="white-space:pre-wrap;font-family:inherit">${escapeHtml(body)}</pre>`;
+
+    await sgMail.send({
+      to: toEmail,
+      from: fromEmail,
+      replyTo: replyToEmail,
+      subject: sendSubject,
+      text,
+      html,
+    });
+
+    // Store outgoing reply in the thread so it's visible in the admin inbox
+    await appendReplyToStores(messageId, {
+      direction: 'outgoing',
+      from: fromEmail,
+      to: toEmail,
+      subject: sendSubject,
+      text,
+      html,
+    });
+
+    return res.json({ success: true, message: 'Sent' });
+  } catch (error) {
+    console.error('Reply send failed:', error);
+    return res.status(500).json({ success: false, error: 'Failed to send reply' });
+  }
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'Car Connect Rentals API',
+    name: 'CJF Rentals API',
     version: '1.0.0',
     endpoints: {
       vehicles: '/api/vehicles',
@@ -1276,7 +1731,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`\n🚀 CCR Backend Server running on http://localhost:${PORT}`);
+  console.log(`\n🚀 CJF Backend Server running on http://localhost:${PORT}`);
   console.log(`📊 API Endpoints:`);
   console.log(`   GET    http://localhost:${PORT}/api/vehicles`);
   console.log(`   POST   http://localhost:${PORT}/api/vehicles`);

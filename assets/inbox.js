@@ -11,6 +11,8 @@ const AdminInbox = (function() {
   let selectedMessages = new Set();
   let currentMessageId = null;
   let sortBy = 'newest';
+  let tokenRetryCount = 0;
+  const MAX_TOKEN_RETRIES = 6;
 
   const API_URL = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
     ? 'http://localhost:3000/api'
@@ -28,15 +30,36 @@ const AdminInbox = (function() {
     AuthManager.requireAuth();
     
     // Ensure user is admin
-    if (!AuthManager.isAdmin || !AuthManager.isAdmin()) {
+    const isAdminMode = typeof AuthManager.isAdminModeEnabled === 'function'
+      ? AuthManager.isAdminModeEnabled()
+      : (AuthManager.isAdmin ? AuthManager.isAdmin() : false);
+
+    if (!isAdminMode) {
       console.warn('AdminInbox: user is not admin, redirecting');
       window.location.href = 'index.html';
       return;
     }
-    
+
     setupEventListeners();
-    loadMessages();
-    setInterval(loadMessages, 30000); // Refresh every 30s
+
+    // Wait for Firebase auth to be ready before loading messages.
+    // This avoids a redirect loop where localStorage says "signed in"
+    // but firebaseAuth.currentUser is still null for a moment.
+    waitForIdToken({ timeoutMs: 8000 })
+      .then((token) => {
+        if (!token) {
+          console.error('No Firebase ID token available');
+          showToast('Please sign in again to access admin inbox', 'error');
+          setTimeout(() => window.location.href = 'signin.html', 1200);
+          return;
+        }
+        loadMessages();
+        setInterval(loadMessages, 30000); // Refresh every 30s
+      })
+      .catch((e) => {
+        console.error('AdminInbox: token wait failed', e);
+        showToast('Sign-in not ready. Please refresh and try again.', 'error');
+      });
   }
 
   function setupEventListeners() {
@@ -96,11 +119,27 @@ const AdminInbox = (function() {
     try {
       const token = await getIdToken();
       if (!token) {
+        // On some mobile browsers, auth can take a moment to hydrate.
+        // Retry briefly before treating it as a real sign-out.
+        tokenRetryCount += 1;
+        const definitelySignedOut =
+          window.firebaseAuth &&
+          window.firebaseAuth.currentUser === null &&
+          localStorage.getItem('ccrSignedIn') === 'false';
+
+        if (!definitelySignedOut && tokenRetryCount <= MAX_TOKEN_RETRIES) {
+          console.warn(`ID token not ready (attempt ${tokenRetryCount}/${MAX_TOKEN_RETRIES}); retrying...`);
+          setTimeout(loadMessages, 600);
+          return;
+        }
+
         console.error('No Firebase ID token available');
         showToast('Please sign in to access admin inbox', 'error');
-        setTimeout(() => window.location.href = 'signin.html', 2000);
+        setTimeout(() => window.location.href = 'signin.html', 1200);
         return;
       }
+      // Reset retries once we have a token.
+      tokenRetryCount = 0;
       
       const response = await fetch(`${API_URL}/admin/messages`, {
         headers: {
@@ -258,6 +297,7 @@ const AdminInbox = (function() {
     
     panel.innerHTML = `
       <div class="inbox-detail-header">
+        <button class="button-small inbox-mobile-back" id="mobileBackBtn">← Back</button>
         <div class="inbox-detail-title">${escapeHtml(msg.subject || 'Contact message')}</div>
         <div class="inbox-detail-meta">
           <span class="inbox-detail-status status-${status}">${status.toUpperCase()}</span>
@@ -278,6 +318,8 @@ const AdminInbox = (function() {
           <option value="resolved" ${status === 'resolved' ? 'selected' : ''}>Resolved</option>
         </select>
         
+        <button class="button-small primary" id="replyMailBtn" ${msg.email ? '' : 'disabled'}>Reply (Mail app)</button>
+        <button class="button-small" id="replyGmailBtn" ${msg.email ? '' : 'disabled'}>Reply (Gmail)</button>
         <button class="button-small" id="starBtn">${msg.starred ? '⭐ Unstar' : '☆ Star'}</button>
         <button class="button-small" id="archiveBtn">Archive</button>
         <button class="button-small" id="deleteBtn">Delete</button>
@@ -288,6 +330,51 @@ const AdminInbox = (function() {
       await updateMessageStatus(msg.id, e.target.value);
     });
     
+    const replyMailBtn = document.getElementById('replyMailBtn');
+    const replyGmailBtn = document.getElementById('replyGmailBtn');
+
+    const defaultSubject = `Re: ${(msg.subject || 'Your message to CJF Rentals').toString().trim()}`;
+    const name = (msg.name || '').toString().trim();
+    const createdAt = formatTime(msg.createdAt);
+    const original = (msg.message || '').toString();
+    const greeting = name ? `Hi ${name},\n\n` : 'Hi,\n\n';
+    const defaultBody =
+      `${greeting}` +
+      `Thanks for reaching out.\n\n` +
+      `— CJF Rentals\n\n` +
+      `--- Original message ---\n` +
+      `From: ${name || (msg.email || '')}\n` +
+      `Email: ${(msg.email || '')}\n` +
+      `Date: ${createdAt}\n` +
+      `Subject: ${(msg.subject || '').toString().trim()}\n\n` +
+      `${original}`;
+
+    replyMailBtn.addEventListener('click', () => {
+      if (!msg.email) {
+        showToast('No email address on this message', 'error');
+        return;
+      }
+      const to = String(msg.email).trim();
+      const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(defaultSubject)}&body=${encodeURIComponent(defaultBody)}`;
+      window.location.href = mailto;
+    });
+
+    replyGmailBtn.addEventListener('click', () => {
+      if (!msg.email) {
+        showToast('No email address on this message', 'error');
+        return;
+      }
+      const to = String(msg.email).trim();
+      const gmailUrl =
+        `https://mail.google.com/mail/?view=cm&fs=1` +
+        `&to=${encodeURIComponent(to)}` +
+        `&su=${encodeURIComponent(defaultSubject)}` +
+        `&body=${encodeURIComponent(defaultBody)}`;
+
+      const w = window.open(gmailUrl, '_blank', 'noopener');
+      if (!w) window.location.href = gmailUrl;
+    });
+
     document.getElementById('starBtn').addEventListener('click', async () => {
       await toggleStar(msg.id);
     });
@@ -303,6 +390,19 @@ const AdminInbox = (function() {
         loadMessages();
       }
     });
+
+    // On mobile, the detail panel is hidden until it has the "active" class.
+    // Add the class when opening a message so it actually becomes visible.
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      panel.classList.add('active');
+      const backBtn = document.getElementById('mobileBackBtn');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          panel.classList.remove('active');
+        });
+      }
+    }
     
     renderList();
   }
@@ -445,11 +545,51 @@ const AdminInbox = (function() {
     });
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function waitForFirebaseAuthReady(timeoutMs = 5000) {
+    const start = Date.now();
+    while (!window.firebaseAuth) {
+      if (Date.now() - start > timeoutMs) return false;
+      await sleep(50);
+    }
+    return true;
+  }
+
+  async function waitForFirebaseUser(timeoutMs = 7000) {
+    const ready = await waitForFirebaseAuthReady(Math.min(timeoutMs, 5000));
+    if (!ready) return null;
+
+    if (window.firebaseAuth.currentUser) return window.firebaseAuth.currentUser;
+
+    return await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(null), timeoutMs);
+      const unsub = window.firebaseAuth.onAuthStateChanged((user) => {
+        clearTimeout(timer);
+        try { unsub(); } catch {}
+        resolve(user || null);
+      });
+    });
+  }
+
+  async function waitForIdToken({ timeoutMs = 8000 } = {}) {
+    const user = await waitForFirebaseUser(timeoutMs);
+    if (!user) return null;
+    try {
+      return await user.getIdToken(true);
+    } catch (e) {
+      console.warn('AdminInbox: getIdToken failed', e);
+      return null;
+    }
+  }
+
   async function getIdToken() {
     if (window.firebaseAuth && window.firebaseAuth.currentUser) {
-      return await window.firebaseAuth.currentUser.getIdToken();
+      return await window.firebaseAuth.currentUser.getIdToken(true);
     }
-    return null;
+    return await waitForIdToken({ timeoutMs: 8000 });
   }
 
   function formatTime(isoString) {

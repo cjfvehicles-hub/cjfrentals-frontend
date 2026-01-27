@@ -14,12 +14,14 @@ const AuthManager = (function() {
     ADMIN: 'admin',
   };
 
+  // Admin override email (this account always gets ADMIN privileges in the UI)
   const SPECIAL_ADMIN_EMAIL = 'cjfvehicles@gmail.com';
 
   // Storage keys
   const STORAGE_KEYS = {
     CURRENT_USER: 'CJF_CURRENT_USER',
     USER_ROLE: 'CJF_USER_ROLE',
+    ADMIN_MODE: 'CJF_ADMIN_MODE',
   };
 
   let authListenerAttached = false;
@@ -56,13 +58,33 @@ const AuthManager = (function() {
   }
 
   function isAdmin() {
-    return getUserRole() === ROLES.ADMIN;
+    return getUserRole() === ROLES.ADMIN || isSpecialAdminUser();
+  }
+
+  // Admin mode is a UI/UX toggle for the special admin account.
+  // It controls whether admin-only pages and admin navigation are shown.
+  function isAdminModeEnabled() {
+    // Only the special admin can use admin mode toggle.
+    if (!isSpecialAdminUser()) return getUserRole() === ROLES.ADMIN;
+    const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_MODE);
+    if (raw === null) return true; // default ON for the special admin
+    return raw === 'true';
+  }
+
+  function setAdminModeEnabled(enabled) {
+    if (!isSpecialAdminUser()) return false;
+    const normalized = enabled === true;
+    localStorage.setItem(STORAGE_KEYS.ADMIN_MODE, normalized ? 'true' : 'false');
+    // Keep the stored role in sync so existing UI logic stays consistent.
+    updateProfile({ role: normalized ? ROLES.ADMIN : ROLES.HOST });
+    updateUIForRole();
+    return true;
   }
 
   function isSpecialAdminUser(user) {
-    const target = user || getCurrentUser();
+    const target = user || getFirebaseUser() || getCurrentUser();
     const email = (target?.email || '').toLowerCase();
-    return email === SPECIAL_ADMIN_EMAIL;
+    return !!email && email === SPECIAL_ADMIN_EMAIL;
   }
 
   function isOwner(resourceHostId) {
@@ -74,16 +96,23 @@ const AuthManager = (function() {
     if (!firebaseUser) return null;
     const storedRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
     const validStoredRole = storedRole && Object.values(ROLES).includes(storedRole) ? storedRole : ROLES.HOST;
+    const email = (firebaseUser.email || '').toLowerCase();
+    let effectiveRole = validStoredRole;
+    if (email === SPECIAL_ADMIN_EMAIL) {
+      const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_MODE);
+      const adminMode = raw === null ? true : raw === 'true';
+      effectiveRole = adminMode ? ROLES.ADMIN : ROLES.HOST;
+    }
     const localUser = {
       id: firebaseUser.uid,
       name: firebaseUser.displayName || (firebaseUser.email || '').split('@')[0],
       email: firebaseUser.email || '',
       phone: '',
-      role: validStoredRole,
+      role: effectiveRole,
       lastSync: new Date().toISOString(),
     };
     localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(localUser));
-    localStorage.setItem(STORAGE_KEYS.USER_ROLE, validStoredRole);
+    localStorage.setItem(STORAGE_KEYS.USER_ROLE, effectiveRole);
     cachedLocalUser = localUser;
     return localUser;
   }
@@ -95,6 +124,11 @@ const AuthManager = (function() {
     // Toggle host-only elements
     document.querySelectorAll('[data-host-only]').forEach((el) => {
       el.style.display = isUserHost || isUserAdmin ? '' : 'none';
+    });
+
+    // Hide elements that should not be visible to signed-in hosts/admins
+    document.querySelectorAll('[data-hide-when-host]').forEach((el) => {
+      el.style.display = authenticated && (isUserHost || isUserAdmin) ? 'none' : '';
     });
   }
 
@@ -118,6 +152,7 @@ const AuthManager = (function() {
           cachedLocalUser = null;
           localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
           localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_MODE);
           localStorage.setItem('ccrSignedIn', 'false');
           updateUIForRole();
           document.dispatchEvent(new CustomEvent('authStateChanged', { detail: { user: null, authenticated: false } }));
@@ -133,6 +168,7 @@ const AuthManager = (function() {
     localStorage.removeItem('_userSignedOutIntentionally');
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_MODE);
     localStorage.setItem('ccrSignedIn', 'false');
     cachedFirebaseUser = null;
     cachedLocalUser = null;
@@ -202,11 +238,13 @@ const AuthManager = (function() {
     isAuthenticated,
     isHost,
     isAdmin,
+    isAdminModeEnabled,
     isSpecialAdminUser,
     isOwner,
     signOut,
     updateProfile,
     setRole,
+    setAdminModeEnabled,
     updateUIForRole,
     requireAuth,
     requireHost,

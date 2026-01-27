@@ -13,14 +13,14 @@
   <header class="header">
     <div class="header-inner">
       <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
-      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">☰</button>
     </div>
   </header>
   <div class="backdrop" id="backdrop"></div>
   <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
     <div class="menu-header">
       <span class="menu-title">Navigation</span>
-      <button class="menu-close" aria-label="Close menu">Close</button>
+      <button class="menu-close" id="menuClose" aria-label="Close menu"></button>
     </div>
     <ul class="menu-list" id="nav-list">
       <!-- Menu items built dynamically by navBuilder.js -->
@@ -111,8 +111,16 @@
       <p class="muted">Generate a secure one-time review link after a completed interaction and copy it for the customer.</p>
       <div class="form-grid">
         <div class="form-field">
+          <label for="reviewVehicleSelect">Vehicle (optional)</label>
+          <select class="input" id="reviewVehicleSelect" disabled>
+            <option value="">Loading your fleet…</option>
+          </select>
+          <div class="muted" style="margin-top:6px; font-size:13px;">Pick a vehicle to auto-fill Vehicle ID. Leave blank for a host-only review.</div>
+        </div>
+        <div class="form-field">
           <label for="reviewVehicleId">Vehicle ID (optional)</label>
-          <input class="input" id="reviewVehicleId" placeholder="e.g. vehicle-abc123" />
+          <input class="input" id="reviewVehicleId" placeholder="From vehicle page URL (vehicle.html?id=...)" />
+          <div class="muted" style="margin-top:6px; font-size:13px;">Leave blank for a host-only review. To attach to a vehicle, open that vehicle and copy the value after <strong>id=</strong> in the URL.</div>
         </div>
         <div class="form-field">
           <label for="reviewCustomerLabel">Label (optional)</label>
@@ -175,6 +183,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script src="assets/firebase.js"></script>
   <script src="assets/auth.js"></script>
+  <script src="assets/vehicleStore.js"></script>
   <script src="assets/navBuilder.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -184,6 +193,7 @@
       const resultPanel = document.getElementById('reviewLinkResult');
       const meta = document.getElementById('reviewLinkMeta');
       const vehicleInput = document.getElementById('reviewVehicleId');
+      const vehicleSelect = document.getElementById('reviewVehicleSelect');
       const labelInput = document.getElementById('reviewCustomerLabel');
 
       const setMeta = (text, isError = false) => {
@@ -191,6 +201,104 @@
         meta.textContent = text;
         meta.style.color = isError ? '#b91c1c' : '#0f172a';
       };
+
+      const waitForFirebaseUser = ({ timeoutMs = 8000 } = {}) => {
+        const started = Date.now();
+        return new Promise((resolve) => {
+          const tick = () => {
+            const u = window.firebaseAuth?.currentUser || null;
+            if (u) return resolve(u);
+            if (Date.now() - started > timeoutMs) return resolve(null);
+            setTimeout(tick, 120);
+          };
+          tick();
+        });
+      };
+
+      const setVehicleSelectOptions = (options) => {
+        if (!vehicleSelect) return;
+        vehicleSelect.innerHTML = '';
+        options.forEach((opt) => vehicleSelect.appendChild(opt));
+      };
+
+      const buildOption = (value, label) => {
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        return opt;
+      };
+
+      const formatVehicleLabel = (v) => {
+        const year = v?.year ? String(v.year).trim() : '';
+        const make = v?.make ? String(v.make).trim() : '';
+        const model = v?.model ? String(v.model).trim() : '';
+        const title = [year, make, model].filter(Boolean).join(' ').trim() || (v?.title || v?.name || 'Vehicle');
+        return title;
+      };
+
+      const loadFleetIntoSelect = async () => {
+        if (!vehicleSelect) return;
+
+        vehicleSelect.disabled = true;
+        setVehicleSelectOptions([buildOption('', 'Loading your fleet…')]);
+
+        const user = AuthManager?.getCurrentUser ? AuthManager.getCurrentUser() : null;
+        if (!user) {
+          setVehicleSelectOptions([buildOption('', 'Sign in to load your fleet')]);
+          return;
+        }
+
+        // Fetch active vehicles and filter down to this host/owner
+        let all = [];
+        try {
+          if (window.VehicleStore && typeof VehicleStore.getAllVehicles === 'function') {
+            all = await VehicleStore.getAllVehicles();
+          } else {
+            const resp = await fetch('/api/vehicles?status=active', { headers: { 'Accept': 'application/json' } });
+            const data = await resp.json().catch(() => null);
+            all = Array.isArray(data?.data) ? data.data : [];
+          }
+        } catch (e) {
+          all = [];
+        }
+
+        const uid = String(user.id || '').trim();
+        const mine = all
+          .filter(v => String(v?.hostId || v?.ownerId || v?.userId || '') === uid)
+          .filter(v => (v?.status || 'active') === 'active');
+
+        const opts = [buildOption('', '— No vehicle (host-only review) —')];
+        mine.forEach((v) => {
+          const label = `${formatVehicleLabel(v)}${v?.city || v?.state ? ` • ${(v.city || '')}${v.state ? ', ' + v.state : ''}`.trim() : ''}`;
+          opts.push(buildOption(String(v.id || ''), label));
+        });
+
+        if (mine.length === 0) {
+          opts.push(buildOption('', 'No vehicles found in your fleet'));
+        }
+
+        setVehicleSelectOptions(opts);
+        vehicleSelect.disabled = false;
+      };
+
+      vehicleSelect?.addEventListener('change', () => {
+        if (!vehicleInput) return;
+        const selectedId = String(vehicleSelect.value || '').trim();
+        vehicleInput.value = selectedId;
+      });
+
+      vehicleInput?.addEventListener('input', () => {
+        if (!vehicleSelect) return;
+        const val = String(vehicleInput.value || '').trim();
+        // If user types manually, keep selection in sync if possible
+        const exists = Array.from(vehicleSelect.options).some(o => String(o.value) === val);
+        if (exists) vehicleSelect.value = val;
+        else vehicleSelect.value = '';
+      });
+
+      // Load fleet after auth is ready
+      waitForFirebaseUser({ timeoutMs: 8000 }).then(() => loadFleetIntoSelect());
+      document.addEventListener('authStateChanged', () => loadFleetIntoSelect());
 
       genBtn?.addEventListener('click', async () => {
         if (!AuthManager?.getCurrentUser) {
@@ -202,6 +310,13 @@
           setMeta('Sign in as a host to generate review links.', true);
           return;
         }
+
+        const firebaseUser = window.firebaseAuth?.currentUser;
+        if (!firebaseUser) {
+          setMeta('Authentication required. Please sign in again.', true);
+          return;
+        }
+
         const payload = {};
         const vehicleId = vehicleInput?.value.trim();
         const customerLabel = labelInput?.value.trim();
@@ -211,11 +326,12 @@
         genBtn.disabled = true;
         genBtn.textContent = 'Generating...';
         try {
+          const idToken = await firebaseUser.getIdToken(true);
           const response = await fetch('/api/review-tokens', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${user.id}`
+              Authorization: `Bearer ${idToken}`
             },
             body: JSON.stringify(payload)
           });

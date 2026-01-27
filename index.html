@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>CCR | Global Vehicle Rentals</title>
+	<title>CJF | Global Vehicle Rentals</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -18,14 +18,14 @@
 				<span class="brand-mark">CJF</span>
 				<span>CJF Rentals</span>
 			</a>
-			<button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+			<button class="menu-button" id="menuToggle" aria-label="Open menu">☰</button>
 		</div>
 	</header>
 	<div class="backdrop" id="backdrop"></div>
 	<nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
 		<div class="menu-header">
 			<span class="menu-title">Navigation</span>
-			<button class="menu-close" aria-label="Close menu">Close</button>
+			<button class="menu-close" id="menuClose" aria-label="Close menu"></button>
 		</div>
 		<ul class="menu-list" id="nav-list">
 			<!-- Menu items built dynamically by navBuilder.js -->
@@ -65,7 +65,7 @@
 					</div>
 					<div class="hero-actions">
 						<a class="button" href="vehicles.html">Browse vehicles</a>
-						<a class="button ghost" href="host-signup.html">Become a host</a>
+						<a class="button ghost" href="host-signup.html" data-hide-when-host>Become a host</a>
 						<button class="button ghost location-btn" type="button" id="locationBtn" aria-label="Use my location">
 							<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 								<path d="M12 2a8 8 0 0 0-8 8c0 6 7.2 11.4 7.5 11.6a1 1 0 0 0 1 0C12.8 21.4 20 16 20 10a8 8 0 0 0-8-8Zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"></path>
@@ -92,22 +92,13 @@
 			</div>
 		</section>
 
-		
-
 		<section>
-			<div class="grid" style="gap:8px;">
-				<div class="pill">Main fleet  shuffled</div>
-				<h2>All vehicles</h2>
-			</div>
-			<div class="grid three" id="allVehiclesGrid">
-				<article style="grid-column: 1 / -1; text-align: center; padding: 40px; border: 2px dashed #ddd; border-radius: 8px;">
-					<p style="color: #999; margin: 0;">No vehicles available yet. <a href="host-signup.html" style="color: #667eea;">Become a host</a> and add the first listing!</p>
-				</article>
-			</div>
+			<div id="locationShelves" class="location-shelves"></div>
 			<div id="filterEmptyMsg" class="empty-state" style="display:none; text-align:center; padding:32px 20px; grid-column:1 / -1;">
 				<p style="font-size:16px; color:#666; margin:0;">No vehicles found for this location.</p>
 				<p class="muted" style="margin-top:8px;">Try another country, state, or city.</p>
 			</div>
+		</section>
 	</main>
 
 	<!-- Footer with Legal Links -->
@@ -121,6 +112,7 @@
 				<a href="privacy.html" style="color: var(--accent); font-size: 14px;">Privacy Policy</a>
 				<a href="host-agreement.html" style="color: var(--accent); font-size: 14px;">Host Agreement</a>
 				<a href="safety.html" style="color: var(--accent); font-size: 14px;">Safety Guidelines</a>
+				<a href="https://www.tiktok.com/@cjfrentals" target="_blank" rel="noopener" style="color: var(--accent); font-size: 14px;">TikTok</a>
 				<a href="contact.html" style="color: var(--accent); font-size: 14px;">Contact Support</a>
 			</div>
 			<p style="margin: 16px 0 0 0; font-size: 13px; color: #999;">
@@ -132,6 +124,105 @@
 	<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 	<script>
+		const toTitleCase = (value) => {
+			const s = (value ?? '').toString().trim();
+			if (!s) return '';
+			return s
+				.split(/\s+/g)
+				.map((w) => w ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : w)
+				.join(' ');
+		};
+
+		const sanitizeYear = (year) => {
+			const y = Number(year);
+			if (!Number.isFinite(y)) return '';
+			const max = new Date().getFullYear() + 1;
+			if (y < 1985 || y > max) return '';
+			return String(y);
+		};
+
+		const normalizeCategory = (value) => {
+			const raw = (value ?? '').toString().trim();
+			if (!raw) return 'Vehicle';
+			const normalized = toTitleCase(raw);
+			const allowed = new Set(['SUV','Sedan','Coupe','Truck','Bike','Convertible','Minivan','Hatchback','Station Wagon','Bus','Wagon']);
+			if (allowed.has(normalized)) return normalized;
+			if (normalized === 'Stationwagon') return 'Station Wagon';
+			return 'Vehicle';
+		};
+
+		const normalizeFuel = (value) => {
+			const raw = toTitleCase((value ?? '').toString().trim());
+			const allowed = new Set(['Gas','Diesel','Hybrid','Electric']);
+			return allowed.has(raw) ? raw : '';
+		};
+
+		const shouldHideMetaForMismatch = ({ make, model, category, fuel }) => {
+			const m = (model || '').toString().toLowerCase();
+			const mk = (make || '').toString().toLowerCase();
+			const cat = (category || '').toString().toLowerCase();
+			const fu = (fuel || '').toString().toLowerCase();
+
+			// Common passenger-car model names; helps catch obvious “Accord → Truck” type issues.
+			const looksPassenger = /(accord|civic|camry|corolla|altima|sentra|malibu|impala|elantra|sonata|fusion|focus|prius|model\s*3|model\s*s|model\s*y|model\s*x|a4|a6|c-?class|e-?class|3\s*series|5\s*series|golf|jetta)/.test(m);
+			const looksElectricModel = /(model\s*3|model\s*s|model\s*y|model\s*x|leaf|bolt|ioniq|ev|mach-?e|id\.?4|taycan)/.test(m);
+			const dieselUnlikelyMake = /^(honda|toyota|nissan|hyundai|kia)$/.test(mk);
+			const dieselUnlikelyModel = /(accord|civic|camry|corolla|altima|sentra|elantra|sonata|prius)/.test(m);
+
+			if ((cat === 'truck' || cat === 'bus' || cat === 'bike') && looksPassenger) return true;
+			if (looksElectricModel && fu === 'diesel') return true;
+			// Honda Accord/Civic etc are almost never trucks.
+			if (mk === 'honda' && cat === 'truck' && looksPassenger) return true;
+			// On a rental marketplace, showing "Accord • Diesel" hurts trust even if it's test data.
+			if (fu === 'diesel' && (dieselUnlikelyMake || dieselUnlikelyModel)) return true;
+			return false;
+		};
+
+		const normalizeFrequency = (value) => {
+			const v = (value ?? '').toString().trim().toLowerCase();
+			if (!v) return 'Daily';
+			if (v.startsWith('day')) return 'Daily';
+			if (v.startsWith('week')) return 'Weekly';
+			if (v.startsWith('month')) return 'Monthly';
+			return 'Daily';
+		};
+
+		const formatPrice = (price, frequency) => {
+			const n = Number(price);
+			const freq = normalizeFrequency(frequency);
+			const unit = (freq === 'Weekly') ? 'week' : (freq === 'Monthly') ? 'month' : 'day';
+			if (!Number.isFinite(n) || n <= 0) return `Contact for price / ${unit}`;
+			return `$${n} / ${unit}`;
+		};
+
+		const normalizeVehicle = (v) => {
+			const clean = (x) => (x ?? '').toString().trim();
+			const make = toTitleCase(clean(v?.make));
+			const model = toTitleCase(clean(v?.model));
+			const country = toTitleCase(clean(v?.country));
+			const state = toTitleCase(clean(v?.state));
+			const city = toTitleCase(clean(v?.city));
+			const category = normalizeCategory(v?.vehicleType || v?.category);
+			const fuel = normalizeFuel(v?.fuelType || v?.fuel);
+			const frequency = normalizeFrequency(v?.frequency || v?.priceFrequency);
+			const year = sanitizeYear(v?.year || v?.modelYear);
+
+			const hideMeta = shouldHideMetaForMismatch({ make, model, category, fuel });
+			return {
+				...v,
+				make,
+				model,
+				country,
+				state,
+				city,
+				category: hideMeta ? 'Vehicle' : category,
+				fuel: hideMeta ? '' : fuel,
+				frequency,
+				year,
+				price: (v?.price != null ? v.price : (v?.pricePerDay != null ? v.pricePerDay : v?.pricePerWeek != null ? v.pricePerWeek : v?.pricePerMonth != null ? v.pricePerMonth : 0)),
+			};
+		};
+
 		// Use VehicleStore as single source of truth
 		const getActiveVehicles = async () => {
 			return await VehicleStore.getActiveVehicles();
@@ -139,163 +230,187 @@
 
 		const normalizeLocation = (value) => (value ?? '').toString().trim().toLowerCase();
 
+		let homeVehiclesAll = [];
+
+			const renderShelvesLoading = () => {
+				const container = document.getElementById('locationShelves');
+				if (!container) return;
+				container.innerHTML = `
+					<section class="location-shelf">
+						<div class="location-shelf-header">
+							<h3 class="location-shelf-title">Loading vehicles…</h3>
+						</div>
+						<div class="shelf-row" aria-hidden="true">
+							${Array.from({ length: 8 }).map(() => {
+								return `
+									<article class="card vehicle-card">
+										<div class="vehicle-card-link">
+											<div class="vehicle-card-image skeleton"></div>
+											<div class="vehicle-card-body">
+												<div class="vehicle-spec skeleton skeleton-line sm" style="width: 58%;"></div>
+												<div class="vehicle-title skeleton skeleton-line lg" style="width: 92%;"></div>
+												<div class="vehicle-location skeleton skeleton-line md" style="width: 70%;"></div>
+												<div class="vehicle-bottom" style="margin-top: 10px;">
+													<div class="vehicle-price skeleton skeleton-line lg" style="width: 44%;"></div>
+													<div class="badges" style="width: 40%;">
+														<div class="badge skeleton" style="height: 26px; width: 100%; border-radius: 10px;"></div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</article>
+								`;
+							}).join('')}
+						</div>
+					</section>
+				`;
+			};
+
 			// Render vehicle card HTML
 		const createVehicleCardHtml = (vehicle) => {
 			const clean = (value) => (value ?? '').toString().trim();
-			// Normalize legacy/new field names to avoid runtime errors
-			const category = vehicle.category || vehicle.vehicleType || 'Vehicle';
-			const fuel = vehicle.fuel || vehicle.fuelType || 'Unknown';
-			const transmission = vehicle.transmission || '';
-			const frequency = vehicle.frequency || vehicle.priceFrequency || 'Daily';
-			const country = clean(vehicle.country || '');
-			const state = clean(vehicle.state || '');
-			const city = clean(vehicle.city || '');
-			const insurance = clean(vehicle.insurance || '').toLowerCase() === 'included' ? 'Insurance included' : 'No insurance';
-			const specLine = [vehicle.year || '', category, fuel].filter(Boolean).join(' &bull; ');
-			const locationLine = [city, state || country].filter(Boolean).join(' &bull; ');
+			const v = normalizeVehicle(vehicle);
+			const insuranceIncluded = v.insuranceIncluded === true || clean(v.insurance || '').toLowerCase() === 'included' || clean(v.insurance || '').toLowerCase() === 'yes';
+			const insuranceLabel = insuranceIncluded ? 'Insurance included' : 'Insurance not included';
+			const insuranceClass = insuranceIncluded ? 'badge badge--success' : 'badge badge--danger';
+			const availability = clean(v.availability || '').toLowerCase() === 'rented' ? 'rented' : 'available';
+			const availabilityLabel = availability === 'rented' ? 'Rented' : 'Available';
+			const availabilityClass = availability === 'rented' ? 'badge badge--rented' : 'badge badge--available';
+			const specLine = [v.year, (v.category && v.category !== 'Vehicle') ? v.category : '', v.fuel].filter(Boolean).join(' • ');
+			const locationLine = [v.city, v.state || v.country].filter(Boolean).join(' • ');
+			const title = [v.make, v.model].filter(Boolean).join(' ').trim() || 'Vehicle';
+			const priceLabel = formatPrice(v.price, v.frequency);
 			
 				// Create placeholder SVG for vehicles without photos
 				const placeholderSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23e5e7eb;stop-opacity:1" /><stop offset="100%" style="stop-color:%23d1d5db;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23grad)" width="400" height="300"/><g transform="translate(200, 80)"><circle cx="0" cy="0" r="35" fill="%23999" opacity="0.3"/></g><g transform="translate(200, 160)"><rect x="-60" y="0" width="120" height="70" rx="8" fill="none" stroke="%23999" stroke-width="3" opacity="0.3"/><rect x="-50" y="10" width="30" height="20" rx="4" fill="%23999" opacity="0.3"/><rect x="20" y="10" width="30" height="20" rx="4" fill="%23999" opacity="0.3"/><rect x="-35" y="50" width="70" height="8" rx="4" fill="%23999" opacity="0.3"/></g><text x="200" y="280" text-anchor="middle" font-family="Arial" font-size="16" fill="%23999" opacity="0.5">No photo</text></svg>';
 			
 				// Use image from vehicle, or fall back to placeholder
 				// Note: vehicleStore already adds placeholder if missing, but we provide one here as well
-				const image = vehicle.image || (vehicle.photos && vehicle.photos[0]) || placeholderSvg;
+				const image = v.image || (v.photos && v.photos[0]) || placeholderSvg;
+
+				const badges = [];
+				badges.push(`<span class="${availabilityClass}">${availabilityLabel}</span>`);
+				badges.push(`<span class="${insuranceClass}">${insuranceLabel}</span>`);
 
 				return `
-					<article class="card vehicle-card" data-vehicle data-type="${clean(category)}" data-country="${country}" data-state="${state}" data-city="${city}" data-frequency="${frequency}" data-id="${vehicle.id}" data-make="${clean(vehicle.make)}" data-year="${vehicle.year || ''}" data-price="${vehicle.price || ''}" data-transmission="${clean(transmission)}" data-fuel="${clean(fuel)}" data-seats="${vehicle.seats || ''}">
-						<a href="vehicle.html?id=${vehicle.id}" class="vehicle-card-link">
-							<img src="${image}" alt="${vehicle.make || ''} ${vehicle.model || ''}" style="background: #f0f0f0;" />
-							<div class="vehicle-meta">${specLine}</div>
-							<strong>${vehicle.make || ''} ${vehicle.model || ''}</strong>
-							<div class="vehicle-meta">${locationLine}</div>
-							<div class="vehicle-price">$${vehicle.price || 0} / ${frequency.toLowerCase()}</div>
-							<div class="vehicle-meta" style="display:flex; gap:6px; flex-wrap:wrap;">
-								<span class="badge">${insurance}</span>
+					<article class="card vehicle-card" data-vehicle data-type="${clean(v.category)}" data-country="${clean(v.country)}" data-state="${clean(v.state)}" data-city="${clean(v.city)}" data-frequency="${clean(v.frequency)}" data-id="${v.id}" data-make="${clean(v.make)}" data-year="${clean(v.year)}" data-price="${v.price || ''}" data-transmission="${clean(v.transmission)}" data-fuel="${clean(v.fuel)}" data-seats="${v.seats || ''}">
+						<a href="vehicle.html?id=${v.id}" class="vehicle-card-link">
+							<div class="vehicle-card-image"><img src="${image}" alt="${title}" /></div>
+							<div class="vehicle-card-body">
+								<div class="vehicle-spec">${specLine || ''}</div>
+								<div class="vehicle-title line-clamp-2">${title}</div>
+								<div class="vehicle-location">${locationLine || ''}</div>
+								<div class="vehicle-bottom">
+									<div class="vehicle-price">${priceLabel}</div>
+									<div class="badges">${badges.slice(0,2).join('')}</div>
+								</div>
 							</div>
 						</a>
 					</article>
 				`;
 			};
+		const buildListingUrl = ({ country, state, city } = {}) => {
+			const params = new URLSearchParams();
+			if (country) params.set('country', country);
+			if (state) params.set('state', state);
+			if (city) params.set('city', city);
+			const qs = params.toString();
+			return qs ? `vehicles.html?${qs}` : 'vehicles.html';
+		};
+
+		const getLocationGroupInfo = (vehicle) => {
+			const clean = (v) => (v ?? '').toString().trim();
+			const country = clean(vehicle?.country);
+			const state = clean(vehicle?.state);
+			const city = clean(vehicle?.city);
+
+			if (city) {
+				const parts = [city, state, country].filter(Boolean);
+				return { key: `city|${parts.join('|')}`, title: `Vehicles in ${parts.join(', ')}`, url: buildListingUrl({ country, state, city }) };
+			}
+			if (state) {
+				const parts = [state, country].filter(Boolean);
+				return { key: `state|${parts.join('|')}`, title: `Vehicles in ${parts.join(', ')}`, url: buildListingUrl({ country, state }) };
+			}
+			if (country) {
+				return { key: `country|${country}`, title: `Vehicles in ${country}`, url: buildListingUrl({ country }) };
+			}
+			return { key: 'country|unknown', title: 'Vehicles near you', url: 'vehicles.html' };
+		};
+
+		const renderLocationShelves = (vehicles) => {
+			const container = document.getElementById('locationShelves');
+			if (!container) return;
+			container.innerHTML = '';
+
+			const list = Array.isArray(vehicles) ? vehicles : [];
+			if (!list.length) return;
+
+			const groups = new Map();
+			list.forEach((v) => {
+				const info = getLocationGroupInfo(v);
+				const rec = groups.get(info.key) || { info, items: [] };
+				rec.items.push(v);
+				groups.set(info.key, rec);
+			});
+
+			const sorted = Array.from(groups.values()).sort((a, b) => b.items.length - a.items.length);
+			sorted.slice(0, 10).forEach((group, idx) => {
+				const section = document.createElement('section');
+				section.className = 'location-shelf';
+				const viewAll = (group.items || []).length > 8
+					? `<a class="shelf-viewall" href="${group.info.url}">View all</a>`
+					: '';
+				section.innerHTML = `
+					<div class="location-shelf-header">
+						<a class="location-shelf-link" href="${group.info.url}">
+							<h3 class="location-shelf-title">${group.info.title}</h3>
+						</a>
+						<div class="location-shelf-actions">${viewAll}</div>
+					</div>
+					<div class="shelf-row" id="shelfRow${idx}"></div>
+				`;
+
+				const row = section.querySelector(`#shelfRow${idx}`);
+				const count = (group.items || []).length;
+				if (row) {
+					row.classList.toggle('shelf-row--single', count === 1);
+					row.classList.toggle('shelf-row--pair', count === 2);
+				}
+				(group.items || []).slice(0, 12).forEach((veh) => {
+					row.insertAdjacentHTML('beforeend', createVehicleCardHtml(veh));
+				});
+
+
+				if ((group.items || []).length > 0 && (group.items || []).length < 4) {
+					const cta = document.createElement('div');
+					cta.className = 'shelf-cta';
+					const title = group.info.title.replace(/^Vehicles in\s+/i, '').split(',')[0] || 'this area';
+					const helper = (group.items || []).length <= 2
+						? `<div class="muted" style="margin-top:6px; font-size:13px;">More vehicles coming soon in this area.</div>`
+						: '';
+					cta.innerHTML = `<a href="${group.info.url}">Browse all vehicles in ${title}</a>${helper}`;
+					section.appendChild(cta);
+				}
+
+				container.appendChild(section);
+			});
+		};
 
 		// Initialize homepage with live fleet data
 		const initializeFleetDisplay = async () => {
 			console.log(' Initializing fleet display...');
+			renderShelvesLoading();
 			const activeVehicles = await getActiveVehicles();
 			console.log(` Found ${activeVehicles.length} active vehicles to display`);
-			
-			// Get the "All vehicles" grid container
-			const allVehiclesGrid = document.querySelector('#allVehiclesGrid') || document.querySelector('.grid.three');
-			if (!allVehiclesGrid) return;
 
-			if (activeVehicles.length > 0) {
-				// Remove empty-state placeholder
-				const emptyPlaceholder = allVehiclesGrid.querySelector('article:not([data-vehicle])');
-				if (emptyPlaceholder) emptyPlaceholder.remove();
-				
-				populateMakeOptions(activeVehicles);
+			homeVehiclesAll = (activeVehicles || []).map((vehicle) => normalizeVehicle(vehicle));
 
-				// Clear existing vehicle cards
-				const vehicleCards = allVehiclesGrid.querySelectorAll('[data-vehicle]');
-				vehicleCards.forEach(card => card.remove());
-				
-				// Render all active vehicles
-				activeVehicles.forEach(vehicle => {
-					const normalized = {
-						...vehicle,
-						category: vehicle.category || vehicle.vehicleType || 'Vehicle',
-						fuel: vehicle.fuel || vehicle.fuelType || 'Unknown',
-						frequency: vehicle.frequency || vehicle.priceFrequency || 'Daily',
-						image: vehicle.image || (vehicle.photos && vehicle.photos[0]) || null,
-						price: vehicle.price != null ? vehicle.price : (vehicle.pricePerDay != null ? vehicle.pricePerDay : 0),
-						year: vehicle.year || vehicle.modelYear || ''
-					};
-					allVehiclesGrid.innerHTML += createVehicleCardHtml(normalized);
-				});
-				applyFilters();
-			} else {
-				// No active vehicles - clear cards and ensure placeholder
-				const vehicleCards = allVehiclesGrid.querySelectorAll('[data-vehicle]');
-				vehicleCards.forEach(card => card.remove());
-				const existingPlaceholder = allVehiclesGrid.querySelector('article:not([data-vehicle])');
-				if (!existingPlaceholder) {
-					const placeholder = document.createElement('article');
-					placeholder.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 40px; border: 2px dashed #ddd; border-radius: 8px;';
-					placeholder.innerHTML = '<p style="color: #999; margin: 0;">No vehicles available yet. <a href="host-signup.html" style="color: #667eea;">Become a host</a> and add the first listing!</p>';
-					allVehiclesGrid.appendChild(placeholder);
-				}
-			}
+			populateMakeOptions(homeVehiclesAll);
+			applyFilters();
 		};
 
-		// Update vehicle cards dynamically if new vehicles were added or existing ones changed
-		const updateFleetDisplay = async () => {
-			const activeVehicles = await getActiveVehicles();
-			if (activeVehicles.length > 0) {
-				const allVehiclesGrid = document.querySelector('#allVehiclesGrid') || document.querySelector('.grid.three');
-				if (!allVehiclesGrid) return;
-				
-				// Get existing vehicle IDs in the DOM
-				const existingCards = Array.from(allVehiclesGrid.querySelectorAll('[data-vehicle][data-id]'));
-				const existingIds = new Set(existingCards.map(el => String(el.dataset.id)));
-				
-				// Check for UPDATED existing vehicles (data changed but same ID)
-				const vehiclesById = new Map(activeVehicles.map(v => [String(v.id), v]));
-				let hasUpdates = false;
-				
-				existingCards.forEach(card => {
-					const vehicleId = String(card.dataset.id);
-					const vehicle = vehiclesById.get(vehicleId);
-					
-					if (vehicle) {
-						// Check if any critical data has changed
-						const cardCountry = card.dataset.country || '';
-						const cardState = card.dataset.state || '';
-						const cardCity = card.dataset.city || '';
-						const cardType = card.dataset.type || '';
-						const cardFreq = card.dataset.frequency || '';
-						
-						const countryChanged = cardCountry.toLowerCase() !== (vehicle.country || '').toLowerCase();
-						const stateChanged = cardState.toLowerCase() !== (vehicle.state || '').toLowerCase();
-						const cityChanged = cardCity.toLowerCase() !== (vehicle.city || '').toLowerCase();
-						const typeChanged = cardType.toLowerCase() !== (vehicle.category || '').toLowerCase();
-						const freqChanged = cardFreq.toLowerCase() !== (vehicle.frequency || '').toLowerCase();
-						
-						if (countryChanged || stateChanged || cityChanged || typeChanged || freqChanged) {
-							console.log(` Vehicle ${vehicleId} data changed - updating card`);
-							// Update data attributes
-							card.dataset.country = vehicle.country || '';
-							card.dataset.state = vehicle.state || '';
-							card.dataset.city = vehicle.city || '';
-							card.dataset.type = vehicle.category || '';
-							card.dataset.frequency = vehicle.frequency || '';
-							hasUpdates = true;
-						}
-					}
-				});
-				
-				if (hasUpdates) {
-					console.log(' Reapplying filters after vehicle updates');
-					applyFilters();
-				}
-				
-				// Add new vehicles that aren't already in the DOM
-				const newVehicles = activeVehicles.filter(v => !existingIds.has(String(v.id)));
-				
-				if (newVehicles.length > 0) {
-					console.log(` Adding ${newVehicles.length} new vehicles to fleet`);
-					newVehicles.forEach(vehicle => {
-						const cardHtml = createVehicleCardHtml(vehicle);
-						allVehiclesGrid.innerHTML += cardHtml;
-					});
-					
-					populateMakeOptions(activeVehicles);
-
-					// Re-apply filters to new vehicles
-					applyFilters();
-				}
-			}
-			};
-
-			// Wait for external scripts and DOMContentLoaded before initializing
+		// Wait for external scripts and DOMContentLoaded before initializing
 			const initWhenReady = () => {
 				// Menu wiring lives here to avoid hoist issues
 				const menuPanel = document.getElementById('menuPanel');
@@ -501,7 +616,27 @@
 		};
 
 		const applyFilters = async () => {
-			vehicleCards = document.querySelectorAll('[data-vehicle]');
+			const shelves = document.getElementById('locationShelves');
+			if (!homeVehiclesAll || homeVehiclesAll.length === 0) {
+				if (shelves) {
+					shelves.innerHTML = `
+					<div class="empty-block">
+						<div class="empty-icon" aria-hidden="true">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 7h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 7l1 13h12l1-13" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+						</div>
+						<div class="empty-title">No vehicles found</div>
+						<p class="muted">Vehicles will appear here once hosts publish listings.</p>
+						<div class="empty-actions">
+							<a class="button" href="vehicles.html">Browse all vehicles</a>
+							<a class="button ghost" href="host-signup.html" data-hide-when-host>Become a host</a>
+						</div>
+					</div>
+				`;
+				}
+				if (filterEmptyMsg) filterEmptyMsg.style.display = 'none';
+				return;
+			}
+
 			const activeCategory = document.querySelector('.category-chip.active')?.dataset.category || 'All';
 			const countryValue = (countrySelect?.value || 'Any').trim();
 			const stateValue = (stateSelect?.value || 'Any').trim();
@@ -517,40 +652,20 @@
 			const stateNorm = normalizeLocation(state);
 			const cityNorm = normalizeLocation(city);
 			const freqNorm = normalizeLocation(frequency);
-			
-			// Load current vehicles from VehicleStore (Firebase/cache)
-			const allVehicles = await VehicleStore.getAllVehicles();
-			const vehiclesById = new Map(allVehicles.map(v => [String(v.id), v]));
-			let visibleCount = 0;
-			const chips = [];
 
-			if (countryNorm) chips.push({ label: country, clear: () => { countrySelect.value = 'Any'; applyFilters(); }});
-			if (stateNorm) chips.push({ label: state, clear: () => { stateSelect.value = 'Any'; applyFilters(); }});
-			if (cityNorm) chips.push({ label: city, clear: () => { cityInput.value = ''; applyFilters(); }});
-			if (frequency) chips.push({ label: frequency, clear: () => { frequencySelect.value = 'Any'; applyFilters(); }});
-			if (activeCategory && activeCategory !== 'All') chips.push({ label: activeCategory, clear: () => { setActiveCategory(document.querySelector('.category-chip[data-category="All"]')); }});
-			renderActiveChips(chips);
+			const filtered = (homeVehiclesAll || []).filter((vehicle) => {
+				if (!vehicle) return false;
+				if (vehicle.status && String(vehicle.status).toLowerCase() === 'hidden') return false;
 
-			vehicleCards.forEach((card) => {
-				const id = card.dataset.id;
-				const vehicle = vehiclesById.get(id);
-				
-				// Hide if vehicle is marked as hidden
-				if (vehicle && vehicle.status === 'hidden') {
-					card.style.display = 'none';
-					return;
-				}
-				
-				const type = normalizeLocation(vehicle?.category || vehicle?.vehicleType || card.dataset.type);
-				const vCountry = normalizeLocation(vehicle?.country ?? card.dataset.country);
-				const vState = normalizeLocation(vehicle?.state ?? card.dataset.state);
-				const vCity = normalizeLocation(vehicle?.city ?? card.dataset.city);
-				const vFreq = normalizeLocation(vehicle?.frequency || vehicle?.priceFrequency || card.dataset.frequency);
+				const type = normalizeLocation(vehicle.category || vehicle.vehicleType || '');
+				const vCountry = normalizeLocation(vehicle.country);
+				const vState = normalizeLocation(vehicle.state);
+				const vCity = normalizeLocation(vehicle.city);
+				const vFreq = normalizeLocation(vehicle.frequency || vehicle.priceFrequency);
 
-				// Enforce required data when a corresponding filter is set
-				if (countryNorm && !vCountry) { card.style.display = 'none'; return; }
-				if (stateNorm && !vState) { card.style.display = 'none'; return; }
-				if (cityNorm && !vCity) { card.style.display = 'none'; return; }
+				if (countryNorm && !vCountry) return false;
+				if (stateNorm && !vState) return false;
+				if (cityNorm && !vCity) return false;
 
 				const categoryOk = activeCategory === 'All' || type === normalizeLocation(activeCategory);
 				const countryOk = !countryNorm || vCountry === countryNorm;
@@ -558,18 +673,32 @@
 				const cityOk = !cityNorm || (vCity === cityNorm && (!countryNorm || vCountry === countryNorm));
 				const freqOk = !freqNorm || vFreq === freqNorm;
 
-				const showCard = categoryOk && countryOk && stateOk && cityOk && freqOk;
-				card.style.display = showCard ? '' : 'none';
-				if (showCard) visibleCount += 1;
+				return categoryOk && countryOk && stateOk && cityOk && freqOk;
 			});
 
+			renderLocationShelves(filtered);
+
 			if (filterEmptyMsg) {
-				const hasCards = vehicleCards.length > 0;
-				filterEmptyMsg.style.display = hasCards && visibleCount === 0 ? 'block' : 'none';
+				filterEmptyMsg.style.display = 'none';
 			}
-			const countEl = document.getElementById('vehicleCount');
-			if (countEl) {
-				countEl.textContent = `${visibleCount} vehicle${visibleCount === 1 ? '' : 's'} available`;
+
+			if (filtered.length === 0 && shelves) {
+				shelves.innerHTML = `
+					<div class="empty-block">
+						<div class="empty-icon" aria-hidden="true">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21H3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 14l3-3 4 4 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 10h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+						</div>
+						<div class="empty-title">No vehicles found</div>
+						<p class="muted">Try removing a filter, choosing a nearby city, or switching price frequency.</p>
+						<div class="empty-actions">
+							<button class="button ghost" type="button" id="emptyClearFilters">Clear filters</button>
+							<a class="button" href="vehicles.html">Browse all vehicles</a>
+						</div>
+					</div>
+				`;
+				setTimeout(() => {
+					document.getElementById('emptyClearFilters')?.addEventListener('click', clearFilters);
+				}, 0);
 			}
 		};
 
@@ -648,119 +777,7 @@
 		// Users must go through proper sign-in/sign-up flow.
 		// ========== END DEMO AUTH CONTROLS ==========
 
-		// ========== SAFETY POPUP ==========
-		// Show safety warning popup on first visit
-		const SAFETY_POPUP_KEY = 'CJF_SAFETY_POPUP_SHOWN';
-		
-		function showSafetyPopup() {
-			// Check if user has already seen the popup
-			const hasSeenPopup = localStorage.getItem(SAFETY_POPUP_KEY);
-			if (hasSeenPopup) return;
-			
-			// Create popup
-			const popup = document.createElement('div');
-			popup.id = 'safetyPopup';
-			popup.style.cssText = `
-				position: fixed;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: rgba(0, 0, 0, 0.85);
-				z-index: 99999;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				padding: 20px;
-			`;
-			
-			popup.innerHTML = `
-				<div style="
-					background: white;
-					border-radius: 12px;
-					max-width: 600px;
-					width: 100%;
-					padding: 32px;
-					box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-					max-height: 90vh;
-					overflow-y: auto;
-				">
-					<div style="text-align: center; margin-bottom: 24px;">
-						<div style="font-size: 48px; margin-bottom: 12px;"></div>
-						<h2 style="font-size: 24px; margin: 0 0 8px 0; color: #dc3545;">SAFETY WARNING  PLEASE READ</h2>
-						<p style="color: #666; margin: 0;">Protect yourself from scams</p>
-					</div>
-					
-					<div style="background: #ffe6e6; border-left: 4px solid #dc3545; padding: 16px; border-radius: 4px; margin-bottom: 20px;">
-						<p style="margin: 0; font-weight: 600; font-size: 15px; color: #dc3545;">
-							To protect yourself from scams:
-						</p>
-					</div>
-					
-					<ul style="margin: 0 0 20px 0; padding-left: 24px; line-height: 2;">
-						<li><strong>Only pay after seeing the vehicle IN PERSON</strong></li>
-						<li>Inspect the vehicle before giving any money</li>
-						<li>Meet Hosts in public places</li>
-						<li>Do not trust online-only transactions</li>
-					</ul>
-					
-					<div style="background: #f8f9fa; border: 2px solid #6c757d; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-						<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #333;">
-							<strong>CJF is not responsible for:</strong><br/>
-							Scams  Fraud  Damages  False listings  Vehicle problems  Financial loss
-						</p>
-						<p style="margin: 12px 0 0 0; font-size: 13px; color: #666;">
-							CJF is an advertising platform only. All transactions are between you and the Host.
-						</p>
-					</div>
-					
-					<div style="text-align: center;">
-						<button id="safetyPopupAgree" style="
-							background: #0066cc;
-							color: white;
-							border: none;
-							padding: 14px 32px;
-							border-radius: 8px;
-							font-size: 16px;
-							font-weight: 600;
-							cursor: pointer;
-							width: 100%;
-							transition: all 0.2s ease;
-						">I AGREE & CONTINUE</button>
-						<p style="margin: 12px 0 0 0; font-size: 13px; color: #666;">
-							<a href="safety.html" target="_blank" style="color: var(--accent);">Read full Safety Guidelines </a>
-						</p>
-					</div>
-				</div>
-			`;
-			
-			document.body.appendChild(popup);
-			
-			// Prevent body scroll
-			document.body.style.overflow = 'hidden';
-			
-			// Close popup and save preference
-			document.getElementById('safetyPopupAgree').addEventListener('click', () => {
-				localStorage.setItem(SAFETY_POPUP_KEY, 'true');
-				popup.remove();
-				document.body.style.overflow = '';
-			});
-			
-			// Hover effect for button
-			const btn = document.getElementById('safetyPopupAgree');
-			btn.addEventListener('mouseenter', () => {
-				btn.style.background = '#0052a3';
-				btn.style.transform = 'scale(1.02)';
-			});
-			btn.addEventListener('mouseleave', () => {
-				btn.style.background = '#0066cc';
-				btn.style.transform = 'scale(1)';
-			});
-		}
-		
-		// Show popup after short delay for better UX
-		setTimeout(showSafetyPopup, 800);
-		// ========== END SAFETY POPUP ==========
+		// Safety popup is now shown on-demand (e.g., when contacting a host).
 	</script>
 
 <!-- Firebase SDKs and initializer (must load before firebase.js logic) -->
@@ -776,3 +793,7 @@
 
 </body>
 </html>
+
+
+
+

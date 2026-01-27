@@ -14,14 +14,14 @@
   <header class="header">
     <div class="header-inner">
       <a class="brand" href="index.html"><span class="brand-mark">CJF</span><span>CJF Rentals</span></a>
-      <button class="menu-button" id="menuToggle" aria-label="Open menu">Menu</button>
+      <button class="menu-button" id="menuToggle" aria-label="Open menu">☰</button>
     </div>
   </header>
   <div class="backdrop" id="backdrop"></div>
   <nav class="menu-panel" id="menuPanel" role="dialog" aria-label="Navigation">
     <div class="menu-header">
       <span class="menu-title">Navigation</span>
-      <button class="menu-close" aria-label="Close menu">Close</button>
+      <button class="menu-close" id="menuClose" aria-label="Close menu"></button>
     </div>
     <ul class="menu-list" id="nav-list">
       <!-- Menu items built dynamically by navBuilder.js -->
@@ -167,7 +167,7 @@
       
       // Redirect to dashboard after 1.5 seconds
       setTimeout(() => {
-        window.location.href = 'host-dashboard.html';
+        window.location.href = 'account.html';
       }, 1500);
     });
 

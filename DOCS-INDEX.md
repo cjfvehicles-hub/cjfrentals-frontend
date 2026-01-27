@@ -1,6 +1,6 @@
 # 📖 Security Documentation Index
 
-Welcome! This document indexes all security documentation for the Car Connect Rentals RBAC implementation.
+Welcome! This document indexes all security documentation for the CJF Rentals RBAC implementation.
 
 ---
 

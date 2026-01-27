@@ -1,15 +1,15 @@
+functionsDirectory = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental\\netlify\\functions"
+functionsDirectoryOrigin = "default"
 headersOrigin = "config"
 redirectsOrigin = "config"
 plugins = []
 
-[functions]
-
-[functions."*"]
-
 [build]
 publish = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental"
 publishOrigin = "config"
-base = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental"
+commandOrigin = "config"
+command = "echo No build step"
+functions = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental\\netlify\\functions"
 
 [build.environment]
 
@@ -25,6 +25,10 @@ base = "C:\\Users\\DELL\\Downloads\\MY WEBSIDE CAR RENTAL\\World Rental"
 
 [build.services]
 
+[functions]
+
+[functions."*"]
+
 [[headers]]
 for = "/*"
 
@@ -32,13 +36,13 @@ for = "/*"
 X-Content-Type-Options = "nosniff"
 X-Frame-Options = "SAMEORIGIN"
 Referrer-Policy = "strict-origin-when-cross-origin"
-Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+Permissions-Policy = "geolocation=(self), microphone=(), camera=()"
 
 [[redirects]]
-from = "http://www.cjfrentals.com/*"
-to = "https://cjfrentals.com/:splat"
-status = 301.0
-force = false
+from = "/api/*"
+to = "https://cjf-api-864727255016.us-east1.run.app/api/:splat"
+status = 200.0
+force = true
 
 [redirects.query]
 
@@ -47,10 +51,10 @@ force = false
 [redirects.headers]
 
 [[redirects]]
-from = "https://www.cjfrentals.com/*"
-to = "https://cjfrentals.com/:splat"
-status = 301.0
-force = false
+from = "/__/auth/*"
+to = "https://cjf-rentals.firebaseapp.com/__/auth/:splat"
+status = 200.0
+force = true
 
 [redirects.query]
 
@@ -59,10 +63,10 @@ force = false
 [redirects.headers]
 
 [[redirects]]
-from = "http://cjfrentals.com/*"
-to = "https://cjfrentals.com/:splat"
-status = 301.0
-force = false
+from = "/__/firebase/*"
+to = "https://cjf-rentals.firebaseapp.com/__/firebase/:splat"
+status = 200.0
+force = true
 
 [redirects.query]
 

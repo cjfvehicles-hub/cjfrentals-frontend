@@ -1,4 +1,4 @@
-# 🚀 Car Connect Rentals - Complete Setup Guide
+# 🚀 CJF Rentals - Complete Setup Guide
 
 ## ✅ What You Now Have
 
@@ -49,7 +49,7 @@ npm run dev
 
 You should see:
 ```
-🚀 CCR Backend Server running on http://localhost:3000
+🚀 CJF Backend Server running on http://localhost:3000
 📊 API Endpoints:
    GET    http://localhost:3000/api/vehicles
    POST   http://localhost:3000/api/vehicles

@@ -1,148 +1,116 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Signing In…</title>
+  <title>Signing In</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="assets/firebase.js"></script>
-  <style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f7fb} .card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.08);max-width:520px;width:100%;text-align:center} .muted{color:#666} .small{font-size:13px;color:#444;margin-top:12px;line-height:1.4}</style>
+  <style>
+    body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f7fb;margin:0}
+    .card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.08);max-width:520px;width:100%;text-align:center}
+    .muted{color:#666}
+    .small{font-size:13px;color:#444;margin-top:12px;line-height:1.4}
+    .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+    .btn{appearance:none;border:1px solid #d1d5db;background:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+  </style>
 </head>
 <body>
   <div class="card">
-    <h2>Redirecting to Google…</h2>
-    <p class="muted" id="status">Preparing sign-in</p>
+    <h2>Completing sign-in…</h2>
+    <p class="muted" id="status">Preparing…</p>
     <p class="small" id="diag">Loading…</p>
-    <p class="muted" style="margin-top:12px">If nothing happens, <a id="retry" href="#">try again</a>.</p>
+    <div class="actions">
+      <button class="btn primary" id="retry" type="button">Try again</button>
+      <a class="btn" href="signin.html" style="text-decoration:none;display:inline-flex;align-items:center;">Back to sign in</a>
+    </div>
   </div>
   <script>
     (function(){
       const statusEl = document.getElementById('status');
       const diagEl = document.getElementById('diag');
+      const retryBtn = document.getElementById('retry');
+
       function setStatus(s){ console.log('[signin-redirect]', s); statusEl.textContent = s; }
       function setDiag(s){ diagEl.textContent = s; }
       function ready(){ return !!(window.firebaseAuth && window._firebaseInitialized); }
       function snapshot(){
-        const snap = {
-          firebaseLoaded: !!window.firebase,
-          authReady: !!window.firebaseAuth,
-          initializedFlag: !!window._firebaseInitialized,
-          location: window.location.href
-        };
-        setDiag('firebaseLoaded: '+snap.firebaseLoaded+' | authReady: '+snap.authReady+' | initFlag: '+snap.initializedFlag);
+        setDiag('firebaseLoaded: ' + (!!window.firebase) + ' | authReady: ' + (!!window.firebaseAuth) + ' | initFlag: ' + (!!window._firebaseInitialized));
       }
-      function forceHandlerRedirect() {
-        if (!(window.firebaseConfig && window.firebaseConfig.apiKey && window.firebaseConfig.authDomain)) {
-          setDiag('Cannot build fallback URL (missing firebaseConfig)');
+
+      async function ensureReady(maxWaitMs = 4000) {
+        const start = Date.now();
+        while (!ready() && Date.now() - start < maxWaitMs) {
+          snapshot();
+          await new Promise(r => setTimeout(r, 50));
+        }
+        snapshot();
+        return ready();
+      }
+
+      function syncLocalUser(firebaseUser) {
+        const localUser = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || (firebaseUser.email || '').split('@')[0],
+          email: firebaseUser.email || '',
+          phone: '',
+          role: 'host',
+          lastSync: new Date().toISOString(),
+        };
+        localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
+        localStorage.setItem('CJF_USER_ROLE', 'host');
+        localStorage.removeItem('_forceSignOut');
+      }
+
+      async function handleRedirectResult() {
+        if (!(await ensureReady())) {
+          setStatus('Firebase is still loading. Please try again.');
+          return false;
+        }
+        try {
+          setStatus('Checking sign-in result…');
+          const res = await window.firebaseAuth.getRedirectResult();
+          if (res && res.user) {
+            setStatus('Signed in. Redirecting…');
+            syncLocalUser(res.user);
+            window.location.replace('account.html');
+            return true;
+          }
+          setStatus('No sign-in result. Click “Try again” to continue with Google.');
+          return false;
+        } catch (err) {
+          console.warn('getRedirectResult error:', err);
+          setStatus('Sign-in check failed. Click “Try again” to continue with Google.');
+          return false;
+        }
+      }
+
+      async function startGoogleRedirect() {
+        if (!(await ensureReady())) {
+          setStatus('Firebase is still loading. Please wait and try again.');
           return;
         }
-        const handlerUrl = `https://${window.firebaseConfig.authDomain}/__/auth/handler?apiKey=${encodeURIComponent(window.firebaseConfig.apiKey)}&appName=%5BDEFAULT%5D&authType=signInViaRedirect&providerId=google.com&redirectUrl=${encodeURIComponent(window.location.href)}`;
-        setDiag('Fallback navigating to handler…');
-        window.location.assign(handlerUrl);
-      }
-
-      let signInStarted = false;
-
-      function checkRedirectResult() {
-        if (!ready()) return;
-        firebaseAuth.getRedirectResult().then(res=>{
-          if (res && res.user) {
-            setStatus('Signed in. Syncing…');
-            // Sync user to localStorage so account.html can see auth state immediately
-            const localUser = {
-              id: res.user.uid,
-              name: res.user.displayName || (res.user.email || '').split('@')[0],
-              email: res.user.email || '',
-              phone: '',
-              role: 'host',
-              lastSync: new Date().toISOString(),
-            };
-            localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
-            localStorage.setItem('CJF_USER_ROLE', 'host');
-            localStorage.removeItem('_forceSignOut');
-            setStatus('Redirecting to account…');
-            window.location.href = 'account.html';
-            return true; // Success
-          }
-          return false; // No result yet
-        }).catch((err)=>{
-          console.warn('RedirectResult error:', err);
-          return false;
-        });
-      }
-
-      function startSignIn() {
-        if (signInStarted) return; // Prevent duplicate calls
-        signInStarted = true;
-        snapshot();
-        if (!ready()){ setStatus('Waiting for Firebase…'); signInStarted = false; return; }
         try {
-          const auth = window.firebaseAuth;
+          setStatus('Redirecting to Google…');
           const provider = new firebase.auth.GoogleAuthProvider();
-          setStatus('Starting Google redirect…');
-          let kicked = false;
-          auth.signInWithRedirect(provider).then(()=>{ kicked = true; }).catch(err=>{
-            console.warn('signInWithRedirect error:', err);
-            setStatus('Failed: ' + (err.message || err.code || 'Unknown'));
-            setDiag('Error: '+(err.stack || err.message || err.code));
-            signInStarted = false;
-            forceHandlerRedirect();
-          });
-          // If the browser swallows the promise without navigating, force handler after a short wait
-          setTimeout(() => { if (!kicked) { forceHandlerRedirect(); } }, 1200);
-        } catch (e) {
-          console.warn('Unexpected error:', e);
-          setStatus('Unexpected error: ' + (e.message || e));
-          setDiag('Exception: '+(e.stack || e));
-          signInStarted = false;
-          forceHandlerRedirect();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          window.firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+          await window.firebaseAuth.signInWithRedirect(provider);
+        } catch (err) {
+          console.warn('signInWithRedirect error:', err);
+          setStatus('Google sign-in failed. Please try again.');
         }
       }
 
-      // On load, check for redirect result FIRST
-      window.addEventListener('load', () => {
-        snapshot();
-        if (ready()) {
-          const hasResult = firebaseAuth.getRedirectResult().then(res=>{
-            if (res && res.user) {
-              setStatus('Signed in. Syncing…');
-              const localUser = {
-                id: res.user.uid,
-                name: res.user.displayName || (res.user.email || '').split('@')[0],
-                email: res.user.email || '',
-                phone: '',
-                role: 'host',
-                lastSync: new Date().toISOString(),
-              };
-              localStorage.setItem('CJF_CURRENT_USER', JSON.stringify(localUser));
-              localStorage.setItem('CJF_USER_ROLE', 'host');
-              localStorage.removeItem('_forceSignOut');
-              setStatus('Redirecting to account…');
-              window.location.href = 'account.html';
-              return true;
-            }
-            return false;
-          }).catch(() => false);
-        }
+      retryBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        startGoogleRedirect();
       });
 
-      // Wait for auth ready, then offer to start sign-in
-      let attempts = 0;
-      const iv = setInterval(()=>{
-        attempts++;
-        snapshot();
-        if (ready()) {
-          clearInterval(iv);
-          setStatus('Ready. Starting sign-in...');
-          startSignIn();
-        } else if (attempts > 120) {
-          clearInterval(iv);
-          setStatus('Timeout waiting for Firebase.');
-        }
-      }, 50);
-
-      document.getElementById('retry').onclick = function(e){ e.preventDefault(); signInStarted = false; startSignIn(); };
+      // Important: do NOT auto-start a new redirect here (prevents loops).
+      handleRedirectResult();
     })();
   </script>
 </body>

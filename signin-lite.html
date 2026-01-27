@@ -21,6 +21,7 @@
       if (!window.firebaseAuth){ log('Firebase not ready'); return; }
       const auth = window.firebaseAuth;
       const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       document.getElementById('btn').onclick = function(){
         log('Starting redirect...');
         auth.signInWithRedirect(provider).catch(err=>{ log('Error: '+ (err.message||err.code)); });

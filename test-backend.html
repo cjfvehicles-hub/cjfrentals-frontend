@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Backend Test - CCR</title>
+  <title>Backend Test - CJF</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -59,7 +59,7 @@
 </head>
 <body>
   <div class="container">
-    <h1><span class="emoji">ðŸš€</span>Backend Database Test</h1>
+    <h1>Backend Database Test</h1>
     
     <div id="backendStatus" class="status info">
       <strong>Checking backend connection...</strong>
@@ -72,11 +72,11 @@
     </div>
 
     <h2>Quick Tests</h2>
-    <button onclick="testHealth()">ðŸ¥ Test Backend Health</button>
-    <button onclick="testGetVehicles()">ðŸš— Get All Vehicles</button>
-    <button onclick="testGetStats()">ðŸ“Š Get Statistics</button>
+    <button onclick="testHealth()">Test Backend Health</button>
+    <button onclick="testGetVehicles()">Get All Vehicles</button>
+    <button onclick="testGetStats()">Get Statistics</button>
     <button onclick="testAddVehicle()">➤ Add Test Vehicle</button>
-    <button onclick="clearResults()">ðŸ—‘ï¸ Clear Results</button>
+    <button onclick="clearResults()">Clear Results</button>
 
     <div id="results"></div>
 
@@ -136,7 +136,7 @@
       try {
         const response = await fetch('http://localhost:3000/api/health');
         const data = await response.json();
-        addResult('ðŸ¥ Backend Health Check', data);
+        addResult('Backend Health Check', data);
       } catch (error) {
         addResult('✖ Health Check Failed', { error: error.message }, true);
       }
@@ -145,7 +145,7 @@
     async function testGetVehicles() {
       try {
         const vehicles = await VehicleStore.getAllVehicles();
-        addResult('ðŸš— All Vehicles from Database', {
+        addResult('All Vehicles from Database', {
           count: vehicles.length,
           vehicles: vehicles
         });
@@ -157,7 +157,7 @@
     async function testGetStats() {
       try {
         const stats = await VehicleStore.getStats();
-        addResult('ðŸ“Š Vehicle Statistics', stats);
+        addResult('Vehicle Statistics', stats);
       } catch (error) {
         addResult('✖ Get Stats Failed', { error: error.message }, true);
       }
@@ -186,7 +186,7 @@
         
         // Show updated count
         const stats = await VehicleStore.getStats();
-        addResult('ðŸ“Š Updated Stats', stats);
+        addResult('Updated Stats', stats);
       } catch (error) {
         addResult('✖ Add Vehicle Failed', { error: error.message }, true);
       }

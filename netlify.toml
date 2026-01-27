@@ -20,6 +20,13 @@ to = "https://cjf-rentals.firebaseapp.com/__/auth/:splat"
 status = 200
 force = true
 
+# Firebase Hosting helper assets used by the auth handler page (served via proxy so the handler is first-party)
+[[redirects]]
+from = "/__/firebase/*"
+to = "https://cjf-rentals.firebaseapp.com/__/firebase/:splat"
+status = 200
+force = true
+
 # =========================
 # SECURITY HEADERS
 # =========================

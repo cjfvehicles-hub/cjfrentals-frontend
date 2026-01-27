@@ -324,7 +324,7 @@ Firefox Mobile    ✅ Responsive
 // Open DevTools (F12) → Console
 
 // Verify page loaded
-console.log(document.title); // Should show "Host Name - Host Profile | CCR"
+console.log(document.title); // Should show "Host Name - Host Profile | CJF"
 
 // Check host data
 document.getElementById('hostNameText').textContent; // Should show name

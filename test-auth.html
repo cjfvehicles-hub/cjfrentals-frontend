@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>ðŸ” Auth Debug & Test</title>
+	<title>Auth Debug & Test</title>
 	<link rel="stylesheet" href="assets/style.css" />
 	<script src="assets/auth.js"></script>
 	<style>
@@ -137,20 +137,20 @@
 </head>
 <body>
 	<div class="debug-container">
-		<h1>ðŸ” Authentication Debug & Test Tool</h1>
+		<h1>Authentication Debug & Test Tool</h1>
 
 		<!-- Current Auth State -->
 		<div class="debug-section">
-			<h2>ðŸ“Š Current Auth State</h2>
+			<h2>Current Auth State</h2>
 			<div id="authStatus"></div>
-			<button class="btn-primary" onclick="refreshAuthStatus()">ðŸ”„ Refresh Status</button>
+			<button class="btn-primary" onclick="refreshAuthStatus()">Refresh Status</button>
 		</div>
 
 		<!-- localStorage Contents -->
 		<div class="debug-section">
-			<h2>ðŸ’¾ localStorage Contents</h2>
+			<h2>localStorage Contents</h2>
 			<div class="debug-output" id="localStorageView"></div>
-			<button class="btn-primary" onclick="viewLocalStorage()">ðŸ” View localStorage</button>
+			<button class="btn-primary" onclick="viewLocalStorage()">View localStorage</button>
 		</div>
 
 		<!-- Test Sign In -->
@@ -166,7 +166,7 @@
 
 		<!-- Test Access Control -->
 		<div class="debug-section">
-			<h2>ðŸ”’ Test Access Control</h2>
+			<h2>Test Access Control</h2>
 			<p style="color: #666; font-size: 14px; margin-bottom: 12px;">Verify that AuthManager correctly blocks/allows access.</p>
 			<div class="button-group">
 				<button class="btn-primary" onclick="testAccessControl()">Test Access Checks</button>
@@ -177,7 +177,7 @@
 
 		<!-- Navigate to Pages -->
 		<div class="debug-section">
-			<h2>ðŸš€ Navigate to Pages</h2>
+			<h2>Navigate to Pages</h2>
 			<p style="color: #666; font-size: 14px; margin-bottom: 12px;">After signing in above, test navigation to protected pages.</p>
 			<div class="nav-buttons">
 				<a href="account.html">Go to My Account</a>
@@ -221,7 +221,7 @@
 				}
 			}
 			if (output === 'localStorage Contents:\n\n') {
-				output = '(No CCR-related data found in localStorage)';
+				output = '(No CJF-related data found in localStorage)';
 			}
 			document.getElementById('localStorageView').textContent = output;
 		}

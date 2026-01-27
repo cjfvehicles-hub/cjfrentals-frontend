@@ -1,4 +1,4 @@
-# Car Connect Rentals - Backend API
+# CJF Rentals - Backend API
 
 ## 🚀 Quick Start
 

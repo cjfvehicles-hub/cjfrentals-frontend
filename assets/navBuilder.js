@@ -10,8 +10,6 @@
 const NavBuilder = (function() {
 	'use strict';
 
-	const SPECIAL_ADMIN_EMAIL = 'cjfvehicles@gmail.com';
-
 	let menuRendered = false; // Track if we've rendered the menu at least once
 
 	// Menu item definitions
@@ -28,7 +26,6 @@ const NavBuilder = (function() {
 	const HOST_ITEMS = [
 		{ id: 'account', label: 'My Account', href: 'account.html', hideWhenAdmin: false },
 		{ id: 'vehicles', label: 'Vehicles', href: 'vehicles.html', hideWhenAdmin: true },
-		{ id: 'become-host', label: 'Become a Host', href: 'host-signup.html', hideWhenAdmin: true },
 		{ id: 'upgrade', label: 'Upgrade Plan', href: 'upgrade.html', hideWhenAdmin: true },
 		{ id: 'terms', label: 'Terms &amp; Conditions', href: 'terms.html', hideWhenAdmin: true },
 		{ id: 'host-agreement', label: 'Host Agreement', href: 'host-agreement.html', hideWhenAdmin: true },
@@ -53,7 +50,9 @@ const NavBuilder = (function() {
 		navList.innerHTML = '';
 
 		// Choose items based on auth state
-		const isAdminMode = AuthManager?.isAdmin ? AuthManager.isAdmin() : false;
+		const isAdminMode = AuthManager?.isAdminModeEnabled
+			? AuthManager.isAdminModeEnabled()
+			: (AuthManager?.isAdmin ? AuthManager.isAdmin() : false);
 		const items = isLoggedIn
 			? HOST_ITEMS.filter(item => !(isAdminMode && item.hideWhenAdmin))
 			: GUEST_ITEMS;
@@ -100,9 +99,7 @@ const NavBuilder = (function() {
 
 	function userIsSpecialAdmin() {
 		if (typeof AuthManager === 'undefined') return false;
-		const user = AuthManager.getCurrentUser();
-		const email = (user?.email || '').toLowerCase();
-		return email === SPECIAL_ADMIN_EMAIL;
+		return typeof AuthManager.isSpecialAdminUser === 'function' ? AuthManager.isSpecialAdminUser() : false;
 	}
 
 	function appendAdminToggle(navList) {
@@ -123,7 +120,9 @@ const NavBuilder = (function() {
 
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
-		checkbox.checked = AuthManager?.isAdmin ? AuthManager.isAdmin() : false;
+		checkbox.checked = AuthManager?.isAdminModeEnabled
+			? AuthManager.isAdminModeEnabled()
+			: (AuthManager?.isAdmin ? AuthManager.isAdmin() : false);
 		const slider = document.createElement('span');
 		slider.className = 'slider';
 
@@ -136,6 +135,15 @@ const NavBuilder = (function() {
 		navList.appendChild(li);
 
 		checkbox.addEventListener('change', () => {
+			if (AuthManager?.setAdminModeEnabled) {
+				AuthManager.setAdminModeEnabled(checkbox.checked);
+				AuthManager.updateUIForRole();
+				renderNav(true);
+				checkbox.checked = AuthManager.isAdminModeEnabled();
+				return;
+			}
+
+			// Fallback for older AuthManager versions
 			const nextRole = checkbox.checked ? AuthManager.ROLES.ADMIN : AuthManager.ROLES.HOST;
 			if (AuthManager?.setRole) {
 				AuthManager.setRole(nextRole);
@@ -147,7 +155,12 @@ const NavBuilder = (function() {
 	}
 
 	function appendAdminPages(navList) {
-		if (!navList || typeof AuthManager === 'undefined' || !AuthManager.isAdmin()) return;
+		if (!navList || typeof AuthManager === 'undefined') return;
+		if (typeof AuthManager.isAdminModeEnabled === 'function') {
+			if (!AuthManager.isAdminModeEnabled()) return;
+		} else if (!AuthManager.isAdmin()) {
+			return;
+		}
 		if (navList.querySelector('[data-menu-id="admin-inbox"]')) return;
 
 		const li = document.createElement('li');

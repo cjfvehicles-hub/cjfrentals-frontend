@@ -2,7 +2,7 @@
 
 ## 🎯 What Was Accomplished
 
-A comprehensive **Role-Based Access Control (RBAC)** system has been implemented across the entire Car Connect Rentals application, addressing the critical security vulnerability where non-authenticated users could see host-only controls.
+A comprehensive **Role-Based Access Control (RBAC)** system has been implemented across the entire CJF Rentals application, addressing the critical security vulnerability where non-authenticated users could see host-only controls.
 
 ---
 

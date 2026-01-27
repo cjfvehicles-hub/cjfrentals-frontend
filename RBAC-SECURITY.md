@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the comprehensive security system implemented for Car Connect Rentals (CCR) that controls who can see and edit what content.
+This document describes the comprehensive security system implemented for CJF Rentals that controls who can see and edit what content.
 
 ---
 
