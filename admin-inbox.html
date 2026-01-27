@@ -400,6 +400,7 @@
       .inbox-header {
         padding: 0 12px;
         gap: 8px;
+        max-width: 100%;
       }
       .inbox-header-logo {
         font-size: 16px;
@@ -409,10 +410,21 @@
         margin-left: auto;
       }
       .inbox-container,
-      .inbox-content { width: 100%; max-width: 100%; }
+      .inbox-content { width: 100%; max-width: 100%; overflow-x: hidden; }
+      .inbox-container { display: block; overflow-x: hidden; }
       .inbox-content { display: block; }
       .inbox-sidebar { display: none; }
-      .inbox-list-panel { width: 100%; max-width: 100%; flex: none; border-right: none; min-width: 0; }
+      .inbox-list-panel {
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+        border-right: none;
+        min-width: 0;
+        overflow-x: hidden;
+      }
+      .inbox-list-header,
+      .inbox-list-item,
+      .inbox-list-item-content { min-width: 0; }
       .inbox-detail-panel { display: none; position: fixed; inset: 64px 0 0 0; z-index: 999; }
       .inbox-detail-panel.active { display: flex; }
       .inbox-mobile-back { display: inline-flex; }
