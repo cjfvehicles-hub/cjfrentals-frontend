@@ -1,0 +1,30 @@
+# Normalize text file line endings in-repo.
+# This prevents recurring "LF will be replaced by CRLF" churn on Windows.
+
+* text=auto
+
+# Web/text sources
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Windows scripts should stay CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.mp3 binary
+*.wav binary
