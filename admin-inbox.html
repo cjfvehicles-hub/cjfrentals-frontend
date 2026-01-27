@@ -396,7 +396,7 @@
     
     /* Mobile */
     @media (max-width: 1024px) {
-      body { overflow-x: hidden; }
+      html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
       .inbox-header {
         padding: 0 12px;
         gap: 8px;
@@ -410,17 +410,27 @@
         margin-left: auto;
       }
       .inbox-container,
-      .inbox-content { width: 100%; max-width: 100%; overflow-x: hidden; }
-      .inbox-container { display: block; overflow-x: hidden; }
-      .inbox-content { display: block; }
+      .inbox-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+      }
+      .inbox-container {
+        display: block !important;
+        overflow-x: hidden !important;
+      }
+      .inbox-content {
+        display: block !important;
+      }
       .inbox-sidebar { display: none; }
       .inbox-list-panel {
-        width: 100%;
-        max-width: 100%;
-        flex: none;
-        border-right: none;
-        min-width: 0;
-        overflow-x: hidden;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        border-right: none !important;
+        overflow-x: hidden !important;
       }
       .inbox-list-header,
       .inbox-list-item,
@@ -545,6 +555,49 @@
     </div>
   </div>
   
+  <script>
+    // Tiny mobile overflow debugger: logs any element wider than the viewport.
+    (function () {
+      const isSmallScreen = () => window.matchMedia('(max-width: 1024px)').matches;
+      const run = () => {
+        if (!isSmallScreen()) return;
+        const vw = document.documentElement.clientWidth;
+        const offenders = [];
+        document.querySelectorAll('body *').forEach((el) => {
+          const r = el.getBoundingClientRect();
+          const overflow = r.width - vw;
+          if (overflow > 1 || r.right - vw > 1) {
+            offenders.push({
+              tag: el.tagName.toLowerCase(),
+              id: el.id || '',
+              className: (el.className || '').toString(),
+              width: Math.round(r.width),
+              right: Math.round(r.right),
+              vw,
+              overflow: Math.round(Math.max(overflow, r.right - vw)),
+              el,
+            });
+          }
+        });
+        offenders
+          .sort((a, b) => b.overflow - a.overflow)
+          .slice(0, 10)
+          .forEach((o, i) => {
+            console.warn(
+              `[overflow ${i + 1}] <${o.tag}>#${o.id}.${o.className} width=${o.width} right=${o.right} vw=${o.vw} overflow=${o.overflow}`,
+              o.el
+            );
+          });
+        if (offenders.length) {
+          console.warn(`Found ${offenders.length} overflowing element(s) on small screen.`);
+        } else {
+          console.log('No overflowing elements detected on small screen.');
+        }
+      };
+      window.addEventListener('load', () => setTimeout(run, 300));
+      window.addEventListener('resize', () => setTimeout(run, 150));
+    })();
+  </script>
   <script src="assets/inbox.js"></script>
 </body>
 </html>
