@@ -358,15 +358,12 @@
 			sorted.slice(0, 10).forEach((group, idx) => {
 				const section = document.createElement('section');
 				section.className = 'location-shelf';
-				const viewAll = (group.items || []).length > 8
-					? `<a class="shelf-viewall" href="${group.info.url}">View all</a>`
-					: '';
 				section.innerHTML = `
 					<div class="location-shelf-header">
 						<a class="location-shelf-link" href="${group.info.url}">
 							<h3 class="location-shelf-title">${group.info.title}</h3>
 						</a>
-						<div class="location-shelf-actions">${viewAll}</div>
+						<div class="location-shelf-actions"></div>
 					</div>
 					<div class="shelf-row" id="shelfRow${idx}"></div>
 				`;
@@ -380,18 +377,6 @@
 				(group.items || []).slice(0, 12).forEach((veh) => {
 					row.insertAdjacentHTML('beforeend', createVehicleCardHtml(veh));
 				});
-
-
-				if ((group.items || []).length > 0 && (group.items || []).length < 4) {
-					const cta = document.createElement('div');
-					cta.className = 'shelf-cta';
-					const title = group.info.title.replace(/^Vehicles in\s+/i, '').split(',')[0] || 'this area';
-					const helper = (group.items || []).length <= 2
-						? `<div class="muted" style="margin-top:6px; font-size:13px;">More vehicles coming soon in this area.</div>`
-						: '';
-					cta.innerHTML = `<a href="${group.info.url}">Browse all vehicles in ${title}</a>${helper}`;
-					section.appendChild(cta);
-				}
 
 				container.appendChild(section);
 			});
